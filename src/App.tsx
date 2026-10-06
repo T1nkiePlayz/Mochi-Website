@@ -21,6 +21,7 @@ import {
   Users,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import md5 from 'blueimp-md5'
 import { DocumentationPage, DocumentationArticlePage } from './Documentation'
 import { HashRouter, NavLink, Route, Routes, Link } from 'react-router-dom'
 import {
@@ -86,6 +87,32 @@ const providerOptions = [
   'Google',
 ]
 
+function useAuthHeader() {
+  const { user, profile } = useAuth()
+  if (!user) {
+    return (
+      <Link
+        to="/signin"
+        className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-500/30 transition hover:brightness-110"
+      >
+        Sign in
+      </Link>
+    )
+  }
+  const email = user.email?.trim().toLowerCase() ?? ''
+  const avatar = profile?.avatar_url || (email ? `https://www.gravatar.com/avatar/${md5(email)}?d=identicon&s=96` : '')
+  return (
+    <Link
+      to="/dashboard"
+      aria-label="Open your Mochi dashboard"
+      title="Account dashboard"
+      className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-white/5 transition hover:border-violet-400/60 hover:bg-violet-500/10"
+    >
+      {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : <UserRound className="h-5 w-5 text-slate-100" />}
+    </Link>
+  )
+}
+
 function App() {
   return (
     <AuthProvider>
@@ -121,12 +148,7 @@ function App() {
               >
                 Download
               </Link>
-              <Link
-                to="/signin"
-                className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-500/30 transition hover:brightness-110"
-              >
-                Sign in
-              </Link>
+              {useAuthHeader()}
             </div>
           </div>
         </header>
@@ -613,7 +635,7 @@ function DashboardPage() {
   return <PageShell className="max-w-6xl">
     <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-violet-500/[0.12] via-slate-950/70 to-cyan-500/[0.08] p-6 sm:p-8">
       <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div><div className="flex flex-wrap items-center gap-2"><p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-300">Mochi account</p>{isAdmin && <span className="inline-flex items-center gap-1.5 rounded-md border border-violet-400/30 bg-violet-500/15 px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-violet-200"><Shield className="h-3 w-3" /> Admin</span>}</div><h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">Welcome back, {profile?.display_name || user.email || 'player'}</h2><p className="mt-2 text-sm text-slate-400">{user.email}</p></div>
+        <div className="flex items-center gap-4"><img src={profile?.avatar_url || `https://www.gravatar.com/avatar/${md5((user.email || '').trim().toLowerCase())}?d=identicon&s=128`} alt="" className="h-16 w-16 shrink-0 rounded-full border border-white/15 bg-slate-900 object-cover" /><div><div className="flex flex-wrap items-center gap-2"><p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-300">Mochi account</p>{isAdmin && <span className="inline-flex items-center gap-1.5 rounded-md border border-violet-400/30 bg-violet-500/15 px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-violet-200"><Shield className="h-3 w-3" /> Admin</span>}</div><h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">Welcome back, {profile?.display_name || 'player'}</h2></div></div>
         <button onClick={() => void signOutCurrentUser()} className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-violet-400/50 hover:bg-violet-500/10">Sign out</button>
       </div>
     </div>
@@ -641,10 +663,10 @@ function AccountTab({ user, profile, refreshProfile }: { user: any; profile: Pro
   const [currentPassword, setCurrentPassword] = useState('')
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
-  const saveProfile = async () => { setBusy(true); setMessage(''); const { error } = await updateMyProfile({ display_name: name, avatar_url: profile?.avatar_url ?? null, cloud_sync_enabled: profile?.cloud_sync_enabled ?? false, metadata_sync_allowed: profile?.metadata_sync_allowed ?? false }); setMessage(error ? error.message : 'Profile saved.'); if (!error) await refreshProfile(); setBusy(false) }
+  const saveProfile = async () => { setBusy(true); setMessage(''); const { data, error } = await updateMyProfile({ display_name: name, avatar_url: profile?.avatar_url ?? null, cloud_sync_enabled: profile?.cloud_sync_enabled ?? false, metadata_sync_allowed: profile?.metadata_sync_allowed ?? false }); setMessage(error ? error.message : 'Username updated successfully.'); if (!error) await refreshProfile(); setBusy(false) }
   const changeEmail = async () => { setBusy(true); setMessage(''); const { error } = await updateEmail(email); setMessage(error ? error.message : 'Check your inbox to confirm the email change.'); setBusy(false) }
   const changePassword = async () => { if (newPassword.length < 8) { setMessage('Choose a password with at least 8 characters.'); return } setBusy(true); setMessage(''); const { error } = await updatePassword(newPassword, currentPassword || undefined); setMessage(error ? error.message : 'Password updated successfully.'); if (!error) { setNewPassword(''); setCurrentPassword('') } setBusy(false) }
-  return <div className="space-y-6"><SectionHeading eyebrow="Account" title="Your identity and account credentials." /><section className="glass-card space-y-5 p-6"><label className="block text-sm text-slate-300">Display name<input value={name} onChange={(e) => setName(e.target.value)} className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" /></label><div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-slate-900/50 p-4"><div><p className="font-semibold text-white">User ID</p><p className="mt-1 break-all font-mono text-xs text-slate-500">{user.id}</p></div><CopyButton value={user.id} /></div><button disabled={busy} onClick={() => void saveProfile()} className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-5 py-3 font-semibold text-white disabled:opacity-50">{busy ? 'Saving…' : 'Save profile'}</button></section>
+  return <div className="space-y-6"><SectionHeading eyebrow="Account" title="Your identity and account credentials." /><section className="glass-card space-y-5 p-6"><label className="block text-sm text-slate-300">Username<input value={name} onChange={(e) => setName(e.target.value)} className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" /></label><div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-slate-900/50 p-4"><div><p className="font-semibold text-white">User ID</p><p className="mt-1 break-all font-mono text-xs text-slate-500">{user.id}</p></div><CopyButton value={user.id} /></div><button disabled={busy} onClick={() => void saveProfile()} className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-5 py-3 font-semibold text-white disabled:opacity-50">{busy ? 'Saving…' : 'Save profile'}</button></section>
     <section className="glass-card space-y-5 p-6"><div><p className="text-sm uppercase tracking-[0.2em] text-cyan-200">Email address</p><h3 className="mt-2 text-xl font-semibold text-white">Change your email</h3><p className="mt-2 text-sm text-slate-400">A confirmation flow protects email changes.</p></div><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" /><button disabled={busy || email === user.email} onClick={() => void changeEmail()} className="rounded-full border border-white/15 bg-white/5 px-5 py-3 font-semibold text-white disabled:opacity-40">Send email change confirmation</button></section>
     <section className="glass-card space-y-5 p-6"><div><p className="text-sm uppercase tracking-[0.2em] text-violet-200">Password</p><h3 className="mt-2 text-xl font-semibold text-white">Change your password</h3><p className="mt-2 text-sm text-slate-400">Change it while signed in. Your project may require recent authentication or your current password.</p></div><input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Current password (if required)" className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" /><input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="New password" className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" /><button disabled={busy || !newPassword} onClick={() => void changePassword()} className="rounded-full bg-violet-500 px-5 py-3 font-semibold text-white disabled:opacity-40">Change password</button></section>{message && <p className="rounded-2xl border border-cyan-400/20 bg-cyan-500/5 p-4 text-sm text-cyan-200">{message}</p>}</div>
 }
@@ -676,37 +698,20 @@ function SecurityTab({ user }: { user: any }) {
 
   const start = async () => {
     if (pendingFactors.length > 0) {
-      const factor = pendingFactors[0]
-
-      // Supabase does not reliably return the original TOTP secret/QR data
-      // after an enrollment has been started and the page is refreshed.
-      // If the pending factor has no setup material, remove that stale
-      // enrollment and immediately create a fresh one instead of showing a
-      // dead-end "already exists" error.
-      if (!factor.totp?.qr_code && !factor.totp?.secret) {
-        const { error: unenrollError } = await unenrollTotp(factor.id)
-        if (unenrollError) {
-          setMessage(unenrollError.message)
-          return
-        }
-        const { data: freshData, error: enrollError } = await enrollTotp()
-        if (enrollError) {
-          setMessage(enrollError.message)
-          await loadMfa()
-          return
-        }
-        setMfaFactorId(freshData.id)
-        setMfaQr(freshData.totp.qr_code)
-        setMfaSecret(freshData.totp.secret)
-        setMessage('Your previous unfinished setup was cleared. Scan this new QR code, then enter the six-digit code from your authenticator app.')
-        await loadMfa()
+      // A pending factor can survive a refresh without its original secret.
+      // Do not try to reuse that secret: create a fresh uniquely named
+      // enrollment so setup always produces a new QR code.
+      const freshName = `Mochi authenticator ${Date.now().toString().slice(-6)}`
+      const { data: freshData, error: enrollError } = await enrollTotp(freshName)
+      if (enrollError) {
+        setMessage(enrollError.message)
         return
       }
-
-      setMfaFactorId(factor.id)
-      setMfaQr(factor.totp.qr_code)
-      setMfaSecret(factor.totp.secret)
-      setMessage('You already started authenticator setup. Finish it below, or cancel the pending setup.')
+      setMfaFactorId(freshData.id)
+      setMfaQr(freshData.totp.qr_code)
+      setMfaSecret(freshData.totp.secret)
+      setMessage('A fresh authenticator setup is ready. Scan the new QR code and enter the six-digit code.')
+      await loadMfa()
       return
     }
 
