@@ -753,13 +753,4 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
   )
 }
 
-function StatusCard({ label, value, tone }: { label: string; value: string; tone: 'good' | 'neutral' }) {
-  return (
-    <div className="glass-card p-6">
-      <p className="text-sm text-slate-400">{label}</p>
-      <p className={`mt-3 text-2xl font-bold ${tone === 'good' ? 'text-emerald-300' : 'text-white'}`}>{value}</p>
-    </div>
-  )
-}
-
 export default App
