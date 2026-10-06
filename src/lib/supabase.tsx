@@ -21,6 +21,7 @@ export const supabase =
           persistSession: true,
           autoRefreshToken: true,
           detectSessionInUrl: true,
+          experimental: { passkey: true },
         },
       })
     : null
@@ -73,10 +74,13 @@ export async function updatePassword(password: string, currentPassword?: string)
 
 export async function linkAuthIdentity(provider: 'github' | 'google') {
   if (!supabase) return { data: null, error: new Error(notConfigured) }
-  return supabase.auth.linkIdentity({
+  const result = await supabase.auth.linkIdentity({
     provider,
     options: { redirectTo: window.location.origin },
   })
+  if (result.error) return result
+  if (result.data?.url) window.location.assign(result.data.url)
+  return result
 }
 
 export async function refreshAuthSession() {
@@ -97,6 +101,26 @@ export async function listMfaFactors() {
 export async function enrollTotp(friendlyName = 'Mochi authenticator') {
   if (!supabase) return { data: null, error: new Error(notConfigured) }
   return supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName })
+}
+
+export async function unenrollTotp(factorId: string) {
+  if (!supabase) return { data: null, error: new Error(notConfigured) }
+  return supabase.auth.mfa.unenroll({ factorId })
+}
+
+export async function listPasskeys() {
+  if (!supabase) return { data: null, error: new Error(notConfigured) }
+  return supabase.auth.passkey.list()
+}
+
+export async function registerPasskey() {
+  if (!supabase) return { data: null, error: new Error(notConfigured) }
+  return supabase.auth.registerPasskey()
+}
+
+export async function deletePasskey(passkeyId: string) {
+  if (!supabase) return { data: null, error: new Error(notConfigured) }
+  return supabase.auth.passkey.delete({ passkeyId })
 }
 
 export async function verifyTotpEnrollment(factorId: string, code: string) {
