@@ -798,7 +798,8 @@ function SecurityTab({ user }: { user: any }) {
 
 function ApiTab() {
   const [nexusKey, setNexusKey] = useState('')
-  const [igdbKey, setIgdbKey] = useState('')
+  const [igdbClientId, setIgdbClientId] = useState('')
+  const [igdbClientSecret, setIgdbClientSecret] = useState('')
   const [configured, setConfigured] = useState<{ nexus: boolean; igdb: boolean }>({ nexus: false, igdb: false })
   const [visible, setVisible] = useState<{ nexus: boolean; igdb: boolean }>({ nexus: false, igdb: false })
   const [loading, setLoading] = useState(true)
@@ -820,18 +821,29 @@ function ApiTab() {
   useEffect(() => { void loadStatus() }, [])
 
   const save = async (provider: 'nexus' | 'igdb') => {
-    const value = provider === 'nexus' ? nexusKey.trim() : igdbKey.trim()
-    if (!value) {
-      setMessage(`Enter your ${provider === 'nexus' ? 'Nexus Mods' : 'IGDB'} credential first.`)
+    const value = provider === 'nexus'
+      ? nexusKey.trim()
+      : JSON.stringify({ clientId: igdbClientId.trim(), clientSecret: igdbClientSecret.trim() })
+
+    if (provider === 'nexus' && !nexusKey.trim()) {
+      setMessage('Enter your Nexus Mods credential first.')
       return
     }
+    if (provider === 'igdb' && (!igdbClientId.trim() || !igdbClientSecret.trim())) {
+      setMessage('Enter your IGDB Client ID and Client Secret first.')
+      return
+    }
+
     setSaving(provider)
     setMessage('')
     const { error } = await manageApiCredential('set', provider, value)
     if (error) setMessage(error.message)
     else {
       if (provider === 'nexus') setNexusKey('')
-      else setIgdbKey('')
+      else {
+        setIgdbClientId('')
+        setIgdbClientSecret('')
+      }
       setConfigured((current) => ({ ...current, [provider]: true }))
       setVisible((current) => ({ ...current, [provider]: false }))
       setMessage(`${provider === 'nexus' ? 'Nexus Mods' : 'IGDB'} credential saved securely.`)
@@ -875,43 +887,83 @@ function ApiTab() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-medium text-white">Credential status</p>
-              <p className="mt-1 text-xs text-slate-500">{isConfigured ? 'A credential is stored for your account.' : 'No credential is stored for your account.'}</p>
+              <p className="mt-1 text-xs text-slate-500">{isConfigured ? 'Credentials are stored for your account.' : 'No credentials are stored for your account.'}</p>
             </div>
             <span className={isConfigured ? 'inline-flex items-center rounded-full bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-300' : 'inline-flex items-center rounded-full bg-slate-500/10 px-3 py-1.5 text-xs font-semibold text-slate-400'}>
               {isConfigured ? 'Configured' : 'Not configured'}
             </span>
           </div>
         </div>
-        <div>
-          <label className="mb-2 block text-sm font-medium text-slate-200">{isConfigured ? 'Replace credential' : 'API credential'}</label>
-          <div className="flex gap-2">
-            <input
-              type={isVisible ? 'text' : 'password'}
-              value={value}
-              onChange={(event) => setValue(event.target.value)}
-              placeholder={isConfigured ? 'Enter a new credential to replace it' : 'Paste your credential'}
-              autoComplete="off"
-              spellCheck={false}
-              className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 font-mono text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/60"
-            />
-            <button type="button" onClick={() => setVisible((current) => ({ ...current, [provider]: !current[provider] }))} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-200">
-              {isVisible ? 'Hide' : 'Show'}
-            </button>
+        {provider === 'igdb' ? (
+          <div className="space-y-4">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-200">{isConfigured ? 'Replace Client ID' : 'Client ID'}</label>
+              <input
+                value={igdbClientId}
+                onChange={(event) => setIgdbClientId(event.target.value)}
+                placeholder="Your Twitch application Client ID"
+                autoComplete="off"
+                spellCheck={false}
+                className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 font-mono text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/60"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-200">{isConfigured ? 'Replace Client Secret' : 'Client Secret'}</label>
+              <div className="flex gap-2">
+                <input
+                  type={isVisible ? 'text' : 'password'}
+                  value={igdbClientSecret}
+                  onChange={(event) => setIgdbClientSecret(event.target.value)}
+                  placeholder="Your Twitch application Client Secret"
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 font-mono text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/60"
+                />
+                <button type="button" onClick={() => setVisible((current) => ({ ...current, igdb: !current.igdb }))} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-200">
+                  {isVisible ? 'Hide' : 'Show'}
+                </button>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-violet-400/15 bg-violet-500/[0.04] p-4 text-sm leading-6 text-slate-300">
+              <p className="font-semibold text-white">How IGDB authentication works</p>
+              <p className="mt-1">IGDB uses Twitch application credentials. You provide the Client ID and Client Secret from your Twitch Developer application. Mochi securely exchanges them for a temporary bearer token when it needs to query IGDB.</p>
+              <p className="mt-2">You do <strong>not</strong> need to enter a bearer token or separate API key. The Twitch application name is only the application's display name.</p>
+            </div>
+            <a
+              href="https://dev.twitch.tv/console/apps"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex text-xs font-medium text-violet-300 underline decoration-violet-400/40 underline-offset-2 transition hover:text-white"
+            >
+              Open Twitch Developer Console ↗
+            </a>
           </div>
-        </div>
-        {provider === 'igdb' && (
-          <a
-            href="https://api-docs.igdb.com/"
-            target="_blank"
-            rel="noreferrer"
-            className="mt-2 inline-flex text-xs font-medium text-violet-300 underline decoration-violet-400/40 underline-offset-2 transition hover:text-white"
-          >
-            Need an IGDB credential? Open the official setup guide ↗
-          </a>
+        ) : (
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-200">{isConfigured ? 'Replace credential' : 'API credential'}</label>
+            <div className="flex gap-2">
+              <input
+                type={isVisible ? 'text' : 'password'}
+                value={value}
+                onChange={(event) => setValue(event.target.value)}
+                placeholder={isConfigured ? 'Enter a new credential to replace it' : 'Paste your credential'}
+                autoComplete="off"
+                spellCheck={false}
+                className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 font-mono text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/60"
+              />
+              <button type="button" onClick={() => setVisible((current) => ({ ...current, nexus: !current.nexus }))} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-200">
+                {isVisible ? 'Hide' : 'Show'}
+              </button>
+            </div>
+          </div>
         )}
         <div className="flex flex-wrap gap-3">
-          <button disabled={isSaving || !value.trim()} onClick={() => void save(provider)} className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40">
-            {isSaving ? 'Saving…' : isConfigured ? 'Replace credential' : 'Save credential'}
+          <button
+            disabled={isSaving || (provider === 'igdb' ? !igdbClientId.trim() || !igdbClientSecret.trim() : !nexusKey.trim())}
+            onClick={() => void save(provider)}
+            className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+          >
+            {isSaving ? 'Saving…' : isConfigured ? 'Replace credentials' : 'Save credentials'}
           </button>
           {isConfigured && <button disabled={isSaving} onClick={() => void remove(provider)} className="rounded-full border border-rose-400/20 bg-rose-500/5 px-5 py-2.5 text-sm font-semibold text-rose-200 disabled:opacity-40">Remove</button>}
         </div>
@@ -927,19 +979,18 @@ function ApiTab() {
           <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" />
           <div>
             <p className="font-semibold text-white">Private to your Mochi account</p>
-            <p className="mt-1 text-sm leading-6 text-slate-300">Credentials are sent only to Mochi’s authenticated backend and stored separately for your user. The saved secret is never returned to this page; you only see whether each service is configured.</p>
+            <p className="mt-1 text-sm leading-6 text-slate-300">Credentials are sent only to Mochi’s authenticated backend and stored separately for your user. Saved secrets are never returned to this page; you only see whether each service is configured.</p>
           </div>
         </div>
       </section>
       {loading ? <div className="glass-card p-8 text-slate-400">Loading API configuration…</div> : <>
         {card('nexus', 'Nexus Mods', 'Store the Nexus Mods credential used by Mochi for Nexus Mods integration.', nexusKey, setNexusKey)}
-        {card('igdb', 'IGDB', 'Store the IGDB credential used by Mochi for game metadata and artwork lookup.', igdbKey, setIgdbKey)}
+        {card('igdb', 'IGDB', 'Use your Twitch Developer application credentials for IGDB game metadata and artwork lookup.', '', () => undefined)}
       </>}
       {message && <p className="rounded-2xl border border-cyan-400/20 bg-cyan-500/5 p-4 text-sm text-cyan-200">{message}</p>}
     </div>
   )
 }
-
 function CloudTab({ profile }: { profile: Profile | null }) {
   const [sync, setSync] = useState(profile?.cloud_sync_enabled ?? false)
   const [pikoCount, setPikoCount] = useState(0)
