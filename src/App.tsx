@@ -76,7 +76,7 @@ const featureCards = [
   },
   {
     title: 'Secure cloud sync',
-    description: 'Protect account details, launcher settings, and Piko metadata with the same authentication system.',
+    description: 'Protect account details, launcher settings, and Piko metadata with Mochi’s secure account system.',
     icon: ShieldCheck,
   },
 ]
@@ -185,6 +185,9 @@ function App() {
               <Link to="/signin" className="transition hover:text-white">
                 Sign in
               </Link>
+              <a href="/policy/" className="transition hover:text-white">
+                Privacy Policy
+              </a>
             </div>
           </div>
         </footer>
@@ -328,7 +331,7 @@ function FeaturePage() {
           'Custom Tofu environments for profiles and versions',
           'Cross-device account sync and launcher settings for selected users',
           'Local game installs with cloud metadata support for selected users',
-          'Secure Supabase authentication and user accounts',
+          'Secure account authentication and user accounts',
           'Responsive portal for end users and admins',
         ].map((item) => (
           <div key={item} className="glass-card flex items-start gap-3 p-5 text-slate-200">
@@ -413,7 +416,7 @@ function DocumentationPage() {
 
       <div className="grid gap-6 md:grid-cols-2">
         <DocCard title="Getting started" text="Learn how to install Mochi, add games, and create your first Tofu environment." />
-        <DocCard title="Account management" text="Connect to the same Supabase identity used by the launcher and portal." />
+        <DocCard title="Account management" text="Use your Mochi account across the website and launcher." />
         <DocCard title="Pikos & Tofus" text="Organize your games and environment presets with intentionally simple terminology." />
         <DocCard title="Cloud sync" text="Review what Mochi Cloud syncs: metadata, configs, launch settings, devices, and account state." />
       </div>
@@ -428,7 +431,7 @@ function FaqPage() {
 
       <div className="space-y-5">
         <FaqItem question="Does Mochi upload entire games to the cloud?" answer="No. The goal is to synchronize useful metadata and configuration data rather than move large game files online." />
-        <FaqItem question="Can I use the same account on the website and launcher?" answer="Yes. Mochi Web and the launcher share the same Supabase authentication system and project identity." />
+        <FaqItem question="Can I use the same account on the website and launcher?" answer="Yes. Your Mochi account can be used across the Mochi website and launcher." />
         <FaqItem question="What is a Tofu?" answer="A Tofu is an individual game environment or configuration, such as vanilla, performance, Fabric, or a custom profile." />
       </div>
     </PageShell>
@@ -457,7 +460,7 @@ function SignInPage() {
           <p className="text-sm uppercase tracking-[0.2em] text-violet-200">Welcome back</p>
           <h2 className="mt-3 text-3xl font-bold text-white">Create or access your account</h2>
           <p className="mt-3 text-slate-300">
-            Sign in with the same Supabase-backed identity that powers the Mochi launcher and web portal.
+            Sign in with your Mochi account. You can use Google, GitHub, a magic link, or email and password.
           </p>
 
           <div className="mt-6 space-y-3">
