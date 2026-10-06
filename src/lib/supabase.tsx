@@ -63,26 +63,6 @@ export async function signOutCurrentUser() {
   return supabase.auth.signOut()
 }
 
-export async function signInWithPasskey() {
-  if (!supabase) return { data: { user: null, session: null }, error: new Error(notConfigured) }
-  return supabase.auth.signInWithPasskey()
-}
-
-export async function registerPasskey() {
-  if (!supabase) return { data: null, error: new Error(notConfigured) }
-  return supabase.auth.registerPasskey()
-}
-
-export async function listPasskeys() {
-  if (!supabase) return { data: null, error: new Error(notConfigured) }
-  return supabase.auth.passkey.list()
-}
-
-export async function deletePasskey(passkeyId: string) {
-  if (!supabase) return { error: new Error(notConfigured) }
-  return supabase.auth.passkey.delete({ passkeyId })
-}
-
 export async function listMfaFactors() {
   if (!supabase) return { data: null, error: new Error(notConfigured) }
   return supabase.auth.mfa.listFactors()
