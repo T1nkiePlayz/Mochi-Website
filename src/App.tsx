@@ -45,6 +45,7 @@ import {
   signUpWithPassword,
   setUserMetadataAccess,
   updateMyProfile,
+  manageApiCredential,
   useAuth,
   listProfiles,
   type Profile,
@@ -622,13 +623,14 @@ function EmailVerificationPage() {
 
 function DashboardPage() {
   const { user, profile, refreshProfile } = useAuth()
-  const [tab, setTab] = useState<'overview' | 'account' | 'security' | 'cloud' | 'admin'>('overview')
+  const [tab, setTab] = useState<'overview' | 'account' | 'security' | 'api' | 'cloud' | 'admin'>('overview')
   if (!user) return <PageShell><SectionHeading eyebrow="User portal" title="Sign in to access your Mochi dashboard." /><Link to="/signin" className="inline-flex rounded-full bg-violet-500 px-5 py-3 font-semibold">Sign in</Link></PageShell>
   const isAdmin = user.app_metadata?.role === 'admin' || profile?.is_admin === true
   const tabs = [
     { id: 'overview' as const, label: 'Overview', icon: UserRound },
     { id: 'account' as const, label: 'Account', icon: UserRound },
     { id: 'security' as const, label: 'Security', icon: Shield },
+    { id: 'api' as const, label: 'API', icon: KeyRound },
     { id: 'cloud' as const, label: 'Cloud', icon: Cloud },
     ...(isAdmin ? [{ id: 'admin' as const, label: 'Admin', icon: Users }] : []),
   ]
@@ -641,7 +643,7 @@ function DashboardPage() {
     </div>
     <div className="grid gap-8 lg:grid-cols-[220px_1fr]">
       <aside className="h-fit rounded-3xl border border-white/10 bg-white/[0.025] p-2 lg:sticky lg:top-24"><nav className="grid gap-1">{tabs.map(({ id, label, icon: Icon }) => <button key={id} onClick={() => setTab(id)} className={tab === id ? 'flex items-center gap-3 rounded-2xl bg-violet-500/15 px-4 py-3 text-left text-sm font-medium text-white ring-1 ring-violet-400/20' : 'flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-medium text-slate-400 hover:bg-white/[0.04] hover:text-slate-200'}><Icon className="h-4 w-4" />{label}</button>)}</nav><div className="mt-3 border-t border-white/10 px-4 py-4"><p className="text-xs uppercase tracking-wider text-slate-500">Account ID</p><p className="mt-2 break-all font-mono text-[11px] text-slate-400">{user.id}</p></div></aside>
-      <div className="min-w-0">{tab === 'overview' && <OverviewTab user={user} profile={profile} isAdmin={isAdmin} onSecurity={() => setTab('security')} onAccount={() => setTab('account')} onCloud={() => setTab('cloud')} />}{tab === 'account' && <AccountTab user={user} profile={profile} refreshProfile={refreshProfile} />}{tab === 'security' && <SecurityTab user={user} />}{tab === 'cloud' && <CloudTab profile={profile} />}{tab === 'admin' && isAdmin && <AdminTab />}</div>
+      <div className="min-w-0">{tab === 'overview' && <OverviewTab user={user} profile={profile} isAdmin={isAdmin} onSecurity={() => setTab('security')} onAccount={() => setTab('account')} onCloud={() => setTab('cloud')} />}{tab === 'account' && <AccountTab user={user} profile={profile} refreshProfile={refreshProfile} />}{tab === 'security' && <SecurityTab user={user} />}{tab === 'api' && <ApiTab />}{tab === 'cloud' && <CloudTab profile={profile} />}{tab === 'admin' && isAdmin && <AdminTab />}</div>
     </div>
   </PageShell>
 }
@@ -791,6 +793,140 @@ function SecurityTab({ user }: { user: any }) {
     <section className="glass-card p-6"><div className="flex items-start justify-between gap-4"><div><h3 className="text-xl font-semibold text-white">Passkeys</h3><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">Use your device, password manager, biometrics, or security key to sign in without typing a password. Passkeys require WebAuthn to be enabled for the Mochi domain in Supabase.</p></div><KeyRound className="h-6 w-6 text-cyan-300" /></div><div className="mt-5 space-y-3">{passkeys.length ? passkeys.map((passkey) => <div key={passkey.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/50 p-4"><div><p className="font-medium text-white">{passkey.friendly_name || 'Mochi passkey'}</p><p className="mt-1 text-xs text-slate-500">Added {passkey.created_at ? new Date(passkey.created_at).toLocaleDateString() : 'recently'}</p></div><button disabled={busy} onClick={() => void removePasskey(passkey.id)} className="rounded-full border border-rose-400/20 bg-rose-500/5 px-3 py-1.5 text-sm font-semibold text-rose-200">Remove</button></div>) : <p className="text-sm text-slate-400">No passkeys registered yet.</p>}<button disabled={busy} onClick={() => void addPasskey()} className="rounded-full bg-cyan-500/15 px-4 py-2 text-sm font-semibold text-cyan-200 ring-1 ring-cyan-400/20">{busy ? 'Opening passkey setup…' : 'Set up a passkey'}</button></div></section>
     {message && <p className="rounded-2xl border border-cyan-400/20 bg-cyan-500/5 p-4 text-sm text-cyan-200">{message}</p>}
   </div>
+}
+
+function ApiTab() {
+  const [nexusKey, setNexusKey] = useState('')
+  const [igdbKey, setIgdbKey] = useState('')
+  const [configured, setConfigured] = useState<{ nexus: boolean; igdb: boolean }>({ nexus: false, igdb: false })
+  const [visible, setVisible] = useState<{ nexus: boolean; igdb: boolean }>({ nexus: false, igdb: false })
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState<'nexus' | 'igdb' | null>(null)
+  const [message, setMessage] = useState('')
+
+  const loadStatus = async () => {
+    setLoading(true)
+    setMessage('')
+    const { data, error } = await manageApiCredential('status')
+    if (error) setMessage(error.message)
+    else {
+      const providers = (data?.providers ?? []) as string[]
+      setConfigured({ nexus: providers.includes('nexus'), igdb: providers.includes('igdb') })
+    }
+    setLoading(false)
+  }
+
+  useEffect(() => { void loadStatus() }, [])
+
+  const save = async (provider: 'nexus' | 'igdb') => {
+    const value = provider === 'nexus' ? nexusKey.trim() : igdbKey.trim()
+    if (!value) {
+      setMessage(\`Enter your \${provider === 'nexus' ? 'Nexus Mods' : 'IGDB'} credential first.\`)
+      return
+    }
+    setSaving(provider)
+    setMessage('')
+    const { error } = await manageApiCredential('set', provider, value)
+    if (error) setMessage(error.message)
+    else {
+      if (provider === 'nexus') setNexusKey('')
+      else setIgdbKey('')
+      setConfigured((current) => ({ ...current, [provider]: true }))
+      setVisible((current) => ({ ...current, [provider]: false }))
+      setMessage(\`\${provider === 'nexus' ? 'Nexus Mods' : 'IGDB'} credential saved securely.\`)
+    }
+    setSaving(null)
+  }
+
+  const remove = async (provider: 'nexus' | 'igdb') => {
+    setSaving(provider)
+    setMessage('')
+    const { error } = await manageApiCredential('delete', provider)
+    if (error) setMessage(error.message)
+    else {
+      setConfigured((current) => ({ ...current, [provider]: false }))
+      setMessage(\`\${provider === 'nexus' ? 'Nexus Mods' : 'IGDB'} credential removed.\`)
+    }
+    setSaving(null)
+  }
+
+  const card = (
+    provider: 'nexus' | 'igdb',
+    title: string,
+    description: string,
+    value: string,
+    setValue: (value: string) => void,
+  ) => {
+    const isConfigured = configured[provider]
+    const isVisible = visible[provider]
+    const isSaving = saving === provider
+    return (
+      <section className="glass-card space-y-5 p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm uppercase tracking-[0.2em] text-violet-200">External service</p>
+            <h3 className="mt-2 text-xl font-semibold text-white">{title}</h3>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">{description}</p>
+          </div>
+          <KeyRound className="h-6 w-6 shrink-0 text-violet-300" />
+        </div>
+        <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium text-white">Credential status</p>
+              <p className="mt-1 text-xs text-slate-500">{isConfigured ? 'A credential is stored for your account.' : 'No credential is stored for your account.'}</p>
+            </div>
+            <span className={isConfigured ? 'inline-flex items-center rounded-full bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-300' : 'inline-flex items-center rounded-full bg-slate-500/10 px-3 py-1.5 text-xs font-semibold text-slate-400'}>
+              {isConfigured ? 'Configured' : 'Not configured'}
+            </span>
+          </div>
+        </div>
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-200">{isConfigured ? 'Replace credential' : 'API credential'}</label>
+          <div className="flex gap-2">
+            <input
+              type={isVisible ? 'text' : 'password'}
+              value={value}
+              onChange={(event) => setValue(event.target.value)}
+              placeholder={isConfigured ? 'Enter a new credential to replace it' : 'Paste your credential'}
+              autoComplete="off"
+              spellCheck={false}
+              className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 font-mono text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/60"
+            />
+            <button type="button" onClick={() => setVisible((current) => ({ ...current, [provider]: !current[provider] }))} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-200">
+              {isVisible ? 'Hide' : 'Show'}
+            </button>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <button disabled={isSaving || !value.trim()} onClick={() => void save(provider)} className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40">
+            {isSaving ? 'Saving…' : isConfigured ? 'Replace credential' : 'Save credential'}
+          </button>
+          {isConfigured && <button disabled={isSaving} onClick={() => void remove(provider)} className="rounded-full border border-rose-400/20 bg-rose-500/5 px-5 py-2.5 text-sm font-semibold text-rose-200 disabled:opacity-40">Remove</button>}
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <SectionHeading eyebrow="API" title="Connect your external game services." />
+      <section className="rounded-2xl border border-cyan-400/20 bg-cyan-500/[0.05] p-5">
+        <div className="flex items-start gap-3">
+          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" />
+          <div>
+            <p className="font-semibold text-white">Private to your Mochi account</p>
+            <p className="mt-1 text-sm leading-6 text-slate-300">Credentials are sent only to Mochi’s authenticated backend and stored separately for your user. The saved secret is never returned to this page; you only see whether each service is configured.</p>
+          </div>
+        </div>
+      </section>
+      {loading ? <div className="glass-card p-8 text-slate-400">Loading API configuration…</div> : <>
+        {card('nexus', 'Nexus Mods', 'Store the Nexus Mods credential used by Mochi for Nexus Mods integration.', nexusKey, setNexusKey)}
+        {card('igdb', 'IGDB', 'Store the IGDB credential used by Mochi for game metadata and artwork lookup.', igdbKey, setIgdbKey)}
+      </>}
+      {message && <p className="rounded-2xl border border-cyan-400/20 bg-cyan-500/5 p-4 text-sm text-cyan-200">{message}</p>}
+    </div>
+  )
 }
 
 function CloudTab({ profile }: { profile: Profile | null }) {
