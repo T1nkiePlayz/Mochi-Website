@@ -10,7 +10,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { DocumentationPage, DocumentationArticlePage } from './Documentation'
 import { HashRouter, NavLink, Route, Routes, Link } from 'react-router-dom'
 import {
