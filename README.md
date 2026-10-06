@@ -13,7 +13,6 @@ Mochi Web is the public-facing website and authenticated portal for Mochi, a fle
 - TypeScript
 - Vite
 - Tailwind CSS
-- Supabase
 
 
 ## Quick start
