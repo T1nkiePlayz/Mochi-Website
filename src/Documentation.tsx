@@ -10,7 +10,7 @@ const sections = [
 ]
 
 const headingMap: Record<string, Array<[string,string]>> = {
-  'getting-started': [['overview','Overview'],['architecture','How Mochi fits together'],['requirements','Requirements'],['installation','Installation'],['first-launch','First launch'],['add-game','Adding a game'],['igdb','IGDB metadata'],['tofu','Creating a Tofu'],['launching','Launching games'],['local-first','Local-first behaviour'],['limitations','Current limitations']],
+  'getting-started': [['overview','Overview'],['architecture','How Mochi fits together'],['requirements','Requirements'],['installation','Installation'],['first-launch','First launch'],['add-game','Adding a game'],['igdb','IGDB metadata'],['launch-targets','Launch targets'],['tofu','Creating a Tofu'],['launching','Launching games'],['local-first','Local-first behaviour'],['limitations','Current limitations']],
   account: [['model','Account model'],['architecture','Account architecture'],['signin','Sign-in methods'],['sessions','Sessions & persistence'],['profiles','Profiles'],['security','Security & 2FA'],['cloud-access','Cloud access'],['data-flow','Authentication flow']],
   'pikos-tofus': [['concepts','Core concepts'],['architecture','The Piko → Tofu hierarchy'],['piko','Piko model'],['tofu','Tofu model'],['relationships','Relationships'],['examples','Example library'],['storage','Local storage'],['identity','Stable identity'],['future','Future expansion']],
   'cloud-sync': [['principles','Design principles'],['architecture','Cloud architecture'],['data','Synchronised data'],['pull','Pull behaviour'],['push','Push behaviour'],['database','Database structure'],['security','Access control'],['identifiers','Identity & ownership'],['failure','Failure handling'],['conflicts','Conflict handling']],
@@ -73,13 +73,21 @@ function GettingStarted(){return <div className="space-y-9">
 <Section id="architecture" title="2. How Mochi fits together">
   <p>Mochi is deliberately split into layers. The UI should describe what the user wants to do; the native layer should perform operating-system work; local storage should preserve the library; and optional account/cloud services should synchronise supported metadata.</p>
   <Diagram title="High-level Mochi architecture">
-    <div className="flex min-w-[680px] flex-col items-center gap-3">
-      <Box title="Mochi UI" >React + TypeScript · library · settings · account</Box>
-      <div className="text-slate-500">↓</div>
-      <Box title="Tauri 2" >Desktop bridge between the web UI and native capabilities</Box>
-      <div className="flex items-center gap-3 text-slate-500"><span>↙</span><Box title="Rust / OS" muted>processes · filesystem · detection</Box><span>↘</span><Box title="Local data" muted>Pikos · Tofus · settings</Box></div>
-      <div className="text-slate-500">↘</div>
-      <Box title="Optional cloud services" muted>account identity · metadata sync · access control</Box>
+    <div className="flex min-w-[850px] flex-col items-center gap-3 text-xs">
+      <Box title="Mochi UI">React + TypeScript · library · settings · account</Box>
+      <div className="text-slate-500">↓ UI requests</div>
+      <Box title="Tauri 2">Desktop application shell · native bridge</Box>
+      <div className="text-slate-500">↓ native commands</div>
+      <div className="flex items-stretch gap-3">
+        <Box title="Rust / OS integration" muted>process launching · file dialogs · Flatpak discovery · filesystem access</Box>
+        <div className="flex items-center text-slate-500">↔</div>
+        <Box title="Local application data" muted>Pikos · Tofus · launcher settings · IGDB configuration</Box>
+      </div>
+      <div className="flex items-center gap-4 text-slate-500"><span>↙</span><span>↘</span></div>
+      <div className="flex items-center gap-3">
+        <Box title="Local machine" muted>games · executables · .desktop files · scripts · Flatpak apps</Box>
+        <Box title="Optional cloud" muted>account identity · metadata sync · access control</Box>
+      </div>
     </div>
   </Diagram>
   <p>This architecture also explains why a game installation itself is not the same thing as cloud data. A multi-gigabyte game can stay on the user's computer while a small amount of metadata describing that game is synchronised.</p>
@@ -100,11 +108,22 @@ function GettingStarted(){return <div className="space-y-9">
   <p>Being local-first means a user should not need to upload an entire game library to make the launcher useful. Network-dependent features can fail while local library operations continue.</p>
 </Section>
 <Section id="add-game" title="6. Adding a game">
-  <p>When a user adds a game manually, Mochi creates a Piko representing that game and associates a default Tofu with it. The executable path is local machine information and is therefore treated differently from portable metadata such as a display name.</p>
-  <p>As launcher integrations expand, this workflow can support more source types. The current direction includes launching <code>.desktop</code> files, executable scripts, and Flatpak applications, while broader game-store detection and installation management remain separate capabilities.</p>
+  <p>When a user adds a game manually, Mochi creates a Piko representing that game and associates a default Tofu with it. The launch target can now be selected through a native file dialog rather than requiring the user to type a path manually.</p>
+  <p>The add-game flow accepts a normal executable or launcher path and is being extended around Linux-native launch targets. Flatpak games can also be selected from a picker populated by Mochi's native Flatpak discovery command.</p>
   <Diagram title="Game addition flow">
-    <div className="flex min-w-[760px] items-center justify-center gap-2 text-xs">
-      <Box title="Add game" /><span className="text-slate-500">→</span><Box title="Name + path" /><span className="text-slate-500">→</span><Box title="Piko created" /><span className="text-slate-500">→</span><Box title="Default Tofu" /><span className="text-slate-500">→</span><Box title="Library" />
+    <div className="flex min-w-[900px] items-center justify-center gap-2 text-xs">
+      <Box title="Add a Piko" /><span>→</span><Box title="Name + launch target" /><span>→</span><Box title="Optional IGDB match" muted/><span>→</span><Box title="Confirmed Piko" /><span>→</span><Box title="Default Tofu" /><span>→</span><Box title="Library" />
+    </div>
+  </Diagram>
+</Section>
+<Section id="launch-targets" title="7. Launch targets">
+  <p>A launch target is the value Mochi passes to the native launcher when the user presses Play. It is deliberately broader than an executable path: the target may be an executable, a <code>.desktop</code> file, a script, or a Flatpak application reference.</p>
+  <p>The native file dialog is provided by the Tauri dialog plugin. On Linux, Flatpak discovery asks the installed <code>flatpak</code> command for application IDs and names, then reads application metadata to classify entries as <strong>Games</strong> or <strong>Other</strong>. Games are sorted ahead of other installed applications in the picker.</p>
+  <Diagram title="Choosing a launch target">
+    <div className="flex min-w-[900px] items-center justify-center gap-3 text-xs">
+      <Box title="Launch target" />
+      <span>↙</span><Box title="Native file picker" muted>executable · .desktop · script</Box>
+      <span>or</span><Box title="Flatpak picker" muted>installed Flatpaks · Games first</Box>
     </div>
   </Diagram>
 </Section>
@@ -131,10 +150,30 @@ function GettingStarted(){return <div className="space-y-9">
   </Diagram>
 </Section>
 <Section id="launching" title="9. Launching games">
-  <p>The Play action operates on the selected Piko and its selected Tofu. In the mature native launcher, the Tofu will provide the launch configuration while the Rust/Tauri layer performs the actual operating-system process operation.</p>
-  <p>For the near-term Linux launcher scope, this includes support for launching normal executable paths, <code>.desktop</code> entries, scripts, and Flatpak applications. These integrations are intentionally narrower than trying to implement every game store at once.</p>
-  <Diagram title="Launch pipeline">
-    <div className="flex min-w-[760px] items-center justify-center gap-2 text-xs"><Box title="Play" /><span>→</span><Box title="Selected Piko" /><span>→</span><Box title="Selected Tofu" /><span>→</span><Box title="Launch target" muted/><span>→</span><Box title="Native process" /></div>
+  <p>The Play action operates on the selected Piko and its selected Tofu. The selected launch target is passed from the UI to the native Tauri/Rust layer, which decides how that target should be started.</p>
+  <p>Mochi currently supports ordinary executable targets plus Linux launch targets for <code>.desktop</code> files, Flatpak application IDs, and common script types. The launcher target is treated as one value, while the native layer selects the appropriate mechanism.</p>
+  <ul className="list-disc space-y-2 pl-6">
+    <li><strong>Executable:</strong> launched directly as a native process.</li>
+    <li><strong>.desktop:</strong> launched with <code>gio launch</code>, falling back to <code>xdg-open</code> when necessary.</li>
+    <li><strong>Flatpak:</strong> targets using <code>flatpak://APP_ID</code> or <code>flatpak run APP_ID</code> are launched through <code>flatpak run</code>.</li>
+    <li><strong>Scripts:</strong> <code>.sh</code>/<code>.bash</code> use <code>sh</code>, <code>.py</code> uses <code>python3</code>, and <code>.js</code> uses <code>node</code>.</li>
+  </ul>
+  <Diagram title="Launch target routing">
+    <div className="flex min-w-[900px] flex-col items-center gap-3 text-xs">
+      <Box title="Play selected game" />
+      <div className="text-slate-500">↓ Piko + selected Tofu</div>
+      <Box title="Native launch_target" muted>one launch target passed to Tauri/Rust</Box>
+      <div className="text-slate-500">↓ target type detected</div>
+      <div className="flex gap-3">
+        <Box title="Executable" muted />
+        <Box title=".desktop" muted />
+        <Box title="Flatpak" muted />
+        <Box title=".sh / .bash" muted />
+        <Box title=".py / .js" muted />
+      </div>
+      <div className="text-slate-500">↓ native launcher</div>
+      <Box title="Game / application starts" />
+    </div>
   </Diagram>
 </Section>
 <Section id="local-first" title="10. Local-first behaviour">
