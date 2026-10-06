@@ -1,5 +1,6 @@
 import { ArrowRight } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
+import type { ReactNode } from 'react'
 
 const sections = [
   { slug: 'getting-started', title: 'Getting Started', description: 'Installation, first launch, games, Pikos, Tofus, and the current workflow.' },
@@ -36,17 +37,17 @@ export function DocumentationArticlePage() {
       <nav className="space-y-1">{sections.map(s => <Link key={s.slug} to={`/documentation/${s.slug}`} className={`block rounded-lg px-3 py-2 text-sm ${s.slug===current.slug?'bg-violet-500/15 font-semibold text-white':'text-slate-400 hover:bg-white/5 hover:text-white'}`}>{s.title}</Link>)}</nav>
       <div className="my-4 border-t border-white/10" />
       <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">On this page</p>
-      <nav className="space-y-0.5">{headings.map(([id,label]) => <a key={id} href={`#${id}`} className="block rounded-lg px-3 py-1.5 text-sm text-slate-500 hover:bg-white/5 hover:text-slate-200">{label}</a>)}</nav>
+      <nav className="space-y-0.5">{headings.map(([id,label]) => <button key={id} type="button" onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className="block w-full rounded-lg px-3 py-1.5 text-left text-sm text-slate-500 hover:bg-white/5 hover:text-slate-200">{label}</button>)}</nav>
     </div></aside>
     <article id="top" className="min-w-0 max-w-4xl"><header className="mb-10 border-b border-white/10 pb-8"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">Mochi Documentation</p><h1 className="mt-2 text-4xl font-black tracking-tight text-white sm:text-5xl">{current.title}</h1><p className="mt-4 text-lg leading-8 text-slate-300">{current.description}</p></header>
       {current.slug==='getting-started' && <GettingStarted/>}{current.slug==='account' && <Account/>}{current.slug==='pikos-tofus' && <PikosTofus/>}{current.slug==='cloud-sync' && <CloudSync/>}
       <div className="mt-14 grid gap-3 border-t border-white/10 pt-6 sm:grid-cols-2">{previous?<Link to={`/documentation/${previous.slug}`} className="rounded-2xl border border-white/10 p-4 hover:border-white/20"><span className="text-xs text-slate-500">Previous</span><strong className="mt-1 block text-white">← {previous.title}</strong></Link>:<div/>}{next?<Link to={`/documentation/${next.slug}`} className="rounded-2xl border border-white/10 p-4 text-right hover:border-white/20"><span className="text-xs text-slate-500">Next</span><strong className="mt-1 block text-white">{next.title} →</strong></Link>:<div/>}</div>
-      <div className="mt-4 text-center"><a href="#top" className="text-xs text-slate-500 hover:text-white">Back to top ↑</a></div>
+      <div className="mt-4 text-center"><button type="button" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="text-xs text-slate-500 hover:text-white">Back to top ↑</button></div>
     </article>
   </div>
 }
 
-function Section({id,title,children}:{id:string,title:string,children:React.ReactNode}) { return <section id={id} className="scroll-mt-28 border-b border-white/10 pb-9 pt-2"><h2 className="text-2xl font-bold tracking-tight text-white">{title}</h2><div className="mt-4 space-y-4 text-[15px] leading-7 text-slate-300">{children}</div></section> }
+function Section({id,title,children}:{id:string,title:string,children:ReactNode}) { return <section id={id} className="scroll-mt-28 border-b border-white/10 pb-9 pt-2"><h2 className="text-2xl font-bold tracking-tight text-white">{title}</h2><div className="mt-4 space-y-4 text-[15px] leading-7 text-slate-300">{children}</div></section> }
 
 function GettingStarted(){return <div className="space-y-9">
 <Section id="overview" title="1. Overview"><p>Mochi is a Linux-first desktop game launcher designed to bring game discovery, local installations, profiles, environments, and launcher tooling into one consistent interface. The design principle is local-first: the launcher should remain useful without requiring game installations to be uploaded to an online service.</p><p>The current release is an early foundation. The React interface establishes the core information architecture, while Tauri and Rust provide the intended native application boundary for operating-system functionality.</p></Section>
