@@ -61,23 +61,6 @@ const pillars = [
   },
 ]
 
-const featureCards = [
-  {
-    title: 'Local-first launcher',
-    description: 'Games stay on your device. Mochi keeps the experience fast and familiar while preserving choice.',
-    icon: Rocket,
-  },
-  {
-    title: 'Unified account',
-    description: 'Create an account on the website and sign into the launcher with the same Mochi account.',
-    icon: Users,
-  },
-  {
-    title: 'Secure cloud sync',
-    description: 'Protect account details, launcher settings, and Piko metadata with Mochi’s secure account system.',
-    icon: ShieldCheck,
-  },
-]
 
 const providerOptions = [
   'Email / password',
