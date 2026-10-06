@@ -116,9 +116,7 @@ function App() {
         <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
             <Link to="/" className="flex items-center gap-3 text-lg font-semibold tracking-tight text-white">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 via-indigo-500 to-cyan-400 text-base font-black text-white shadow-lg shadow-violet-500/40">
-                M
-              </span>
+              <img src="/mochi.png" alt="Mochi" className="h-9 w-9 rounded-xl object-contain" />
               Mochi
             </Link>
 
@@ -172,7 +170,10 @@ function App() {
         <footer className="relative border-t border-white/10 bg-slate-950/80">
           <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-10 text-sm text-slate-300 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
             <div>
-              <p className="text-base font-semibold text-white">Mochi</p>
+              <div className="flex items-center gap-2">
+                <img src="/mochi.png" alt="" className="h-7 w-7 rounded-lg object-contain" />
+                <p className="text-base font-semibold text-white">Mochi</p>
+              </div>
               <p className="mt-1">Your games, your way.</p>
             </div>
 
