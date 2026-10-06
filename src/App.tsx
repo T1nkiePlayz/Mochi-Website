@@ -898,6 +898,16 @@ function ApiTab() {
             </button>
           </div>
         </div>
+        {provider === 'igdb' && (
+          <a
+            href="https://api-docs.igdb.com/"
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 inline-flex text-xs font-medium text-violet-300 underline decoration-violet-400/40 underline-offset-2 transition hover:text-white"
+          >
+            Need an IGDB credential? Open the official setup guide ↗
+          </a>
+        )}
         <div className="flex flex-wrap gap-3">
           <button disabled={isSaving || !value.trim()} onClick={() => void save(provider)} className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40">
             {isSaving ? 'Saving…' : isConfigured ? 'Replace credential' : 'Save credential'}
