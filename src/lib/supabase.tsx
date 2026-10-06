@@ -8,6 +8,7 @@ export type Profile = {
   cloud_sync_enabled: boolean
   metadata_sync_allowed: boolean
   is_admin: boolean
+  email: string | null
 }
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? ''
@@ -55,6 +56,32 @@ export async function signInWithProvider(provider: 'github' | 'google') {
     // detect the returned session before HashRouter takes over.
     options: { redirectTo: window.location.origin },
   })
+}
+
+export async function updateEmail(email: string) {
+  if (!supabase) return { data: { user: null }, error: new Error(notConfigured) }
+  return supabase.auth.updateUser({ email })
+}
+
+export async function updatePassword(password: string, currentPassword?: string) {
+  if (!supabase) return { data: { user: null }, error: new Error(notConfigured) }
+  return supabase.auth.updateUser({
+    password,
+    ...(currentPassword ? { current_password: currentPassword } : {}),
+  })
+}
+
+export async function linkAuthIdentity(provider: 'github' | 'google') {
+  if (!supabase) return { data: null, error: new Error(notConfigured) }
+  return supabase.auth.linkIdentity({
+    provider,
+    options: { redirectTo: window.location.origin },
+  })
+}
+
+export async function refreshAuthSession() {
+  if (!supabase) return { data: { session: null }, error: new Error(notConfigured) }
+  return supabase.auth.refreshSession()
 }
 
 export async function signOutCurrentUser() {
@@ -131,7 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
     const { data, error } = await supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle()
-    if (!error) setProfile(data as Profile | null)
+    if (!error) setProfile(data ? { ...(data as Profile), is_admin: session.user.app_metadata?.role === 'admin' } : null)
   }
 
   useEffect(() => {
