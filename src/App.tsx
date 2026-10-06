@@ -82,20 +82,6 @@ const providerOptions = [
   'Google',
 ]
 
-const dashboardCards = [
-  { label: 'Library', value: '18 games' },
-  { label: 'Pikos', value: '12 active' },
-  { label: 'Tofus', value: '27 environments' },
-  { label: 'Devices', value: '3 synced' },
-]
-
-const activityFeed = [
-  'Minecraft: Performance Tofu updated',
-  'Steam library imported from your main machine',
-  'Cloud tags synced across devices',
-  'New launcher settings pushed successfully',
-]
-
 function App() {
   return (
     <AuthProvider>
