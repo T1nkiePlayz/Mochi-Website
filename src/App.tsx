@@ -424,9 +424,27 @@ function FaqPage() {
       <SectionHeading eyebrow="FAQ" title="Common questions" />
 
       <div className="space-y-5">
-        <FaqItem question="Does Mochi upload entire games to the cloud?" answer="No. The goal is to synchronize useful metadata and configuration data rather than move large game files online." />
+        <FaqItem question="What is Mochi?" answer="Mochi is a flexible, local-first game launcher designed to manage your games, installations, versions, profiles, and configurations from one place." />
+        <FaqItem question="What is a Piko?" answer="A Piko is a game managed by Mochi. It represents the game and its associated metadata inside the launcher." />
+        <FaqItem question="What is a Tofu?" answer="A Tofu is an individual game environment or configuration, such as vanilla, performance, Fabric, a modded setup, or another profile you create." />
+        <FaqItem question="Does Mochi upload entire games to the cloud?" answer="No. Mochi is local-first. Game installations and large game files stay on your device. Cloud features are intended for supported account information, metadata, configurations, launcher settings, and device state." />
         <FaqItem question="Can I use the same account on the website and launcher?" answer="Yes. Your Mochi account can be used across the Mochi website and launcher." />
-        <FaqItem question="What is a Tofu?" answer="A Tofu is an individual game environment or configuration, such as vanilla, performance, Fabric, or a custom profile." />
+        <FaqItem question="What can I use to sign in?" answer="Mochi currently supports Google, GitHub, magic links, and email and password. Phone-number sign-in is not supported." />
+        <FaqItem question="What is a magic link?" answer="A magic link lets you sign in through a secure link sent to your email address instead of entering a password." />
+        <FaqItem question="Can I use a phone number instead of an email address?" answer="No. Mochi account sign-in uses an email address. Phone-number sign-in is not supported." />
+        <FaqItem question="Can I use Google or GitHub without creating a separate Mochi password?" answer="Yes. If you choose Google or GitHub, you authenticate through that provider rather than entering a separate Mochi password on the sign-in form." />
+        <FaqItem question="Does Mochi support two-factor authentication?" answer="Yes. Accounts can use an authenticator app for two-factor authentication when the feature is available to the account." />
+        <FaqItem question="Does Mochi support passkeys?" answer="Mochi's current website sign-in options do not include passkey sign-in. The supported sign-in methods are Google, GitHub, magic link, and email and password." />
+        <FaqItem question="Is Mochi local-first?" answer="Yes. Mochi is designed to keep your games and large game files on your own device while using online services only where account or supported cloud features require them." />
+        <FaqItem question="What does Mochi Cloud sync?" answer="For users with cloud features enabled, Mochi can sync supported metadata, configurations, launcher settings, account information, and device state. It is not intended to upload complete game installations." />
+        <FaqItem question="Will my games work if I am offline?" answer="Mochi is designed around local game management, so locally installed games do not need to be uploaded to the cloud. Features that depend on an online account or cloud service may require an internet connection." />
+        <FaqItem question="Does Mochi replace the game stores or publishers?" answer="No. Mochi is a launcher and management layer. You remain responsible for owning or having permission to use the games, files, mods, and other content you add." />
+        <FaqItem question="Can I create multiple Tofus for one game?" answer="Yes. Tofus are intended to let you keep separate environments and configurations for the same Piko, such as vanilla, modded, testing, or performance setups." />
+        <FaqItem question="Is cloud sync available to everyone?" answer="Not currently. Cloud metadata features are available only to selected users, and access can be controlled from the Mochi account system." />
+        <FaqItem question="Where can I download Mochi?" answer="The latest publicly available Mochi release can be found from the Download page and the project's release page." />
+        <FaqItem question="What platforms does Mochi support?" answer="Linux is currently available. Windows and macOS support are planned as future releases." />
+        <FaqItem question="How do I get help with my account?" answer="For account, privacy, or other support questions, contact support@ashtontink.com." />
+        <FaqItem question="How is my personal information handled?" answer="Mochi's Privacy Policy explains what information may be collected, why it is used, how it may be disclosed, and how you can request access, correction, or deletion." />
       </div>
     </PageShell>
   )
@@ -443,7 +461,12 @@ function SignInPage() {
     setBusy(true)
     setMessage('')
     const { error } = await action()
-    setMessage(error ? error.message : 'Check your inbox or continue to the dashboard.')
+    const message = error?.message ?? ''
+    const safeMessage =
+      message === 'missing email or phone' || message === 'One of email or phone must be set'
+        ? 'Please enter your email address.'
+        : message
+    setMessage(error ? safeMessage : 'Check your inbox or continue to the dashboard.')
     setBusy(false)
   }
 
