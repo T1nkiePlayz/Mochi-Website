@@ -833,7 +833,7 @@ function ApiTab() {
       else setIgdbKey('')
       setConfigured((current) => ({ ...current, [provider]: true }))
       setVisible((current) => ({ ...current, [provider]: false }))
-      setMessage(\`\${provider === 'nexus' ? 'Nexus Mods' : 'IGDB'} credential saved securely.\`)
+      setMessage(`${provider === 'nexus' ? 'Nexus Mods' : 'IGDB'} credential saved securely.`)
     }
     setSaving(null)
   }
@@ -845,7 +845,7 @@ function ApiTab() {
     if (error) setMessage(error.message)
     else {
       setConfigured((current) => ({ ...current, [provider]: false }))
-      setMessage(\`\${provider === 'nexus' ? 'Nexus Mods' : 'IGDB'} credential removed.\`)
+      setMessage(`${provider === 'nexus' ? 'Nexus Mods' : 'IGDB'} credential removed.`)
     }
     setSaving(null)
   }
