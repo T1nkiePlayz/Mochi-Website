@@ -18,7 +18,14 @@ import {
   resetPassword,
   signInWithPassword,
   signInWithProvider,
+  signInWithPasskey,
   signOutCurrentUser,
+  registerPasskey,
+  listPasskeys,
+  deletePasskey,
+  listMfaFactors,
+  enrollTotp,
+  verifyTotpEnrollment,
   signUpWithPassword,
   setUserMetadataAccess,
   updateMyProfile,
@@ -515,11 +522,14 @@ function SignInPage() {
             </div>
             {message && <p className="text-sm text-cyan-200">{message}</p>}
             <div className="flex flex-wrap gap-2 pt-2">
-              {(['github', 'google', 'discord'] as const).map((provider) => (
+              {(['github', 'google'] as const).map((provider) => (
                 <button key={provider} type="button" onClick={() => void run(() => signInWithProvider(provider))} className="rounded-full border border-white/15 px-3 py-2 text-sm text-slate-200">
-                  Continue with {provider}
+                  Continue with {provider === 'github' ? 'GitHub' : 'Google'}
                 </button>
               ))}
+              <button type="button" onClick={() => void run(() => signInWithPasskey())} className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-100">
+                Sign in with passkey
+              </button>
             </div>
           </form>}
         </div>
@@ -597,13 +607,57 @@ function SettingsPage() {
   const [sync, setSync] = useState(profile?.cloud_sync_enabled ?? false)
   const [metadata, setMetadata] = useState(profile?.metadata_sync_allowed ?? false)
   const [message, setMessage] = useState('')
+  const [passkeys, setPasskeys] = useState<Array<{ id: string; friendly_name?: string | null }>>([])
+  const [mfaFactors, setMfaFactors] = useState<Array<{ id: string; friendly_name?: string | null; status: string }>>([])
+  const [mfaQr, setMfaQr] = useState('')
+  const [mfaSecret, setMfaSecret] = useState('')
+  const [mfaFactorId, setMfaFactorId] = useState('')
+  const [mfaCode, setMfaCode] = useState('')
 
   if (!user) return <PageShell><SectionHeading eyebrow="Settings" title="Sign in to manage your account." /><Link to="/signin" className="inline-flex rounded-full bg-violet-500 px-5 py-3 font-semibold">Sign in</Link></PageShell>
+
   const save = async () => {
     const { error } = await updateMyProfile({ display_name: name, avatar_url: profile?.avatar_url ?? null, cloud_sync_enabled: sync, metadata_sync_allowed: metadata })
     setMessage(error ? error.message : 'Settings saved.')
     if (!error) await refreshProfile()
   }
+
+  const loadSecurity = async () => {
+    const [passkeyResult, mfaResult] = await Promise.all([listPasskeys(), listMfaFactors()])
+    if (!passkeyResult.error) setPasskeys((passkeyResult.data ?? []) as Array<{ id: string; friendly_name?: string | null }>)
+    if (!mfaResult.error) setMfaFactors((mfaResult.data?.totp ?? []) as Array<{ id: string; friendly_name?: string | null; status: string }>)
+  }
+
+  const addPasskey = async () => {
+    const { error } = await registerPasskey()
+    setMessage(error ? error.message : 'Passkey registered successfully.')
+    if (!error) await loadSecurity()
+  }
+
+  const startMfa = async () => {
+    const { data, error } = await enrollTotp()
+    if (error) {
+      setMessage(error.message)
+      return
+    }
+    setMfaFactorId(data.id)
+    setMfaQr(data.totp.qr_code)
+    setMfaSecret(data.totp.secret)
+    setMessage('Scan the QR code with your authenticator app, then enter the 6-digit code.')
+  }
+
+  const finishMfa = async () => {
+    const { error } = await verifyTotpEnrollment(mfaFactorId, mfaCode)
+    setMessage(error ? error.message : 'Two-factor authentication is enabled.')
+    if (!error) {
+      setMfaQr('')
+      setMfaSecret('')
+      setMfaFactorId('')
+      setMfaCode('')
+      await loadSecurity()
+    }
+  }
+
   return <PageShell className="max-w-3xl">
     <SectionHeading eyebrow="Account settings" title="Control your Mochi cloud experience." />
     <div className="glass-card space-y-6 p-6">
@@ -612,6 +666,40 @@ function SettingsPage() {
       <label className="flex items-center justify-between gap-4 text-slate-200"><span><strong className="block text-white">Save metadata</strong><small className="text-slate-400">Admin permission: {metadata ? 'enabled' : 'disabled'}.</small></span><input type="checkbox" checked={metadata} onChange={(event) => setMetadata(event.target.checked)} disabled={!metadata && profile?.metadata_sync_allowed === false} /></label>
       <button onClick={() => void save()} className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-5 py-3 font-semibold text-white">Save settings</button>
       {message && <p className="text-sm text-cyan-200">{message}</p>}
+    </div>
+
+    <div className="glass-card space-y-5 p-6">
+      <div>
+        <p className="text-sm uppercase tracking-[0.2em] text-cyan-200">Account security</p>
+        <h3 className="mt-2 text-xl font-semibold text-white">Passkeys & two-factor authentication</h3>
+        <p className="mt-2 text-sm text-slate-400">Use a passkey or authenticator app to add another layer of protection to your Mochi account.</p>
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        <button onClick={() => void addPasskey()} className="rounded-full bg-cyan-500/15 border border-cyan-400/30 px-4 py-2 text-sm font-semibold text-cyan-100">Add passkey</button>
+        <button onClick={() => void startMfa()} className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-slate-100">Set up authenticator app</button>
+        <button onClick={() => void loadSecurity()} className="rounded-full border border-white/10 px-4 py-2 text-sm text-slate-300">Refresh</button>
+      </div>
+
+      {passkeys.length > 0 && <div className="space-y-2">
+        <p className="text-sm font-medium text-white">Registered passkeys</p>
+        {passkeys.map((item) => <div key={item.id} className="flex items-center justify-between rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-slate-200">
+          <span>{item.friendly_name || 'Passkey'}</span>
+          <button onClick={() => void deletePasskey(item.id).then(({ error }) => { setMessage(error ? error.message : 'Passkey removed.'); if (!error) void loadSecurity() })} className="text-rose-300">Remove</button>
+        </div>)}
+      </div>}
+
+      {mfaFactors.filter((factor) => factor.status === 'verified').length > 0 && <p className="text-sm text-emerald-300">Authenticator-based two-factor authentication is enabled.</p>}
+
+      {mfaQr && <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+        <p className="text-sm text-slate-200">Scan this QR code with your authenticator app.</p>
+        <img src={mfaQr} alt="Authenticator setup QR code" className="mt-4 h-48 w-48 rounded-xl bg-white p-2" />
+        <p className="mt-3 break-all text-xs text-slate-400">Manual setup key: {mfaSecret}</p>
+        <div className="mt-4 flex gap-2">
+          <input value={mfaCode} onChange={(event) => setMfaCode(event.target.value)} inputMode="numeric" maxLength={6} placeholder="123456" className="w-32 rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" />
+          <button onClick={() => void finishMfa()} className="rounded-xl bg-violet-500 px-4 py-2 text-sm font-semibold text-white">Verify</button>
+        </div>
+      </div>}
     </div>
   </PageShell>
 }
