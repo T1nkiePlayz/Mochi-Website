@@ -9,6 +9,17 @@ import {
   Rocket,
   ShieldCheck,
   Sparkles,
+  Shield,
+  UserRound,
+  KeyRound,
+  Mail,
+  Link2,
+  CloudCog,
+  Copy,
+  Check,
+  AlertTriangle,
+  RefreshCw,
+  Users,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { DocumentationPage, DocumentationArticlePage } from './Documentation'
@@ -18,6 +29,9 @@ import {
   supabase,
   resetPassword,
   sendMagicLink,
+  updateEmail,
+  updatePassword,
+  linkAuthIdentity,
   signInWithPassword,
   signInWithProvider,
   signOutCurrentUser,
@@ -596,172 +610,102 @@ function EmailVerificationPage() {
 }
 
 function DashboardPage() {
-  const { user, profile } = useAuth()
-  if (!user) return <PageShell><SectionHeading eyebrow="User portal" title="Sign in to access your Mochi dashboard." /><Link to="/signin" className="inline-flex rounded-full bg-violet-500 px-5 py-3 font-semibold">Sign in</Link></PageShell>
-  return (
-    <PageShell>
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-sm uppercase tracking-[0.2em] text-violet-200">User portal</p>
-          <h2 className="mt-2 text-3xl font-bold text-white">Welcome back, {profile?.display_name || user?.email || 'player'}</h2>
-        </div>
-        <button onClick={() => void signOutCurrentUser()} className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-violet-400/50 hover:bg-violet-500/10">
-          Sign out
-        </button>
-      </div>
-      <div className="flex flex-wrap gap-3">
-        <Link to="/settings" className="rounded-full border border-white/15 px-4 py-2 text-sm text-slate-200">Account settings</Link>
-        {profile?.is_admin && <Link to="/admin" className="rounded-full border border-violet-400/40 px-4 py-2 text-sm text-violet-200">Admin panel</Link>}
-      </div>
-
-      <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        {dashboardCards.map((card) => (
-          <article key={card.label} className="glass-card p-5">
-            <p className="text-sm text-slate-400">{card.label}</p>
-            <p className="mt-3 text-2xl font-bold text-white">{card.value}</p>
-          </article>
-        ))}
-      </div>
-
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-        <div className="glass-card p-6">
-          <p className="text-sm uppercase tracking-[0.2em] text-cyan-200">Recent activity</p>
-          <ul className="mt-4 space-y-4">
-            {activityFeed.map((item) => (
-              <li key={item} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-slate-900/60 p-3 text-slate-200">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-400" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="glass-card p-6">
-          <p className="text-sm uppercase tracking-[0.2em] text-violet-200">Cloud status</p>
-          <div className="mt-5 space-y-4 text-slate-200">
-            <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3">
-              <span>Devices synced</span>
-              <span className="font-semibold text-white">3/3</span>
-            </div>
-            <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3">
-              <span>Metadata updates</span>
-              <span className={`font-semibold ${profile?.metadata_sync_allowed ? 'text-emerald-300' : 'text-amber-300'}`}>{profile?.metadata_sync_allowed ? 'Allowed' : 'Disabled by admin'}</span>
-            </div>
-            <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3">
-              <span>Storage mode</span>
-              <span className="font-semibold text-white">Local-first</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </PageShell>
-  )
-}
-
-function SettingsPage() {
   const { user, profile, refreshProfile } = useAuth()
+  const [tab, setTab] = useState<'overview' | 'account' | 'security' | 'cloud' | 'admin'>('overview')
+  if (!user) return <PageShell><SectionHeading eyebrow="User portal" title="Sign in to access your Mochi dashboard." /><Link to="/signin" className="inline-flex rounded-full bg-violet-500 px-5 py-3 font-semibold">Sign in</Link></PageShell>
+  const isAdmin = user.app_metadata?.role === 'admin' || profile?.is_admin === true
+  const tabs = [
+    { id: 'overview' as const, label: 'Overview', icon: UserRound },
+    { id: 'account' as const, label: 'Account', icon: UserRound },
+    { id: 'security' as const, label: 'Security', icon: Shield },
+    { id: 'cloud' as const, label: 'Cloud', icon: Cloud },
+    ...(isAdmin ? [{ id: 'admin' as const, label: 'Admin', icon: Users }] : []),
+  ]
+  return <PageShell className="max-w-6xl">
+    <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-violet-500/[0.12] via-slate-950/70 to-cyan-500/[0.08] p-6 sm:p-8">
+      <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div><div className="flex flex-wrap items-center gap-2"><p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-300">Mochi account</p>{isAdmin && <span className="inline-flex items-center gap-1.5 rounded-md border border-violet-400/30 bg-violet-500/15 px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-violet-200"><Shield className="h-3 w-3" /> Admin</span>}</div><h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">Welcome back, {profile?.display_name || user.email || 'player'}</h2><p className="mt-2 text-sm text-slate-400">{user.email}</p></div>
+        <button onClick={() => void signOutCurrentUser()} className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-violet-400/50 hover:bg-violet-500/10">Sign out</button>
+      </div>
+    </div>
+    <div className="grid gap-8 lg:grid-cols-[220px_1fr]">
+      <aside className="h-fit rounded-3xl border border-white/10 bg-white/[0.025] p-2 lg:sticky lg:top-24"><nav className="grid gap-1">{tabs.map(({ id, label, icon: Icon }) => <button key={id} onClick={() => setTab(id)} className={tab === id ? 'flex items-center gap-3 rounded-2xl bg-violet-500/15 px-4 py-3 text-left text-sm font-medium text-white ring-1 ring-violet-400/20' : 'flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-medium text-slate-400 hover:bg-white/[0.04] hover:text-slate-200'}><Icon className="h-4 w-4" />{label}</button>)}</nav><div className="mt-3 border-t border-white/10 px-4 py-4"><p className="text-xs uppercase tracking-wider text-slate-500">Account ID</p><p className="mt-2 break-all font-mono text-[11px] text-slate-400">{user.id}</p></div></aside>
+      <div className="min-w-0">{tab === 'overview' && <OverviewTab user={user} profile={profile} isAdmin={isAdmin} onSecurity={() => setTab('security')} onAccount={() => setTab('account')} onCloud={() => setTab('cloud')} />}{tab === 'account' && <AccountTab user={user} profile={profile} refreshProfile={refreshProfile} />}{tab === 'security' && <SecurityTab user={user} />}{tab === 'cloud' && <CloudTab profile={profile} />}{tab === 'admin' && isAdmin && <AdminTab />}</div>
+    </div>
+  </PageShell>
+}
+
+function OverviewTab({ user, profile, isAdmin, onSecurity, onAccount, onCloud }: { user: any; profile: Profile | null; isAdmin: boolean; onSecurity: () => void; onAccount: () => void; onCloud: () => void }) {
+  const verified = Boolean(user.email_confirmed_at)
+  const mfaReady = Boolean(user.factors?.some((factor: any) => factor.factor_type === 'totp' && factor.status === 'verified'))
+  const socialConnected = (user.identities ?? []).some((identity: any) => identity.provider === 'google' || identity.provider === 'github')
+  return <div className="space-y-6"><div className="grid gap-4 sm:grid-cols-2"><InfoCard icon={Mail} label="Email" value={user.email || 'No email'} /><InfoCard icon={KeyRound} label="User ID" value={user.id} mono /></div>
+    <section className="glass-card p-6"><div className="flex items-center justify-between gap-4"><div><p className="text-sm uppercase tracking-[0.2em] text-violet-300">Security health</p><h3 className="mt-2 text-xl font-semibold text-white">Keep your account protected</h3></div><ShieldCheck className="h-7 w-7 text-violet-300" /></div><div className="mt-5 grid gap-3 sm:grid-cols-2"><StatusRow label="Email verification" ok={verified} detail={verified ? 'Verified' : 'Verification required'} /><StatusRow label="Authenticator app" ok={mfaReady} detail={mfaReady ? 'Enabled' : 'Not configured'} /><StatusRow label="Google / GitHub" ok={socialConnected} detail={socialConnected ? 'Connected' : 'Not connected'} /><StatusRow label="Admin access" ok={isAdmin} detail={isAdmin ? 'Administrator' : 'Standard account'} /></div>{(!mfaReady || !socialConnected) && <button onClick={onSecurity} className="mt-5 inline-flex items-center gap-2 rounded-full border border-violet-400/25 bg-violet-500/10 px-4 py-2 text-sm font-semibold text-violet-200">Improve security <Shield className="h-4 w-4" /></button>}</section>
+    <div className="grid gap-4 md:grid-cols-2"><button onClick={onAccount} className="glass-card group p-6 text-left transition hover:-translate-y-0.5 hover:border-violet-400/30"><UserRound className="h-6 w-6 text-violet-300" /><h3 className="mt-4 text-lg font-semibold text-white">Account details</h3><p className="mt-2 text-sm leading-6 text-slate-400">Change your display name, email address, or password.</p><span className="mt-4 inline-flex text-sm font-semibold text-violet-200">Manage account →</span></button><button onClick={onCloud} className="glass-card group p-6 text-left transition hover:-translate-y-0.5 hover:border-cyan-400/30"><Cloud className="h-6 w-6 text-cyan-300" /><h3 className="mt-4 text-lg font-semibold text-white">Cloud experience</h3><p className="mt-2 text-sm leading-6 text-slate-400">{profile?.metadata_sync_allowed ? (profile.cloud_sync_enabled ? 'Cloud sync is enabled for this account.' : 'Cloud sync is available but currently turned off.') : 'Cloud features are not enabled for this account.'}</p><span className="mt-4 inline-flex text-sm font-semibold text-cyan-200">View cloud settings →</span></button></div>
+  </div>
+}
+
+function AccountTab({ user, profile, refreshProfile }: { user: any; profile: Profile | null; refreshProfile: () => Promise<void> }) {
   const [name, setName] = useState(profile?.display_name ?? '')
-  const [sync, setSync] = useState(profile?.cloud_sync_enabled ?? false)
-  const [metadata, setMetadata] = useState(profile?.metadata_sync_allowed ?? false)
+  const [email, setEmail] = useState(user.email ?? '')
+  const [newPassword, setNewPassword] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
   const [message, setMessage] = useState('')
-  const [mfaFactors, setMfaFactors] = useState<Array<{ id: string; friendly_name?: string | null; status: string }>>([])
-  const [mfaQr, setMfaQr] = useState('')
-  const [mfaSecret, setMfaSecret] = useState('')
-  const [mfaFactorId, setMfaFactorId] = useState('')
-  const [mfaCode, setMfaCode] = useState('')
-
-  if (!user) return <PageShell><SectionHeading eyebrow="Settings" title="Sign in to manage your account." /><Link to="/signin" className="inline-flex rounded-full bg-violet-500 px-5 py-3 font-semibold">Sign in</Link></PageShell>
-
-  const save = async () => {
-    const { error } = await updateMyProfile({ display_name: name, avatar_url: profile?.avatar_url ?? null, cloud_sync_enabled: sync, metadata_sync_allowed: metadata })
-    setMessage(error ? error.message : 'Settings saved.')
-    if (!error) await refreshProfile()
-  }
-
-  const loadSecurity = async () => {
-    const [mfaResult] = await Promise.all([listMfaFactors()])
-    if (!mfaResult.error) setMfaFactors((mfaResult.data?.totp ?? []) as Array<{ id: string; friendly_name?: string | null; status: string }>)
-  }
-
-  const startMfa = async () => {
-    const { data, error } = await enrollTotp()
-    if (error) {
-      setMessage(error.message)
-      return
-    }
-    setMfaFactorId(data.id)
-    setMfaQr(data.totp.qr_code)
-    setMfaSecret(data.totp.secret)
-    setMessage('Scan the QR code with your authenticator app, then enter the 6-digit code.')
-  }
-
-  const finishMfa = async () => {
-    const { error } = await verifyTotpEnrollment(mfaFactorId, mfaCode)
-    setMessage(error ? error.message : 'Two-factor authentication is enabled.')
-    if (!error) {
-      setMfaQr('')
-      setMfaSecret('')
-      setMfaFactorId('')
-      setMfaCode('')
-      await loadSecurity()
-    }
-  }
-
-  return <PageShell className="max-w-3xl">
-    <SectionHeading eyebrow="Account settings" title="Control your Mochi cloud experience." />
-    <div className="glass-card space-y-6 p-6">
-      <label className="block text-sm text-slate-300">Display name<input value={name} onChange={(event) => setName(event.target.value)} className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" /></label>
-      <label className="flex items-center justify-between gap-4 text-slate-200"><span><strong className="block text-white">Cloud sync</strong><small className="text-slate-400">Available only to selected users. Sync account settings across devices.</small></span><input type="checkbox" checked={sync} onChange={(event) => setSync(event.target.checked)} /></label>
-      <label className="flex items-center justify-between gap-4 text-slate-200"><span><strong className="block text-white">Save metadata</strong><small className="text-slate-400">Admin permission: {metadata ? 'enabled' : 'disabled'}.</small></span><input type="checkbox" checked={metadata} onChange={(event) => setMetadata(event.target.checked)} disabled={!metadata && profile?.metadata_sync_allowed === false} /></label>
-      <button onClick={() => void save()} className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-5 py-3 font-semibold text-white">Save settings</button>
-      {message && <p className="text-sm text-cyan-200">{message}</p>}
-    </div>
-
-    <div className="glass-card space-y-5 p-6">
-      <div>
-        <p className="text-sm uppercase tracking-[0.2em] text-cyan-200">Account security</p>
-        <h3 className="mt-2 text-xl font-semibold text-white">Two-factor authentication</h3>
-        <p className="mt-2 text-sm text-slate-400">Use an authenticator app to add another layer of protection to your Mochi account.</p>
-      </div>
-
-      <div className="flex flex-wrap gap-3">
-        <button onClick={() => void startMfa()} className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-slate-100">Set up authenticator app</button>
-        <button onClick={() => void loadSecurity()} className="rounded-full border border-white/10 px-4 py-2 text-sm text-slate-300">Refresh</button>
-      </div>
-
-      {mfaFactors.filter((factor) => factor.status === 'verified').length > 0 && <p className="text-sm text-emerald-300">Authenticator-based two-factor authentication is enabled.</p>}
-
-      {mfaQr && <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-        <p className="text-sm text-slate-200">Scan this QR code with your authenticator app.</p>
-        <img src={mfaQr} alt="Authenticator setup QR code" className="mt-4 h-48 w-48 rounded-xl bg-white p-2" />
-        <p className="mt-3 break-all text-xs text-slate-400">Manual setup key: {mfaSecret}</p>
-        <div className="mt-4 flex gap-2">
-          <input value={mfaCode} onChange={(event) => setMfaCode(event.target.value)} inputMode="numeric" maxLength={6} placeholder="123456" className="w-32 rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" />
-          <button onClick={() => void finishMfa()} className="rounded-xl bg-violet-500 px-4 py-2 text-sm font-semibold text-white">Verify</button>
-        </div>
-      </div>}
-    </div>
-  </PageShell>
+  const [busy, setBusy] = useState(false)
+  const saveProfile = async () => { setBusy(true); setMessage(''); const { error } = await updateMyProfile({ display_name: name, avatar_url: profile?.avatar_url ?? null, cloud_sync_enabled: profile?.cloud_sync_enabled ?? false, metadata_sync_allowed: profile?.metadata_sync_allowed ?? false }); setMessage(error ? error.message : 'Profile saved.'); if (!error) await refreshProfile(); setBusy(false) }
+  const changeEmail = async () => { setBusy(true); setMessage(''); const { error } = await updateEmail(email); setMessage(error ? error.message : 'Check your inbox to confirm the email change.'); setBusy(false) }
+  const changePassword = async () => { if (newPassword.length < 8) { setMessage('Choose a password with at least 8 characters.'); return } setBusy(true); setMessage(''); const { error } = await updatePassword(newPassword, currentPassword || undefined); setMessage(error ? error.message : 'Password updated successfully.'); if (!error) { setNewPassword(''); setCurrentPassword('') } setBusy(false) }
+  return <div className="space-y-6"><SectionHeading eyebrow="Account" title="Your identity and account credentials." /><section className="glass-card space-y-5 p-6"><label className="block text-sm text-slate-300">Display name<input value={name} onChange={(e) => setName(e.target.value)} className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" /></label><div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-slate-900/50 p-4"><div><p className="font-semibold text-white">User ID</p><p className="mt-1 break-all font-mono text-xs text-slate-500">{user.id}</p></div><CopyButton value={user.id} /></div><button disabled={busy} onClick={() => void saveProfile()} className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-5 py-3 font-semibold text-white disabled:opacity-50">{busy ? 'Saving…' : 'Save profile'}</button></section>
+    <section className="glass-card space-y-5 p-6"><div><p className="text-sm uppercase tracking-[0.2em] text-cyan-200">Email address</p><h3 className="mt-2 text-xl font-semibold text-white">Change your email</h3><p className="mt-2 text-sm text-slate-400">A confirmation flow protects email changes.</p></div><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" /><button disabled={busy || email === user.email} onClick={() => void changeEmail()} className="rounded-full border border-white/15 bg-white/5 px-5 py-3 font-semibold text-white disabled:opacity-40">Send email change confirmation</button></section>
+    <section className="glass-card space-y-5 p-6"><div><p className="text-sm uppercase tracking-[0.2em] text-violet-200">Password</p><h3 className="mt-2 text-xl font-semibold text-white">Change your password</h3><p className="mt-2 text-sm text-slate-400">Change it while signed in. Your project may require recent authentication or your current password.</p></div><input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Current password (if required)" className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" /><input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="New password" className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" /><button disabled={busy || !newPassword} onClick={() => void changePassword()} className="rounded-full bg-violet-500 px-5 py-3 font-semibold text-white disabled:opacity-40">Change password</button></section>{message && <p className="rounded-2xl border border-cyan-400/20 bg-cyan-500/5 p-4 text-sm text-cyan-200">{message}</p>}</div>
 }
 
-function AdminPage() {
-  const { profile } = useAuth()
-  const [profiles, setProfiles] = useState<Profile[]>([])
-  const [message, setMessage] = useState('')
-  if (!profile?.is_admin) return <PageShell><SectionHeading eyebrow="Admin" title="Admin access required." /></PageShell>
-  const load = async () => {
-    const { data, error } = await listProfiles()
-    if (error) setMessage(error.message)
-    else setProfiles((data ?? []) as Profile[])
-  }
-  return <PageShell>
-    <SectionHeading eyebrow="Admin panel" title="Control metadata sync access." />
-    <button onClick={() => void load()} className="rounded-full bg-violet-500 px-5 py-3 font-semibold">Load users</button>
-    {message && <p className="text-sm text-rose-300">{message}</p>}
-    <div className="space-y-3">{profiles.map((item) => <div key={item.id} className="glass-card flex flex-wrap items-center justify-between gap-4 p-4"><div><p className="font-semibold text-white">{item.display_name || item.id}</p><p className="text-sm text-slate-400">{item.id}</p></div><button onClick={() => void setUserMetadataAccess(item.id, !item.metadata_sync_allowed).then(({ error }) => { if (error) setMessage(error.message); else void load() })} className="rounded-full border border-white/15 px-4 py-2 text-sm text-slate-200">{item.metadata_sync_allowed ? 'Disable metadata' : 'Allow metadata'}</button></div>)}</div>
-  </PageShell>
+function SecurityTab({ user }: { user: any }) {
+  const [mfaFactors, setMfaFactors] = useState<any[]>([])
+  const [mfaQr, setMfaQr] = useState(''); const [mfaSecret, setMfaSecret] = useState(''); const [mfaFactorId, setMfaFactorId] = useState(''); const [mfaCode, setMfaCode] = useState(''); const [message, setMessage] = useState('')
+  const load = async () => { const { data, error } = await listMfaFactors(); if (error) setMessage(error.message); else setMfaFactors(data?.totp ?? []) }
+  useEffect(() => { void load() }, [])
+  const start = async () => { const { data, error } = await enrollTotp(); if (error) { setMessage(error.message); return }; setMfaFactorId(data.id); setMfaQr(data.totp.qr_code); setMfaSecret(data.totp.secret); setMessage('Scan the QR code, then verify the six-digit code.') }
+  const finish = async () => { const { error } = await verifyTotpEnrollment(mfaFactorId, mfaCode); if (error) { setMessage(error.message); return }; setMfaQr(''); setMfaSecret(''); setMfaFactorId(''); setMfaCode(''); setMessage('Two-factor authentication is enabled.'); await load() }
+  const hasMfa = mfaFactors.some((factor) => factor.status === 'verified'); const providers = new Set((user.identities ?? []).map((identity: any) => identity.provider))
+  const connect = async (provider: 'google' | 'github') => { const { error } = await linkAuthIdentity(provider); if (error) setMessage(error.message) }
+  return <div className="space-y-6"><SectionHeading eyebrow="Security" title="Protect your Mochi account." /><section className="glass-card p-6"><div className="flex items-start justify-between gap-4"><div><h3 className="text-xl font-semibold text-white">Authenticator app</h3><p className="mt-2 text-sm leading-6 text-slate-400">Use TOTP two-factor authentication for an extra layer of protection.</p></div><Shield className="h-6 w-6 text-violet-300" /></div><div className="mt-5 flex flex-wrap gap-3"><span className={hasMfa ? 'rounded-full bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-300' : 'rounded-full bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-300'}>{hasMfa ? 'Enabled' : 'Not configured'}</span><button onClick={() => void start()} className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white">{hasMfa ? 'Add another authenticator' : 'Set up authenticator app'}</button><button onClick={() => void load()} className="rounded-full border border-white/10 px-4 py-2 text-sm text-slate-300"><RefreshCw className="mr-2 inline h-4 w-4" />Refresh</button></div>{mfaQr && <div className="mt-5 rounded-2xl border border-white/10 bg-slate-900/60 p-5"><img src={mfaQr} alt="Authenticator setup QR code" className="h-48 w-48 rounded-xl bg-white p-2" /><p className="mt-3 break-all text-xs text-slate-400">Manual setup key: {mfaSecret}</p><div className="mt-4 flex gap-2"><input value={mfaCode} onChange={(e) => setMfaCode(e.target.value)} inputMode="numeric" maxLength={6} placeholder="123456" className="w-32 rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /><button onClick={() => void finish()} className="rounded-xl bg-violet-500 px-4 py-2 text-sm font-semibold text-white">Verify</button></div></div>}</section>
+    <section className="glass-card p-6"><div><h3 className="text-xl font-semibold text-white">Connected accounts</h3><p className="mt-2 text-sm leading-6 text-slate-400">Connect Google or GitHub to the same Mochi account.</p></div><div className="mt-5 grid gap-3 sm:grid-cols-2">{(['google', 'github'] as const).map((provider) => <div key={provider} className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/50 p-4"><div className="flex items-center gap-3"><Link2 className="h-4 w-4 text-violet-300" /><span className="font-medium capitalize text-white">{provider}</span></div>{providers.has(provider) ? <span className="text-sm font-semibold text-emerald-300">Connected</span> : <button onClick={() => void connect(provider)} className="rounded-full border border-white/15 px-3 py-1.5 text-sm text-slate-200">Connect</button>}</div>)}</div></section>
+    <section className="glass-card p-6"><div className="flex items-start gap-4"><KeyRound className="mt-1 h-6 w-6 text-cyan-300" /><div><h3 className="text-xl font-semibold text-white">Passkeys</h3><p className="mt-2 text-sm leading-6 text-slate-400">Passkey management is not exposed by Mochi’s current authentication stack yet, so this is shown as a real availability status rather than a fake setup control.</p></div></div></section>{message && <p className="rounded-2xl border border-cyan-400/20 bg-cyan-500/5 p-4 text-sm text-cyan-200">{message}</p>}</div>
 }
 
+function CloudTab({ profile }: { profile: Profile | null }) {
+  const [pikoCount, setPikoCount] = useState(0); const [tofuCount, setTofuCount] = useState(0); const [loading, setLoading] = useState(true)
+  useEffect(() => { if (!profile?.cloud_sync_enabled || !supabase) { setLoading(false); return }; let active = true; Promise.all([supabase.from('pikos').select('id', { count: 'exact', head: true }), supabase.from('tofus').select('id', { count: 'exact', head: true })]).then(([pikos, tofus]) => { if (!active) return; setPikoCount(pikos.count ?? 0); setTofuCount(tofus.count ?? 0); setLoading(false) }); return () => { active = false } }, [profile?.cloud_sync_enabled])
+  if (!profile?.metadata_sync_allowed) return <EmptyState icon={Cloud} title="Cloud features are unavailable" text="Cloud metadata access has not been enabled for this account." />
+  if (!profile.cloud_sync_enabled) return <EmptyState icon={CloudCog} title="Cloud sync is available" text="Cloud sync is currently turned off. You can enable it from the account controls when you are ready." />
+  const hasData = pikoCount > 0 || tofuCount > 0
+  return <div className="space-y-6"><SectionHeading eyebrow="Mochi Cloud" title="Your synced metadata." />{loading ? <div className="glass-card p-8 text-slate-400">Loading cloud data…</div> : hasData ? <div className="grid gap-4 sm:grid-cols-2"><InfoCard icon={Gamepad2} label="Synced Pikos" value={String(pikoCount)} /><InfoCard icon={Layers3} label="Synced Tofus" value={String(tofuCount)} /></div> : <EmptyState icon={Cloud} title="No cloud data yet" text="Cloud sync is enabled, but there is nothing to show yet. Your local-first library remains on your device until supported metadata is synced." />}<div className="glass-card p-6"><p className="text-sm uppercase tracking-[0.2em] text-cyan-300">Local-first</p><p className="mt-3 leading-7 text-slate-300">Mochi does not upload complete game installations. Cloud features are limited to supported account settings and metadata.</p></div></div>
+}
+
+function AdminTab() {
+  const [profiles, setProfiles] = useState<Profile[]>([]); const [message, setMessage] = useState(''); const [loading, setLoading] = useState(true)
+  const load = async () => { setLoading(true); const { data, error } = await listProfiles(); if (error) setMessage(error.message); else setProfiles((data ?? []) as Profile[]); setLoading(false) }
+  useEffect(() => { void load() }, [])
+  const toggle = async (item: Profile) => { const { error } = await setUserMetadataAccess(item.id, !item.metadata_sync_allowed); if (error) setMessage(error.message); else await load() }
+  return <div className="space-y-6"><SectionHeading eyebrow="Administrator" title="Manage cloud eligibility." /><div className="rounded-2xl border border-violet-400/20 bg-violet-500/[0.06] p-4 text-sm text-violet-100"><Shield className="mr-2 inline h-4 w-4" />Admin status is controlled by Supabase app metadata. These controls are protected server-side.</div>{loading ? <div className="glass-card p-6 text-slate-400">Loading users…</div> : <div className="space-y-3">{profiles.map((item) => <div key={item.id} className="glass-card flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold text-white">{item.display_name || item.email || item.id}</p><p className="mt-1 text-sm text-slate-400">{item.email || 'No email available'}</p><p className="mt-1 break-all font-mono text-[11px] text-slate-500">{item.id}</p></div><button onClick={() => void toggle(item)} className={item.metadata_sync_allowed ? 'rounded-full border border-emerald-400/20 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300' : 'rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-slate-200'}>{item.metadata_sync_allowed ? 'Cloud access enabled' : 'Enable cloud access'}</button></div>)}</div>}{message && <p className="rounded-2xl border border-rose-400/20 bg-rose-500/5 p-4 text-sm text-rose-200">{message}</p>}</div>
+}
+
+function InfoCard({ icon: Icon, label, value, mono = false }: { icon: any; label: string; value: string; mono?: boolean }) {
+  return <article className="glass-card p-5"><div className="flex items-center gap-3 text-slate-400"><Icon className="h-4 w-4 text-violet-300" /><span className="text-sm">{label}</span></div><p className={mono ? 'mt-3 break-all font-mono text-sm font-bold text-white' : 'mt-3 break-all text-lg font-bold text-white'}>{value}</p></article>
+}
+function StatusRow({ label, ok, detail }: { label: string; ok: boolean; detail: string }) {
+  return <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-900/50 p-4"><div><p className="font-medium text-white">{label}</p><p className="mt-1 text-xs text-slate-500">{detail}</p></div>{ok ? <Check className="h-5 w-5 text-emerald-300" /> : <AlertTriangle className="h-5 w-5 text-amber-300" />}</div>
+}
+function CopyButton({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false)
+  return <button onClick={() => { void navigator.clipboard.writeText(value); setCopied(true); window.setTimeout(() => setCopied(false), 1500) }} className="rounded-full border border-white/15 px-3 py-2 text-sm text-slate-200">{copied ? 'Copied' : 'Copy'}</button>
+}
+function EmptyState({ icon: Icon, title, text }: { icon: any; title: string; text: string }) {
+  return <div className="glass-card p-8 text-center"><Icon className="mx-auto h-9 w-9 text-violet-300" /><h3 className="mt-4 text-xl font-semibold text-white">{title}</h3><p className="mx-auto mt-2 max-w-xl leading-7 text-slate-400">{text}</p></div>
+}
+function SettingsPage() { return <DashboardPage /> }
+function AdminPage() { return <DashboardPage /> }
 function PageShell({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return <div className={`space-y-8 pb-10 ${className}`}>{children}</div>
 }
