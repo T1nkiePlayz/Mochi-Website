@@ -650,8 +650,8 @@ function SettingsPage() {
     <div className="glass-card space-y-5 p-6">
       <div>
         <p className="text-sm uppercase tracking-[0.2em] text-cyan-200">Account security</p>
-        <h3 className="mt-2 text-xl font-semibold text-white">Passkeys & two-factor authentication</h3>
-        <p className="mt-2 text-sm text-slate-400">Use a passkey or authenticator app to add another layer of protection to your Mochi account.</p>
+        <h3 className="mt-2 text-xl font-semibold text-white">Two-factor authentication</h3>
+        <p className="mt-2 text-sm text-slate-400">Use an authenticator app to add another layer of protection to your Mochi account.</p>
       </div>
 
       <div className="flex flex-wrap gap-3">
