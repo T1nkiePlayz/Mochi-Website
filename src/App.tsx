@@ -44,6 +44,7 @@ import {
   deletePasskey,
   signUpWithPassword,
   setUserMetadataAccess,
+  setUserCloudSync,
   updateMyProfile,
   manageApiCredential,
   useAuth,
@@ -1004,11 +1005,157 @@ function CloudTab({ profile }: { profile: Profile | null }) {
 }
 
 function AdminTab() {
-  const [profiles, setProfiles] = useState<Profile[]>([]); const [message, setMessage] = useState(''); const [loading, setLoading] = useState(true)
-  const load = async () => { setLoading(true); const { data, error } = await listProfiles(); if (error) setMessage(error.message); else setProfiles((data ?? []) as Profile[]); setLoading(false) }
+  const { profile: currentProfile, refreshProfile } = useAuth()
+  const [profiles, setProfiles] = useState<Profile[]>([])
+  const [userId, setUserId] = useState('')
+  const [message, setMessage] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [selected, setSelected] = useState<Profile | null>(null)
+
+  const load = async () => {
+    setLoading(true)
+    setMessage('')
+    const { data, error } = await listProfiles()
+    if (error) setMessage(error.message)
+    else setProfiles((data ?? []) as Profile[])
+    setLoading(false)
+  }
+
   useEffect(() => { void load() }, [])
-  const toggle = async (item: Profile) => { const { error } = await setUserMetadataAccess(item.id, !item.metadata_sync_allowed); if (error) setMessage(error.message); else await load() }
-  return <div className="space-y-6"><SectionHeading eyebrow="Administrator" title="Manage cloud eligibility." /><div className="rounded-2xl border border-violet-400/20 bg-violet-500/[0.06] p-4 text-sm text-violet-100"><Shield className="mr-2 inline h-4 w-4" />Admin status is controlled by Supabase app metadata. These controls are protected server-side.</div>{loading ? <div className="glass-card p-6 text-slate-400">Loading users…</div> : <div className="space-y-3">{profiles.map((item) => <div key={item.id} className="glass-card flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold text-white">{item.display_name || item.email || item.id}</p><p className="mt-1 text-sm text-slate-400">{item.email || 'No email available'}</p><p className="mt-1 break-all font-mono text-[11px] text-slate-500">{item.id}</p></div><button onClick={() => void toggle(item)} className={item.metadata_sync_allowed ? 'rounded-full border border-emerald-400/20 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300' : 'rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-slate-200'}>{item.metadata_sync_allowed ? 'Cloud access enabled' : 'Enable cloud access'}</button></div>)}</div>}{message && <p className="rounded-2xl border border-rose-400/20 bg-rose-500/5 p-4 text-sm text-rose-200">{message}</p>}</div>
+
+  useEffect(() => {
+    const match = profiles.find((item) => item.id.toLowerCase() === userId.trim().toLowerCase())
+    setSelected(match ?? null)
+  }, [profiles, userId])
+
+  const findUser = () => {
+    const normalized = userId.trim()
+    if (!normalized) {
+      setMessage('Enter a user UID first.')
+      setSelected(null)
+      return
+    }
+    const match = profiles.find((item) => item.id.toLowerCase() === normalized.toLowerCase())
+    if (!match) {
+      setMessage('No profile was found for that UID.')
+      setSelected(null)
+      return
+    }
+    setMessage('')
+    setSelected(match)
+  }
+
+  const updateUser = async (target: Profile, action: 'access' | 'cloud', enabled: boolean) => {
+    setSaving(true)
+    setMessage('')
+    const result = action === 'access'
+      ? await setUserMetadataAccess(target.id, enabled)
+      : await setUserCloudSync(target.id, enabled)
+    if (result.error) {
+      setMessage(result.error.message)
+    } else {
+      await load()
+      if (target.id === currentProfile?.id) await refreshProfile()
+      const refreshed = profiles.find((item) => item.id === target.id)
+      setSelected(refreshed ?? target)
+    }
+    setSaving(false)
+  }
+
+  const setOwnCloud = async (enabled: boolean) => {
+    if (!currentProfile) return
+    await updateUser(currentProfile, 'cloud', enabled)
+    await refreshProfile()
+  }
+
+  return (
+    <div className="space-y-6">
+      <SectionHeading eyebrow="Administrator" title="Developer controls." />
+
+      <div className="rounded-2xl border border-violet-400/20 bg-violet-500/[0.06] p-4 text-sm text-violet-100">
+        <Shield className="mr-2 inline h-4 w-4" />
+        Administrator controls are enforced server-side. Cloud eligibility and cloud synchronization are separate settings.
+      </div>
+
+      <section className="glass-card p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-xl font-semibold text-white">Your developer account</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-400">Quickly enable or disable Mochi Cloud synchronization for your own account while testing the launcher.</p>
+          </div>
+          <CloudCog className="h-6 w-6 text-cyan-300" />
+        </div>
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <button disabled={saving || !currentProfile || currentProfile.cloud_sync_enabled} onClick={() => void setOwnCloud(true)} className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 disabled:cursor-not-allowed disabled:opacity-40">
+            {currentProfile?.cloud_sync_enabled ? 'Cloud sync enabled' : 'Enable cloud sync'}
+          </button>
+          <button disabled={saving || !currentProfile?.cloud_sync_enabled} onClick={() => void setOwnCloud(false)} className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 disabled:cursor-not-allowed disabled:opacity-40">
+            Disable cloud sync
+          </button>
+          <span className="text-xs text-slate-500">Eligibility: {currentProfile?.metadata_sync_allowed ? 'enabled' : 'disabled'}</span>
+        </div>
+      </section>
+
+      <section className="glass-card p-6">
+        <div>
+          <h3 className="text-xl font-semibold text-white">Manage a user by UID</h3>
+          <p className="mt-2 text-sm leading-6 text-slate-400">Enter an exact Mochi account ID to inspect and manage that account's cloud settings.</p>
+        </div>
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+          <input value={userId} onChange={(event) => setUserId(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') findUser() }} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" className="min-w-0 flex-1 rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 font-mono text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-violet-400/50" />
+          <button onClick={findUser} className="rounded-xl bg-violet-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-400">Find user</button>
+        </div>
+
+        {selected && (
+          <div className="mt-5 rounded-2xl border border-white/10 bg-slate-950/50 p-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <p className="font-semibold text-white">{selected.display_name || 'Unnamed account'}</p>
+                <p className="mt-1 text-sm text-slate-400">{selected.email || 'No email available'}</p>
+                <p className="mt-2 break-all font-mono text-[11px] text-slate-500">{selected.id}</p>
+              </div>
+              <div className="grid gap-2 text-sm sm:grid-cols-2">
+                <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
+                  <p className="text-xs text-slate-500">Cloud eligibility</p>
+                  <p className="mt-1 font-semibold text-white">{selected.metadata_sync_allowed ? 'Enabled' : 'Disabled'}</p>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
+                  <p className="text-xs text-slate-500">Cloud sync</p>
+                  <p className="mt-1 font-semibold text-white">{selected.cloud_sync_enabled ? 'Enabled' : 'Disabled'}</p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button disabled={saving || selected.metadata_sync_allowed} onClick={() => void updateUser(selected, 'access', true)} className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 disabled:cursor-not-allowed disabled:opacity-40">Enable cloud access</button>
+              <button disabled={saving || !selected.metadata_sync_allowed} onClick={() => void updateUser(selected, 'access', false)} className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 disabled:cursor-not-allowed disabled:opacity-40">Disable cloud access</button>
+              <button disabled={saving || !selected.metadata_sync_allowed || selected.cloud_sync_enabled} onClick={() => void updateUser(selected, 'cloud', true)} className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 disabled:cursor-not-allowed disabled:opacity-40">Enable cloud sync</button>
+              <button disabled={saving || !selected.cloud_sync_enabled} onClick={() => void updateUser(selected, 'cloud', false)} className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 disabled:cursor-not-allowed disabled:opacity-40">Disable cloud sync</button>
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="glass-card p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-xl font-semibold text-white">Developer utilities</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-400">Read-only diagnostics and a safe refresh control for the administrator user list.</p>
+          </div>
+          <Users className="h-6 w-6 text-violet-300" />
+        </div>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <InfoCard icon={Users} label="Profiles visible to admin" value={String(profiles.length)} />
+          <InfoCard icon={RefreshCw} label="Profile data" value={loading ? 'Refreshing…' : 'Loaded'} />
+        </div>
+        <button disabled={loading} onClick={() => void load()} className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 disabled:opacity-40">
+          <RefreshCw className="h-4 w-4" /> Refresh profiles
+        </button>
+      </section>
+
+      {message && <p className="rounded-2xl border border-rose-400/20 bg-rose-500/5 p-4 text-sm text-rose-200">{message}</p>}
+    </div>
+  )
 }
 
 function InfoCard({ icon: Icon, label, value, mono = false }: { icon: any; label: string; value: string; mono?: boolean }) {
