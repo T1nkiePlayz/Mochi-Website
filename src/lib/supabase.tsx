@@ -140,6 +140,30 @@ export async function verifyMfaLogin(code: string) {
 }
 
 
+export type ApiCredentialProvider = 'nexus' | 'igdb'
+
+export async function manageApiCredential(
+  action: 'set' | 'status' | 'delete',
+  provider?: ApiCredentialProvider,
+  secret?: string,
+) {
+  if (!supabase) return { data: null, error: new Error(notConfigured) }
+
+  const body = {
+    action,
+    ...(provider ? { provider } : {}),
+    ...(secret !== undefined ? { secret } : {}),
+  }
+
+  const { data, error } = await supabase.functions.invoke('store-provider-credentials', {
+    body,
+  })
+
+  if (error) return { data: null, error }
+  if (data?.error) return { data: null, error: new Error(data.error) }
+  return { data, error: null }
+}
+
 export async function updateMyProfile(values: Pick<Profile, 'display_name' | 'avatar_url' | 'cloud_sync_enabled' | 'metadata_sync_allowed'>) {
   if (!supabase) return { error: new Error(notConfigured) }
   return supabase.rpc('update_my_profile', { profile_data: values })
