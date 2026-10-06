@@ -68,7 +68,7 @@ const featureCards = [
   },
   {
     title: 'Unified account',
-    description: 'Create an account on the website and sign into the launcher with the same Supabase-backed identity.',
+    description: 'Create an account on the website and sign into the launcher with the same Mochi account.',
     icon: Users,
   },
   {
@@ -83,9 +83,6 @@ const providerOptions = [
   'Magic link',
   'GitHub',
   'Google',
-  'Discord',
-  'Microsoft',
-  'Apple',
 ]
 
 const dashboardCards = [
