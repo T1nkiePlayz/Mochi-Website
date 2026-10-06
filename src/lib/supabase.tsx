@@ -191,9 +191,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
     let active = true
-    supabase.auth.getSession().then(({ data }) => {
-      if (active) {
-        setSession(data.session)
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!active) return
+
+      // Refresh once on startup so server-managed app_metadata (including the
+      // admin role) is reflected in the current JWT without requiring the
+      // user to discover that they need to sign out and back in.
+      if (data.session) {
+        const refreshed = await supabase.auth.refreshSession()
+        if (active) {
+          setSession(refreshed.data.session ?? data.session)
+          setLoading(false)
+        }
+      } else {
+        setSession(null)
         setLoading(false)
       }
     })
