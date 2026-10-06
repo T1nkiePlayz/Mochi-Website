@@ -675,12 +675,67 @@ function SecurityTab({ user }: { user: any }) {
 }
 
 function CloudTab({ profile }: { profile: Profile | null }) {
-  const [pikoCount, setPikoCount] = useState(0); const [tofuCount, setTofuCount] = useState(0); const [loading, setLoading] = useState(true)
-  useEffect(() => { if (!profile?.cloud_sync_enabled || !supabase) { setLoading(false); return }; let active = true; Promise.all([supabase.from('pikos').select('id', { count: 'exact', head: true }), supabase.from('tofus').select('id', { count: 'exact', head: true })]).then(([pikos, tofus]) => { if (!active) return; setPikoCount(pikos.count ?? 0); setTofuCount(tofus.count ?? 0); setLoading(false) }); return () => { active = false } }, [profile?.cloud_sync_enabled])
+  const [sync, setSync] = useState(profile?.cloud_sync_enabled ?? false)
+  const [pikoCount, setPikoCount] = useState(0)
+  const [tofuCount, setTofuCount] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState('')
+
+  useEffect(() => { setSync(profile?.cloud_sync_enabled ?? false) }, [profile?.cloud_sync_enabled])
+  useEffect(() => {
+    if (!profile?.cloud_sync_enabled || !supabase) { setLoading(false); return }
+    let active = true
+    Promise.all([
+      supabase.from('pikos').select('id', { count: 'exact', head: true }),
+      supabase.from('tofus').select('id', { count: 'exact', head: true }),
+    ]).then(([pikos, tofus]) => {
+      if (!active) return
+      setPikoCount(pikos.count ?? 0)
+      setTofuCount(tofus.count ?? 0)
+      setLoading(false)
+    })
+    return () => { active = false }
+  }, [profile?.cloud_sync_enabled])
+
+  const saveSync = async (enabled: boolean) => {
+    if (!profile?.metadata_sync_allowed) return
+    setSaving(true); setMessage('')
+    const { error } = await updateMyProfile({
+      display_name: profile.display_name,
+      avatar_url: profile.avatar_url,
+      cloud_sync_enabled: enabled,
+      metadata_sync_allowed: profile.metadata_sync_allowed,
+    })
+    if (error) setMessage(error.message)
+    else setSync(enabled)
+    setSaving(false)
+  }
+
   if (!profile?.metadata_sync_allowed) return <EmptyState icon={Cloud} title="Cloud features are unavailable" text="Cloud metadata access has not been enabled for this account." />
-  if (!profile.cloud_sync_enabled) return <EmptyState icon={CloudCog} title="Cloud sync is available" text="Cloud sync is currently turned off. You can enable it from the account controls when you are ready." />
-  const hasData = pikoCount > 0 || tofuCount > 0
-  return <div className="space-y-6"><SectionHeading eyebrow="Mochi Cloud" title="Your synced metadata." />{loading ? <div className="glass-card p-8 text-slate-400">Loading cloud data…</div> : hasData ? <div className="grid gap-4 sm:grid-cols-2"><InfoCard icon={Gamepad2} label="Synced Pikos" value={String(pikoCount)} /><InfoCard icon={Layers3} label="Synced Tofus" value={String(tofuCount)} /></div> : <EmptyState icon={Cloud} title="No cloud data yet" text="Cloud sync is enabled, but there is nothing to show yet. Your local-first library remains on your device until supported metadata is synced." />}<div className="glass-card p-6"><p className="text-sm uppercase tracking-[0.2em] text-cyan-300">Local-first</p><p className="mt-3 leading-7 text-slate-300">Mochi does not upload complete game installations. Cloud features are limited to supported account settings and metadata.</p></div></div>
+
+  return <div className="space-y-6">
+    <SectionHeading eyebrow="Mochi Cloud" title="Your synced metadata." />
+    <section className="glass-card p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div><h3 className="text-xl font-semibold text-white">Cloud sync</h3><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">Cloud access has been granted to this account. Turn synchronization on when you want Mochi to sync supported metadata and settings.</p></div>
+        <CloudCog className="h-6 w-6 text-cyan-300" />
+      </div>
+      <div className="mt-5 flex flex-wrap items-center gap-3">
+        <button disabled={saving} onClick={() => void saveSync(!sync)} className={sync ? 'rounded-full bg-emerald-500/15 px-4 py-2 text-sm font-semibold text-emerald-300 ring-1 ring-emerald-400/20' : 'rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200'}>
+          {saving ? 'Saving…' : sync ? 'Cloud sync enabled' : 'Enable cloud sync'}
+        </button>
+        {sync && <span className="text-xs text-slate-500">Admin eligibility: enabled</span>}
+      </div>
+      {message && <p className="mt-4 text-sm text-rose-300">{message}</p>}
+    </section>
+    {!sync ? <EmptyState icon={Cloud} title="Cloud sync is turned off" text="Your Mochi data remains local-first until you enable cloud sync." /> :
+      loading ? <div className="glass-card p-8 text-slate-400">Loading cloud data…</div> :
+      pikoCount > 0 || tofuCount > 0 ? <div className="grid gap-4 sm:grid-cols-2"><InfoCard icon={Gamepad2} label="Synced Pikos" value={String(pikoCount)} /><InfoCard icon={Layers3} label="Synced Tofus" value={String(tofuCount)} /></div> :
+      <EmptyState icon={Cloud} title="No cloud data yet" text="Cloud sync is enabled, but there is nothing to show yet. Your local-first library remains on your device until supported metadata is synced." />
+    }
+    <div className="glass-card p-6"><p className="text-sm uppercase tracking-[0.2em] text-cyan-300">Local-first</p><p className="mt-3 leading-7 text-slate-300">Mochi does not upload complete game installations. Cloud features are limited to supported account settings and metadata.</p></div>
+  </div>
 }
 
 function AdminTab() {
