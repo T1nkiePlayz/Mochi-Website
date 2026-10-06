@@ -15,7 +15,6 @@ import {
   Mail,
   Link2,
   CloudCog,
-  Copy,
   Check,
   AlertTriangle,
   RefreshCw,
