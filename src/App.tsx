@@ -137,6 +137,7 @@ function App() {
             <Route path="/documentation/:section" element={<DocumentationArticlePage />} />
             <Route path="/faq" element={<FaqPage />} />
             <Route path="/signin" element={<SignInPage />} />
+            <Route path="/auth/verify" element={<EmailVerificationPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/admin" element={<AdminPage />} />
@@ -513,6 +514,80 @@ function SignInPage() {
               ))}
             </div>
           </form>}
+        </div>
+      </div>
+    </PageShell>
+  )
+}
+
+function EmailVerificationPage() {
+  const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying')
+  const [message, setMessage] = useState('Confirming your email address…')
+
+  useEffect(() => {
+    let active = true
+    const params = new URLSearchParams(window.location.hash.split('?')[1] ?? '')
+    const tokenHash = params.get('token_hash')
+    const type = params.get('type')
+
+    const verify = async () => {
+      if (!supabase) {
+        if (active) {
+          setStatus('error')
+          setMessage('Mochi authentication is not configured on this site.')
+        }
+        return
+      }
+      if (!tokenHash || type !== 'email') {
+        if (active) {
+          setStatus('error')
+          setMessage('This verification link is missing the information needed to confirm your email.')
+        }
+        return
+      }
+
+      const { error } = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: 'email',
+      })
+
+      if (!active) return
+      if (error) {
+        setStatus('error')
+        setMessage(error.message)
+        return
+      }
+
+      window.history.replaceState({}, document.title, window.location.pathname)
+      setStatus('success')
+      setMessage('Your email has been verified. Your Mochi account is ready.')
+    }
+
+    void verify()
+    return () => {
+      active = false
+    }
+  }, [])
+
+  return (
+    <PageShell className="max-w-2xl">
+      <div className="glass-card p-8 text-center sm:p-10">
+        <img src="/mochi.png" alt="Mochi" className="mx-auto h-16 w-16 rounded-2xl object-contain" />
+        <p className="mt-6 text-sm font-semibold uppercase tracking-[0.2em] text-violet-300">Email verification</p>
+        <h2 className="mt-3 text-3xl font-bold text-white">
+          {status === 'verifying' ? 'Confirming your email…' : status === 'success' ? 'Email verified!' : 'Verification failed'}
+        </h2>
+        <p className="mx-auto mt-4 max-w-lg leading-7 text-slate-300">{message}</p>
+        <div className="mt-7 flex flex-wrap justify-center gap-3">
+          {status === 'success' ? (
+            <Link to="/signin" className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-5 py-3 font-semibold text-white">
+              Sign in to Mochi
+            </Link>
+          ) : status === 'error' ? (
+            <Link to="/signin" className="rounded-full border border-white/15 bg-white/5 px-5 py-3 font-semibold text-slate-100">
+              Return to sign in
+            </Link>
+          ) : null}
         </div>
       </div>
     </PageShell>
