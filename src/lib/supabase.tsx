@@ -11,11 +11,11 @@ export type Profile = {
 }
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? ''
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? ''
+const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? ''
 
 export const supabase =
-  supabaseUrl && supabaseAnonKey
-    ? createClient(supabaseUrl, supabaseAnonKey, {
+  supabaseUrl && supabasePublishableKey
+    ? createClient(supabaseUrl, supabasePublishableKey, {
         auth: {
           persistSession: true,
           autoRefreshToken: true,
@@ -25,7 +25,7 @@ export const supabase =
       })
     : null
 
-const notConfigured = 'Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.'
+const notConfigured = 'Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.'
 
 export async function signInWithPassword(email: string, password: string) {
   if (!supabase) return { data: { user: null, session: null }, error: new Error(notConfigured) }
