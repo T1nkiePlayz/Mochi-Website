@@ -12,6 +12,7 @@ import {
   Users,
 } from 'lucide-react'
 import { useState } from 'react'
+import { DocumentationPage, DocumentationArticlePage } from './Documentation'
 import { HashRouter, NavLink, Route, Routes, Link } from 'react-router-dom'
 import {
   AuthProvider,
@@ -151,6 +152,7 @@ function App() {
             <Route path="/how-it-works" element={<HowItWorksPage />} />
             <Route path="/download" element={<DownloadPage />} />
             <Route path="/documentation" element={<DocumentationPage />} />
+            <Route path="/documentation/:section" element={<DocumentationArticlePage />} />
             <Route path="/faq" element={<FaqPage />} />
             <Route path="/signin" element={<SignInPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
@@ -403,21 +405,7 @@ function DownloadPage() {
   )
 }
 
-function DocumentationPage() {
-  return (
-    <PageShell>
-      <SectionHeading eyebrow="Documentation" title="Understand the platform and its moving parts" />
-
-      <div className="grid gap-6 md:grid-cols-2">
-        <DocCard title="Getting started" text="Learn how to install Mochi, add games, and create your first Tofu environment." />
-        <DocCard title="Account management" text="Use your Mochi account across the website and launcher." />
-        <DocCard title="Pikos & Tofus" text="Organize your games and environment presets with intentionally simple terminology." />
-        <DocCard title="Cloud sync" text="Review what Mochi Cloud syncs: metadata, configs, launch settings, devices, and account state." />
-      </div>
-    </PageShell>
-  )
-}
-
+/* Documentation pages are implemented in src/Documentation.tsx. */
 function FaqPage() {
   return (
     <PageShell>
@@ -739,11 +727,14 @@ function StepCard({ step, title, description }: { step: string; title: string; d
 }
 
 function DocCard({ title, text }: { title: string; text: string }) {
+  const section = title === 'Getting started' ? 'getting-started' : title === 'Account management' ? 'account' : title === 'Pikos & Tofus' ? 'pikos-tofus' : 'cloud-sync'
   return (
-    <article className="glass-card p-6">
-      <h3 className="text-xl font-semibold text-white">{title}</h3>
-      <p className="mt-3 text-slate-300">{text}</p>
-    </article>
+    <Link to={`/documentation/${section}`} className="glass-card group block p-6 transition hover:-translate-y-0.5 hover:border-violet-400/40 hover:bg-violet-500/[0.05]">
+      <div className="flex items-start justify-between gap-4">
+        <div><h3 className="text-xl font-semibold text-white">{title}</h3><p className="mt-3 text-slate-300">{text}</p></div>
+        <ArrowRight className="mt-1 h-5 w-5 shrink-0 text-slate-500 transition group-hover:translate-x-1 group-hover:text-violet-300" />
+      </div>
+    </Link>
   )
 }
 
