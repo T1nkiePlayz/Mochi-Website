@@ -43,3 +43,52 @@ button,
 input {
   font: inherit;
 }
+
+
+@keyframes mochi-drift {
+  0%, 100% { transform: translate3d(-3%, -2%, 0) rotate(0deg); }
+  50% { transform: translate3d(3%, 3%, 0) rotate(12deg); }
+}
+
+@keyframes mochi-grid-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, 56px, 0); }
+}
+
+.mochi-orbit {
+  position: absolute;
+  width: 42rem;
+  height: 42rem;
+  border: 1px solid rgba(139, 92, 246, 0.10);
+  border-radius: 9999px;
+  filter: blur(0.2px);
+  animation: mochi-drift 18s ease-in-out infinite;
+}
+
+.mochi-orbit::after {
+  content: '';
+  position: absolute;
+  inset: 18%;
+  border: 1px solid rgba(34, 211, 238, 0.08);
+  border-radius: inherit;
+}
+
+.mochi-orbit-one { left: -20rem; top: 10rem; }
+.mochi-orbit-two { right: -20rem; top: 34rem; animation-delay: -7s; }
+
+.mochi-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.16;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: linear-gradient(to bottom, transparent, black 18%, black 72%, transparent);
+  animation: mochi-grid-drift 12s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mochi-orbit,
+  .mochi-grid { animation: none; }
+}
