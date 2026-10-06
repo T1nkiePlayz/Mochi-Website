@@ -16,13 +16,10 @@ import { HashRouter, NavLink, Route, Routes, Link } from 'react-router-dom'
 import {
   AuthProvider,
   resetPassword,
+  sendMagicLink,
   signInWithPassword,
   signInWithProvider,
-  signInWithPasskey,
   signOutCurrentUser,
-  registerPasskey,
-  listPasskeys,
-  deletePasskey,
   listMfaFactors,
   enrollTotp,
   verifyTotpEnrollment,
@@ -509,6 +506,9 @@ function SignInPage() {
               <button type="button" onClick={() => void run(() => resetPassword(email))} className="rounded-full border border-white/15 bg-white/5 px-5 py-3 font-semibold text-slate-100">
                 Reset password
               </button>
+              <button type="button" onClick={() => void run(() => sendMagicLink(email))} className="rounded-full border border-white/15 bg-white/5 px-5 py-3 font-semibold text-slate-100">
+                Send magic link
+              </button>
               <button type="button" onClick={() => void run(() => signUpWithPassword(email, password))} className="rounded-full border border-white/15 bg-white/5 px-5 py-3 font-semibold text-slate-100">
                 Create account
               </button>
@@ -520,9 +520,6 @@ function SignInPage() {
                   Continue with {provider === 'github' ? 'GitHub' : 'Google'}
                 </button>
               ))}
-              <button type="button" onClick={() => void run(() => signInWithPasskey())} className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-100">
-                Sign in with passkey
-              </button>
             </div>
           </form>}
         </div>
@@ -600,7 +597,6 @@ function SettingsPage() {
   const [sync, setSync] = useState(profile?.cloud_sync_enabled ?? false)
   const [metadata, setMetadata] = useState(profile?.metadata_sync_allowed ?? false)
   const [message, setMessage] = useState('')
-  const [passkeys, setPasskeys] = useState<Array<{ id: string; friendly_name?: string | null }>>([])
   const [mfaFactors, setMfaFactors] = useState<Array<{ id: string; friendly_name?: string | null; status: string }>>([])
   const [mfaQr, setMfaQr] = useState('')
   const [mfaSecret, setMfaSecret] = useState('')
@@ -616,15 +612,8 @@ function SettingsPage() {
   }
 
   const loadSecurity = async () => {
-    const [passkeyResult, mfaResult] = await Promise.all([listPasskeys(), listMfaFactors()])
-    if (!passkeyResult.error) setPasskeys((passkeyResult.data ?? []) as Array<{ id: string; friendly_name?: string | null }>)
+    const [mfaResult] = await Promise.all([listMfaFactors()])
     if (!mfaResult.error) setMfaFactors((mfaResult.data?.totp ?? []) as Array<{ id: string; friendly_name?: string | null; status: string }>)
-  }
-
-  const addPasskey = async () => {
-    const { error } = await registerPasskey()
-    setMessage(error ? error.message : 'Passkey registered successfully.')
-    if (!error) await loadSecurity()
   }
 
   const startMfa = async () => {
@@ -669,18 +658,9 @@ function SettingsPage() {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <button onClick={() => void addPasskey()} className="rounded-full bg-cyan-500/15 border border-cyan-400/30 px-4 py-2 text-sm font-semibold text-cyan-100">Add passkey</button>
         <button onClick={() => void startMfa()} className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-slate-100">Set up authenticator app</button>
         <button onClick={() => void loadSecurity()} className="rounded-full border border-white/10 px-4 py-2 text-sm text-slate-300">Refresh</button>
       </div>
-
-      {passkeys.length > 0 && <div className="space-y-2">
-        <p className="text-sm font-medium text-white">Registered passkeys</p>
-        {passkeys.map((item) => <div key={item.id} className="flex items-center justify-between rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-slate-200">
-          <span>{item.friendly_name || 'Passkey'}</span>
-          <button onClick={() => void deletePasskey(item.id).then(({ error }) => { setMessage(error ? error.message : 'Passkey removed.'); if (!error) void loadSecurity() })} className="text-rose-300">Remove</button>
-        </div>)}
-      </div>}
 
       {mfaFactors.filter((factor) => factor.status === 'verified').length > 0 && <p className="text-sm text-emerald-300">Authenticator-based two-factor authentication is enabled.</p>}
 
