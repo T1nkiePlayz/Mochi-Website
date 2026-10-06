@@ -40,7 +40,6 @@ const navItems = [
   { label: 'Download', to: '/download' },
   { label: 'Docs', to: '/documentation' },
   { label: 'FAQ', to: '/faq' },
-  { label: 'Status', to: '/status' },
 ]
 
 const pillars = [
@@ -60,7 +59,7 @@ const pillars = [
     icon: Cloud,
     title: 'Mochi Cloud',
     description:
-      'Sync the metadata that matters across devices without moving full game installs around the cloud.',
+      'Sync the metadata that matters across devices for selected users without moving full game installs around the cloud.',
   },
 ]
 
@@ -159,7 +158,6 @@ function App() {
             <Route path="/download" element={<DownloadPage />} />
             <Route path="/documentation" element={<DocumentationPage />} />
             <Route path="/faq" element={<FaqPage />} />
-            <Route path="/status" element={<StatusPage />} />
             <Route path="/signin" element={<SignInPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/settings" element={<SettingsPage />} />
@@ -211,7 +209,7 @@ function HomePage() {
           </h1>
 
           <p className="mt-5 max-w-xl text-lg text-slate-300">
-            An adaptable game launcher built for flexibility, local control, and a cloud layer that keeps gamers in sync without forcing all game data online.
+            An adaptable game launcher built for flexibility, local control, and a cloud layer available only to selected users, keeping supported metadata in sync without forcing all game data online.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-4">
@@ -328,8 +326,8 @@ function FeaturePage() {
         {[
           'Library management and game discovery',
           'Custom Tofu environments for profiles and versions',
-          'Cross-device account sync and launcher settings',
-          'Local game installs with cloud metadata support',
+          'Cross-device account sync and launcher settings for selected users',
+          'Local game installs with cloud metadata support for selected users',
           'Secure Supabase authentication and user accounts',
           'Responsive portal for end users and admins',
         ].map((item) => (
@@ -354,7 +352,7 @@ function HowItWorksPage() {
       <div className="grid gap-6 md:grid-cols-3">
         <StepCard step="01" title="Pikos" description="Pikos are the games managed by Mochi. They hold the identity and metadata of the libraries you care about." />
         <StepCard step="02" title="Tofus" description="Tofus are the individual environments or configurations for a game, such as a performance build, a modded profile, or a vanilla install." />
-        <StepCard step="03" title="Mochi Cloud" description="Mochi Cloud syncs accounts, metadata, configurations, and device state, while keeping large game files on the user’s device." />
+        <StepCard step="03" title="Mochi Cloud" description="Mochi Cloud is currently available only to selected users. For those users, it syncs accounts, metadata, configurations, and device state, while keeping large game files on the user’s device." />
       </div>
 
       <div className="glass-card mt-8 p-6 text-slate-200">
@@ -378,10 +376,15 @@ function DownloadPage() {
             <p className="text-sm uppercase tracking-[0.2em] text-violet-200">Latest release</p>
             <h3 className="mt-2 text-2xl font-bold text-white">Linux</h3>
           </div>
-          <button className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-5 py-3 font-semibold text-white shadow-lg shadow-violet-500/25">
+          <a
+            href="https://github.com/T1nkiePlayz/Mochi/releases/latest"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-5 py-3 font-semibold text-white shadow-lg shadow-violet-500/25 transition hover:brightness-110"
+          >
             <Download className="h-4 w-4" />
-            Download
-          </button>
+            Download latest release
+          </a>
         </div>
       </div>
 
@@ -427,20 +430,6 @@ function FaqPage() {
         <FaqItem question="Does Mochi upload entire games to the cloud?" answer="No. The goal is to synchronize useful metadata and configuration data rather than move large game files online." />
         <FaqItem question="Can I use the same account on the website and launcher?" answer="Yes. Mochi Web and the launcher share the same Supabase authentication system and project identity." />
         <FaqItem question="What is a Tofu?" answer="A Tofu is an individual game environment or configuration, such as vanilla, performance, Fabric, or a custom profile." />
-      </div>
-    </PageShell>
-  )
-}
-
-function StatusPage() {
-  return (
-    <PageShell>
-      <SectionHeading eyebrow="Status" title="Platform health" />
-
-      <div className="grid gap-6 md:grid-cols-3">
-        <StatusCard label="Authentication" value="Operational" tone="good" />
-        <StatusCard label="Metadata sync" value="Healthy" tone="good" />
-        <StatusCard label="Download portal" value="Linux available" tone="neutral" />
       </div>
     </PageShell>
   )
@@ -663,7 +652,7 @@ function SettingsPage() {
     <SectionHeading eyebrow="Account settings" title="Control your Mochi cloud experience." />
     <div className="glass-card space-y-6 p-6">
       <label className="block text-sm text-slate-300">Display name<input value={name} onChange={(event) => setName(event.target.value)} className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-white" /></label>
-      <label className="flex items-center justify-between gap-4 text-slate-200"><span><strong className="block text-white">Cloud sync</strong><small className="text-slate-400">Sync account settings across devices.</small></span><input type="checkbox" checked={sync} onChange={(event) => setSync(event.target.checked)} /></label>
+      <label className="flex items-center justify-between gap-4 text-slate-200"><span><strong className="block text-white">Cloud sync</strong><small className="text-slate-400">Available only to selected users. Sync account settings across devices.</small></span><input type="checkbox" checked={sync} onChange={(event) => setSync(event.target.checked)} /></label>
       <label className="flex items-center justify-between gap-4 text-slate-200"><span><strong className="block text-white">Save metadata</strong><small className="text-slate-400">Admin permission: {metadata ? 'enabled' : 'disabled'}.</small></span><input type="checkbox" checked={metadata} onChange={(event) => setMetadata(event.target.checked)} disabled={!metadata && profile?.metadata_sync_allowed === false} /></label>
       <button onClick={() => void save()} className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-5 py-3 font-semibold text-white">Save settings</button>
       {message && <p className="text-sm text-cyan-200">{message}</p>}
