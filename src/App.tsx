@@ -37,6 +37,10 @@ import {
   listMfaFactors,
   enrollTotp,
   verifyTotpEnrollment,
+  unenrollTotp,
+  listPasskeys,
+  registerPasskey,
+  deletePasskey,
   signUpWithPassword,
   setUserMetadataAccess,
   updateMyProfile,
@@ -647,16 +651,114 @@ function AccountTab({ user, profile, refreshProfile }: { user: any; profile: Pro
 
 function SecurityTab({ user }: { user: any }) {
   const [mfaFactors, setMfaFactors] = useState<any[]>([])
-  const [mfaQr, setMfaQr] = useState(''); const [mfaSecret, setMfaSecret] = useState(''); const [mfaFactorId, setMfaFactorId] = useState(''); const [mfaCode, setMfaCode] = useState(''); const [message, setMessage] = useState('')
-  const load = async () => { const { data, error } = await listMfaFactors(); if (error) setMessage(error.message); else setMfaFactors(data?.totp ?? []) }
-  useEffect(() => { void load() }, [])
-  const start = async () => { const { data, error } = await enrollTotp(); if (error) { setMessage(error.message); return }; setMfaFactorId(data.id); setMfaQr(data.totp.qr_code); setMfaSecret(data.totp.secret); setMessage('Scan the QR code, then verify the six-digit code.') }
-  const finish = async () => { const { error } = await verifyTotpEnrollment(mfaFactorId, mfaCode); if (error) { setMessage(error.message); return }; setMfaQr(''); setMfaSecret(''); setMfaFactorId(''); setMfaCode(''); setMessage('Two-factor authentication is enabled.'); await load() }
-  const hasMfa = mfaFactors.some((factor) => factor.status === 'verified'); const providers = new Set((user.identities ?? []).map((identity: any) => identity.provider))
-  const connect = async (provider: 'google' | 'github') => { const { error } = await linkAuthIdentity(provider); if (error) setMessage(error.message) }
-  return <div className="space-y-6"><SectionHeading eyebrow="Security" title="Protect your Mochi account." /><section className="glass-card p-6"><div className="flex items-start justify-between gap-4"><div><h3 className="text-xl font-semibold text-white">Authenticator app</h3><p className="mt-2 text-sm leading-6 text-slate-400">Use TOTP two-factor authentication for an extra layer of protection.</p></div><Shield className="h-6 w-6 text-violet-300" /></div><div className="mt-5 flex flex-wrap gap-3"><span className={hasMfa ? 'rounded-full bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-300' : 'rounded-full bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-300'}>{hasMfa ? 'Enabled' : 'Not configured'}</span><button onClick={() => void start()} className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white">{hasMfa ? 'Add another authenticator' : 'Set up authenticator app'}</button><button onClick={() => void load()} className="rounded-full border border-white/10 px-4 py-2 text-sm text-slate-300"><RefreshCw className="mr-2 inline h-4 w-4" />Refresh</button></div>{mfaQr && <div className="mt-5 rounded-2xl border border-white/10 bg-slate-900/60 p-5"><img src={mfaQr} alt="Authenticator setup QR code" className="h-48 w-48 rounded-xl bg-white p-2" /><p className="mt-3 break-all text-xs text-slate-400">Manual setup key: {mfaSecret}</p><div className="mt-4 flex gap-2"><input value={mfaCode} onChange={(e) => setMfaCode(e.target.value)} inputMode="numeric" maxLength={6} placeholder="123456" className="w-32 rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /><button onClick={() => void finish()} className="rounded-xl bg-violet-500 px-4 py-2 text-sm font-semibold text-white">Verify</button></div></div>}</section>
-    <section className="glass-card p-6"><div><h3 className="text-xl font-semibold text-white">Connected accounts</h3><p className="mt-2 text-sm leading-6 text-slate-400">Connect Google or GitHub to the same Mochi account.</p></div><div className="mt-5 grid gap-3 sm:grid-cols-2">{(['google', 'github'] as const).map((provider) => <div key={provider} className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/50 p-4"><div className="flex items-center gap-3"><Link2 className="h-4 w-4 text-violet-300" /><span className="font-medium capitalize text-white">{provider}</span></div>{providers.has(provider) ? <span className="text-sm font-semibold text-emerald-300">Connected</span> : <button onClick={() => void connect(provider)} className="rounded-full border border-white/15 px-3 py-1.5 text-sm text-slate-200">Connect</button>}</div>)}</div></section>
-    <section className="glass-card p-6"><div className="flex items-start gap-4"><KeyRound className="mt-1 h-6 w-6 text-cyan-300" /><div><h3 className="text-xl font-semibold text-white">Passkeys</h3><p className="mt-2 text-sm leading-6 text-slate-400">Passkey management is not exposed by Mochi’s current authentication stack yet, so this is shown as a real availability status rather than a fake setup control.</p></div></div></section>{message && <p className="rounded-2xl border border-cyan-400/20 bg-cyan-500/5 p-4 text-sm text-cyan-200">{message}</p>}</div>
+  const [mfaQr, setMfaQr] = useState('')
+  const [mfaSecret, setMfaSecret] = useState('')
+  const [mfaFactorId, setMfaFactorId] = useState('')
+  const [mfaCode, setMfaCode] = useState('')
+  const [passkeys, setPasskeys] = useState<any[]>([])
+  const [message, setMessage] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const loadMfa = async () => {
+    const { data, error } = await listMfaFactors()
+    if (error) setMessage(error.message)
+    else setMfaFactors([...(data?.totp ?? [])])
+  }
+  const loadPasskeys = async () => {
+    const { data, error } = await listPasskeys()
+    if (error) setMessage(error.message)
+    else setPasskeys(data ?? [])
+  }
+  useEffect(() => { void loadMfa(); void loadPasskeys() }, [])
+
+  const verifiedFactors = mfaFactors.filter((factor) => factor.status === 'verified')
+  const pendingFactors = mfaFactors.filter((factor) => factor.status !== 'verified')
+
+  const start = async () => {
+    if (pendingFactors.length > 0) {
+      const factor = pendingFactors[0]
+      setMfaFactorId(factor.id)
+      setMfaQr(factor.totp?.qr_code ?? '')
+      setMfaSecret(factor.totp?.secret ?? '')
+      setMessage('You already started authenticator setup. Finish it below, or cancel the pending setup.')
+      return
+    }
+    const { data, error } = await enrollTotp()
+    if (error) { setMessage(error.message); return }
+    setMfaFactorId(data.id)
+    setMfaQr(data.totp.qr_code)
+    setMfaSecret(data.totp.secret)
+    setMessage('Scan the QR code, then enter the six-digit code from your authenticator app.')
+  }
+
+  const finish = async () => {
+    if (!mfaFactorId || !mfaCode) return
+    const { error } = await verifyTotpEnrollment(mfaFactorId, mfaCode)
+    if (error) { setMessage(error.message); return }
+    setMfaQr(''); setMfaSecret(''); setMfaFactorId(''); setMfaCode('')
+    setMessage('Two-factor authentication is enabled. Other sessions may need to sign in again.')
+    await loadMfa()
+  }
+
+  const cancelPending = async () => {
+    if (!mfaFactorId) return
+    const { error } = await unenrollTotp(mfaFactorId)
+    if (error) setMessage(error.message)
+    else {
+      setMfaQr(''); setMfaSecret(''); setMfaFactorId(''); setMfaCode('')
+      setMessage('Pending authenticator setup cancelled.')
+      await loadMfa()
+    }
+  }
+
+  const removeVerified = async (factorId: string) => {
+    const { error } = await unenrollTotp(factorId)
+    setMessage(error ? error.message : 'Authenticator removed.')
+    if (!error) await loadMfa()
+  }
+
+  const providers = new Set((user.identities ?? []).map((identity: any) => identity.provider))
+  const connect = async (provider: 'google' | 'github') => {
+    setMessage('')
+    const { error } = await linkAuthIdentity(provider)
+    if (error) setMessage(error.message)
+  }
+
+  const addPasskey = async () => {
+    setBusy(true); setMessage('')
+    const { error } = await registerPasskey()
+    if (error) setMessage(error.message)
+    else { setMessage('Passkey registered successfully.'); await loadPasskeys() }
+    setBusy(false)
+  }
+  const removePasskey = async (id: string) => {
+    setBusy(true); setMessage('')
+    const { error } = await deletePasskey(id)
+    if (error) setMessage(error.message)
+    else { setMessage('Passkey removed.'); await loadPasskeys() }
+    setBusy(false)
+  }
+
+  return <div className="space-y-6">
+    <SectionHeading eyebrow="Security" title="Protect your Mochi account." />
+    <section className="glass-card p-6">
+      <div className="flex items-start justify-between gap-4"><div><h3 className="text-xl font-semibold text-white">Authenticator app</h3><p className="mt-2 text-sm leading-6 text-slate-400">Use TOTP two-factor authentication for an extra layer of protection.</p></div><Shield className="h-6 w-6 text-violet-300" /></div>
+      <div className="mt-5 flex flex-wrap gap-3">
+        <span className={verifiedFactors.length ? 'rounded-full bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-300' : 'rounded-full bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-300'}>{verifiedFactors.length ? 'Enabled' : pendingFactors.length ? 'Setup started' : 'Not configured'}</span>
+        {!mfaFactorId && <button onClick={() => void start()} className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white">{verifiedFactors.length ? 'Add another authenticator' : pendingFactors.length ? 'Continue setup' : 'Set up authenticator app'}</button>}
+        <button onClick={() => void loadMfa()} className="rounded-full border border-white/10 px-4 py-2 text-sm text-slate-300"><RefreshCw className="mr-2 inline h-4 w-4" />Refresh</button>
+        {verifiedFactors.map((factor) => <button key={factor.id} onClick={() => void removeVerified(factor.id)} className="rounded-full border border-rose-400/20 bg-rose-500/5 px-4 py-2 text-sm font-semibold text-rose-200">Remove authenticator</button>)}
+      </div>
+      {mfaFactorId && <div className="mt-5 rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+        {mfaQr ? <img src={mfaQr} alt="Authenticator setup QR code" className="h-48 w-48 rounded-xl bg-white p-2" /> : <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-300">Your authenticator setup is waiting for verification.</div>}
+        <p className="mt-3 break-all text-xs text-slate-400">Manual setup key: {mfaSecret || 'Use the authenticator entry you already created.'}</p>
+        <div className="mt-4 flex flex-wrap gap-2"><input value={mfaCode} onChange={(e) => setMfaCode(e.target.value)} inputMode="numeric" maxLength={6} placeholder="123456" className="w-32 rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /><button onClick={() => void finish()} className="rounded-xl bg-violet-500 px-4 py-2 text-sm font-semibold text-white">Verify</button><button onClick={() => void cancelPending()} className="rounded-xl border border-white/15 px-4 py-2 text-sm text-slate-300">Cancel setup</button></div>
+      </div>}
+    </section>
+    <section className="glass-card p-6"><div><h3 className="text-xl font-semibold text-white">Connected accounts</h3><p className="mt-2 text-sm leading-6 text-slate-400">Connect Google or GitHub to this Mochi account. You will be redirected to the provider and returned here.</p></div><div className="mt-5 grid gap-3 sm:grid-cols-2">{(['google', 'github'] as const).map((provider) => <div key={provider} className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/50 p-4"><div className="flex items-center gap-3"><Link2 className="h-4 w-4 text-violet-300" /><span className="font-medium capitalize text-white">{provider}</span></div>{providers.has(provider) ? <span className="text-sm font-semibold text-emerald-300">Connected</span> : <button onClick={() => void connect(provider)} className="rounded-full border border-white/15 px-3 py-1.5 text-sm text-slate-200">Connect</button>}</div>)}</div></section>
+    <section className="glass-card p-6"><div className="flex items-start justify-between gap-4"><div><h3 className="text-xl font-semibold text-white">Passkeys</h3><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">Use your device, password manager, biometrics, or security key to sign in without typing a password. Passkeys require WebAuthn to be enabled for the Mochi domain in Supabase.</p></div><KeyRound className="h-6 w-6 text-cyan-300" /></div><div className="mt-5 space-y-3">{passkeys.length ? passkeys.map((passkey) => <div key={passkey.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/50 p-4"><div><p className="font-medium text-white">{passkey.friendly_name || 'Mochi passkey'}</p><p className="mt-1 text-xs text-slate-500">Added {passkey.created_at ? new Date(passkey.created_at).toLocaleDateString() : 'recently'}</p></div><button disabled={busy} onClick={() => void removePasskey(passkey.id)} className="rounded-full border border-rose-400/20 bg-rose-500/5 px-3 py-1.5 text-sm font-semibold text-rose-200">Remove</button></div>) : <p className="text-sm text-slate-400">No passkeys registered yet.</p>}<button disabled={busy} onClick={() => void addPasskey()} className="rounded-full bg-cyan-500/15 px-4 py-2 text-sm font-semibold text-cyan-200 ring-1 ring-cyan-400/20">{busy ? 'Opening passkey setup…' : 'Set up a passkey'}</button></div></section>
+    {message && <p className="rounded-2xl border border-cyan-400/20 bg-cyan-500/5 p-4 text-sm text-cyan-200">{message}</p>}
+  </div>
 }
 
 function CloudTab({ profile }: { profile: Profile | null }) {
