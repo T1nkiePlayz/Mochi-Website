@@ -15,6 +15,7 @@ import { DocumentationPage, DocumentationArticlePage } from './Documentation'
 import { HashRouter, NavLink, Route, Routes, Link } from 'react-router-dom'
 import {
   AuthProvider,
+  supabase,
   resetPassword,
   sendMagicLink,
   signInWithPassword,
