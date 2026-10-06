@@ -46,7 +46,10 @@ export async function signInWithProvider(provider: 'github' | 'google' | 'discor
   if (!supabase) return { error: new Error(notConfigured) }
   return supabase.auth.signInWithOAuth({
     provider,
-    options: { redirectTo: window.location.origin + window.location.hash },
+    // HashRouter routes live in the URL fragment. OAuth/PKCE codes must stay in
+    // the real query string, so redirect to the site origin and let Supabase
+    // detect the returned session before HashRouter takes over.
+    options: { redirectTo: window.location.origin },
   })
 }
 
