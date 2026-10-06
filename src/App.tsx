@@ -821,7 +821,7 @@ function ApiTab() {
   const save = async (provider: 'nexus' | 'igdb') => {
     const value = provider === 'nexus' ? nexusKey.trim() : igdbKey.trim()
     if (!value) {
-      setMessage(\`Enter your \${provider === 'nexus' ? 'Nexus Mods' : 'IGDB'} credential first.\`)
+      setMessage(`Enter your ${provider === 'nexus' ? 'Nexus Mods' : 'IGDB'} credential first.`)
       return
     }
     setSaving(provider)
