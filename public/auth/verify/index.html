@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify your Mochi account</title>
+  <meta name="robots" content="noindex">
+  <script>
+    (function () {
+      var query = window.location.search;
+      var params = new URLSearchParams(query);
+      var tokenHash = params.get('token_hash');
+      var type = params.get('type');
+      var target = params.get('target');
+
+      if (!tokenHash || type !== 'email') {
+        window.location.replace('/#/auth/verify');
+        return;
+      }
+
+      var encodedQuery =
+        '?token_hash=' + encodeURIComponent(tokenHash) +
+        '&type=' + encodeURIComponent(type);
+
+      if (target === 'desktop') {
+        window.location.replace('mochi://auth/verify' + encodedQuery);
+        return;
+      }
+
+      window.location.replace('/#/auth/verify' + encodedQuery);
+    })();
+  </script>
+</head>
+<body>
+  <p>Opening Mochi verification…</p>
+</body>
+</html>
