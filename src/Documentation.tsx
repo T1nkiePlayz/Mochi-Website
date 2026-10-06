@@ -118,6 +118,7 @@ function GettingStarted(){return <div className="space-y-9">
 </Section>
 <Section id="launch-targets" title="7. Launch targets">
   <p>A launch target is the value Mochi passes to the native launcher when the user presses Play. It is deliberately broader than an executable path: the target may be an executable, a <code>.desktop</code> file, a script, or a Flatpak application reference.</p>
+  <p>The current desktop build sends the target to the Tauri <code>launch_game</code> command. On Linux, <code>.desktop</code> files use <code>gio launch</code> with an <code>xdg-open</code> fallback; Flatpak references use <code>flatpak run</code>; <code>.sh</code>/<code>.bash</code>, <code>.py</code>, and <code>.js</code> use <code>sh</code>, <code>python3</code>, and <code>node</code>. Other targets are spawned directly. Installed-Flatpak discovery is currently Linux-only.</p>
   <p>The native file dialog is provided by the Tauri dialog plugin. On Linux, Flatpak discovery asks the installed <code>flatpak</code> command for application IDs and names, then reads application metadata to classify entries as <strong>Games</strong> or <strong>Other</strong>. Games are sorted ahead of other installed applications in the picker.</p>
   <Diagram title="Choosing a launch target">
     <div className="flex min-w-[900px] items-center justify-center gap-3 text-xs">
@@ -130,13 +131,6 @@ function GettingStarted(){return <div className="space-y-9">
 <Section id="igdb" title="7. IGDB metadata">
   <p>When an IGDB API configuration is provided, Mochi can use it to improve the metadata associated with a game. The intended user experience is deliberately confirmable rather than silently guessing.</p>
   <p>After the user supplies the game, the flow can present the match Mochi believes is correct. The user can approve that result or correct it by choosing one of the similar matches returned by the lookup. This keeps external metadata from silently changing the identity of a user's game.</p>
-  <Diagram title="IGDB-assisted identification">
-    <div className="flex min-w-[820px] items-center justify-center gap-2 text-xs">
-      <Box title="User adds game" /><span className="text-slate-500">→</span><Box title="IGDB search" muted/><span className="text-slate-500">→</span><Box title="Likely match" /><span className="text-slate-500">→</span>
-      <div className="flex flex-col gap-2"><Box title="Approve" /><Box title="Choose similar match" muted/></div>
-      <span className="text-slate-500">→</span><Box title="Confirmed Piko metadata" />
-    </div>
-  </Diagram>
   <p>IGDB credentials are launcher configuration rather than part of the Piko/Tofu cloud library. This keeps an external API credential separate from ordinary synchronised game metadata.</p>
 </Section>
 <Section id="tofu" title="8. Creating a Tofu">
@@ -288,10 +282,16 @@ function CloudSync(){return <div className="space-y-9">
 <Section id="architecture" title="2. Cloud architecture">
   <p>The cloud system sits beside the local launcher rather than underneath it. Local data can continue to exist when the network is unavailable.</p>
   <Diagram title="Local-first sync architecture">
-    <div className="flex min-w-[820px] items-center justify-center gap-3 text-xs">
-      <div className="flex flex-col gap-2"><Box title="Mochi UI" /><Box title="Local library" muted/></div>
-      <div className="flex flex-col items-center gap-2"><span>↕</span><Box title="Sync engine" >pull · push · ownership checks</Box></div>
-      <div className="flex flex-col gap-2"><Box title="Authenticated account" muted/><Box title="Cloud database" muted>profiles · Pikos · Tofus</Box></div>
+    <div className="flex min-w-[900px] flex-col items-center gap-3 text-xs">
+      <Box title="Mochi on your device">UI · local library · launcher settings</Box>
+      <div className="text-slate-500">↕ library synchronisation</div>
+      <Box title="Cloud sync service" muted>pulls and pushes supported metadata for the signed-in account</Box>
+      <div className="text-slate-500">↓ authenticated requests</div>
+      <Box title="Cloud database" muted>profiles · Pikos · Tofus</Box>
+      <div className="flex items-center gap-8 pt-1">
+        <div className="flex flex-col items-center gap-2"><span className="text-slate-500">↑</span><Box title="Auth identity" muted>identifies the signed-in account</Box></div>
+        <div className="flex flex-col items-center gap-2"><span className="text-slate-500">↓</span><Box title="Piko records" muted>game metadata owned by the account</Box><span className="text-slate-500">↓ parent relationship</span><Box title="Tofu records" muted>environment metadata belonging to a Piko</Box></div>
+      </div>
     </div>
   </Diagram>
   <p>The synchronisation layer is responsible for moving supported metadata between these sides. It is not responsible for uploading a complete game installation.</p>
