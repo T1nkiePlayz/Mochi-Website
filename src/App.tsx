@@ -726,7 +726,8 @@ function StepCard({ step, title, description }: { step: string; title: string; d
   )
 }
 
-function DocCard({ title, text }: { title: string; text: string }) {
+/* Documentation cards are implemented in src/Documentation.tsx. */
+function DocCard_REMOVED({ title, text }: { title: string; text: string }) {
   const section = title === 'Getting started' ? 'getting-started' : title === 'Account management' ? 'account' : title === 'Pikos & Tofus' ? 'pikos-tofus' : 'cloud-sync'
   return (
     <Link to={`/documentation/${section}`} className="glass-card group block p-6 transition hover:-translate-y-0.5 hover:border-violet-400/40 hover:bg-violet-500/[0.05]">
