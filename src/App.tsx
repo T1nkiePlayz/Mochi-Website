@@ -677,12 +677,39 @@ function SecurityTab({ user }: { user: any }) {
   const start = async () => {
     if (pendingFactors.length > 0) {
       const factor = pendingFactors[0]
+
+      // Supabase does not reliably return the original TOTP secret/QR data
+      // after an enrollment has been started and the page is refreshed.
+      // If the pending factor has no setup material, remove that stale
+      // enrollment and immediately create a fresh one instead of showing a
+      // dead-end "already exists" error.
+      if (!factor.totp?.qr_code && !factor.totp?.secret) {
+        const { error: unenrollError } = await unenrollTotp(factor.id)
+        if (unenrollError) {
+          setMessage(unenrollError.message)
+          return
+        }
+        const { data: freshData, error: enrollError } = await enrollTotp()
+        if (enrollError) {
+          setMessage(enrollError.message)
+          await loadMfa()
+          return
+        }
+        setMfaFactorId(freshData.id)
+        setMfaQr(freshData.totp.qr_code)
+        setMfaSecret(freshData.totp.secret)
+        setMessage('Your previous unfinished setup was cleared. Scan this new QR code, then enter the six-digit code from your authenticator app.')
+        await loadMfa()
+        return
+      }
+
       setMfaFactorId(factor.id)
-      setMfaQr(factor.totp?.qr_code ?? '')
-      setMfaSecret(factor.totp?.secret ?? '')
+      setMfaQr(factor.totp.qr_code)
+      setMfaSecret(factor.totp.secret)
       setMessage('You already started authenticator setup. Finish it below, or cancel the pending setup.')
       return
     }
+
     const { data, error } = await enrollTotp()
     if (error) { setMessage(error.message); return }
     setMfaFactorId(data.id)
@@ -744,7 +771,7 @@ function SecurityTab({ user }: { user: any }) {
     <section className="glass-card p-6">
       <div className="flex items-start justify-between gap-4"><div><h3 className="text-xl font-semibold text-white">Authenticator app</h3><p className="mt-2 text-sm leading-6 text-slate-400">Use TOTP two-factor authentication for an extra layer of protection.</p></div><Shield className="h-6 w-6 text-violet-300" /></div>
       <div className="mt-5 flex flex-wrap gap-3">
-        <span className={verifiedFactors.length ? 'rounded-full bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-300' : 'rounded-full bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-300'}>{verifiedFactors.length ? 'Enabled' : pendingFactors.length ? 'Setup started' : 'Not configured'}</span>
+        <span className={verifiedFactors.length ? 'inline-flex items-center justify-center rounded-full bg-emerald-500/10 px-3 py-1.5 text-center text-xs font-semibold text-emerald-300' : 'inline-flex items-center justify-center rounded-full bg-amber-500/10 px-3 py-1.5 text-center text-xs font-semibold text-amber-300'}>{verifiedFactors.length ? 'Enabled' : pendingFactors.length ? 'Setup started' : 'Not configured'}</span>
         {!mfaFactorId && <button onClick={() => void start()} className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white">{verifiedFactors.length ? 'Add another authenticator' : pendingFactors.length ? 'Continue setup' : 'Set up authenticator app'}</button>}
         <button onClick={() => void loadMfa()} className="rounded-full border border-white/10 px-4 py-2 text-sm text-slate-300"><RefreshCw className="mr-2 inline h-4 w-4" />Refresh</button>
         {verifiedFactors.map((factor) => <button key={factor.id} onClick={() => void removeVerified(factor.id)} className="rounded-full border border-rose-400/20 bg-rose-500/5 px-4 py-2 text-sm font-semibold text-rose-200">Remove authenticator</button>)}
