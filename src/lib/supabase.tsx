@@ -179,6 +179,11 @@ export async function setUserMetadataAccess(userId: string, allowed: boolean) {
   return supabase.rpc('admin_set_metadata_access', { target_user_id: userId, allowed })
 }
 
+export async function setUserCloudSync(userId: string, enabled: boolean) {
+  if (!supabase) return { error: new Error(notConfigured) }
+  return supabase.rpc('admin_set_cloud_sync', { target_user_id: userId, enabled })
+}
+
 type AuthContextValue = {
   session: Session | null
   user: User | null
