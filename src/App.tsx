@@ -203,58 +203,30 @@ function HomePage() {
         <div className="absolute right-[14%] top-[38rem] h-1.5 w-1.5 rounded-full bg-cyan-200/70" />
       </div>
 
-      <section className="relative grid min-h-[620px] items-center gap-12 overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/45 px-6 py-16 sm:px-10 lg:grid-cols-[1.1fr_.9fr] lg:px-14">
-        <div className="absolute -left-32 top-10 h-72 w-72 rounded-full bg-violet-600/20 blur-3xl" />
-        <div className="absolute -right-24 bottom-0 h-80 w-80 rounded-full bg-cyan-500/15 blur-3xl" />
-        <div className="relative z-10">
+      <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/45 px-6 py-20 sm:px-10 lg:px-14">
+        <div className="absolute -left-32 top-0 h-96 w-96 rounded-full bg-violet-600/20 blur-3xl mochi-glow mochi-glow-one" />
+        <div className="absolute -right-32 bottom-0 h-96 w-96 rounded-full bg-cyan-500/15 blur-3xl mochi-glow mochi-glow-two" />
+        <div className="relative z-10 mx-auto max-w-5xl text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-violet-200">
             <Sparkles className="h-4 w-4" /> Linux-first game launcher
           </div>
-          <h1 className="mt-6 max-w-3xl text-5xl font-black tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl">
-            Your games.<br /><span className="bg-gradient-to-r from-violet-300 via-white to-cyan-300 bg-clip-text text-transparent">Your way.</span>
+          <h1 className="mt-7 text-5xl font-black tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl">
+            Your games, <span className="bg-gradient-to-r from-violet-300 via-white to-cyan-300 bg-clip-text text-transparent">your way.</span>
           </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl">
+          <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl">
             Mochi is a flexible desktop game launcher built around local control. Bring your games together, give every setup its own environment, and use optional online services when they actually help.
           </p>
-          <div className="mt-9 flex flex-wrap gap-4">
-            <Link to="/download" className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-6 py-3.5 font-semibold text-white shadow-xl shadow-violet-500/25 transition hover:scale-[1.02] hover:brightness-110">
-              Get Mochi <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link to="/documentation" className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-6 py-3.5 font-semibold text-slate-100 transition hover:border-violet-400/40 hover:bg-white/10">
-              Explore the docs
-            </Link>
+          <div className="mt-9 flex justify-center gap-4 flex-wrap">
+            <Link to="/download" className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-6 py-3.5 font-semibold text-white shadow-xl shadow-violet-500/25 transition hover:scale-[1.02] hover:brightness-110">Get Mochi <ArrowRight className="h-4 w-4" /></Link>
+            <Link to="/documentation" className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-6 py-3.5 font-semibold text-slate-100 transition hover:border-violet-400/40 hover:bg-white/10">Explore the docs</Link>
           </div>
-          <div className="mt-10 grid max-w-2xl gap-4 sm:grid-cols-3">
-            {[
-              ['Local-first', 'Games stay on your device'],
-              ['Piko + Tofu', 'Game + environment model'],
-              ['Linux today', 'Windows & macOS planned'],
-            ].map(([title,text]) => <div key={title} className="border-l border-white/10 pl-4"><p className="font-semibold text-white">{title}</p><p className="mt-1 text-sm text-slate-400">{text}</p></div>)}
-          </div>
-        </div>
-
-        <div className="relative z-10 mx-auto w-full max-w-md">
-          <div className="glass-card relative overflow-hidden p-5 shadow-2xl shadow-violet-950/30">
-            <div className="mb-4 flex items-center justify-between">
-              <div><p className="text-[11px] uppercase tracking-[0.2em] text-violet-300">Mochi library</p><p className="mt-1 font-semibold text-white">Ready to play</p></div>
-              <div className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-200">Local</div>
-            </div>
-            <div className="space-y-3">
-              <div className="rounded-2xl border border-violet-400/20 bg-violet-500/[0.07] p-4">
-                <div className="flex items-center justify-between"><div><p className="text-xs text-violet-300">Piko</p><p className="mt-1 text-xl font-bold text-white">Example Game</p></div><Gamepad2 className="h-7 w-7 text-violet-300" /></div>
-                <div className="mt-4 grid gap-2">
-                  {['Vanilla · Ready','Performance · Ready','Mods · Needs attention'].map((x,i)=><div key={x} className="flex items-center justify-between rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2 text-sm"><span className="text-slate-200">{x.split(' · ')[0]}</span><span className={i===2?'text-amber-300':'text-emerald-300'}>{x.split(' · ')[1]}</span></div>)}
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4"><p className="text-xs text-slate-500">Launch target</p><p className="mt-2 truncate text-sm font-semibold text-white">/games/example</p></div>
-                <div className="rounded-2xl border border-cyan-400/15 bg-cyan-500/[0.05] p-4"><p className="text-xs text-cyan-300">Cloud</p><p className="mt-2 text-sm font-semibold text-white">Metadata only</p></div>
-              </div>
-            </div>
+          <div className="mt-12 grid gap-3 text-left sm:grid-cols-3">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"><p className="font-semibold text-white">Local-first</p><p className="mt-1 text-sm text-slate-400">Games stay on your device.</p></div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"><p className="font-semibold text-white">Piko + Tofu</p><p className="mt-1 text-sm text-slate-400">Separate game identity from environment.</p></div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"><p className="font-semibold text-white">Linux today</p><p className="mt-1 text-sm text-slate-400">Windows and macOS are planned.</p></div>
           </div>
         </div>
       </section>
-
       <section>
         <div className="max-w-3xl">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-300">Why Mochi</p>
@@ -266,18 +238,24 @@ function HomePage() {
         </div>
       </section>
 
-      <section className="grid items-start gap-10 lg:grid-cols-[.8fr_1.2fr]">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">The Mochi model</p>
-          <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl">Simple concepts. Lots of room to grow.</h2>
-          <p className="mt-4 leading-7 text-slate-400">The core model separates a game’s identity from the way you run it.</p>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {pillars.map(({icon:Icon,title,description}) => <article key={title} className="glass-card p-6"><Icon className="h-6 w-6 text-violet-300"/><h3 className="mt-4 text-xl font-semibold text-white">{title}</h3><p className="mt-3 leading-7 text-slate-300">{description}</p></article>)}
-          <div className="glass-card p-6 sm:col-span-2"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">Think of it like this</p><p className="mt-3 text-lg text-slate-200"><strong className="text-white">Piko = what you play.</strong> <span className="text-slate-400">Tofu = how you play it.</span></p></div>
+      <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.02] p-7 sm:p-10 lg:p-12">
+        <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
+        <div className="relative">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">The Mochi model</p>
+            <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl">Simple concepts. Lots of room to grow.</h2>
+            <p className="mt-4 leading-7 text-slate-400">The core model separates a game’s identity from the way you run it, so one game can have as many environments as you need.</p>
+          </div>
+          <div className="mt-10 grid gap-4 lg:grid-cols-3">
+            {pillars.map(({icon:Icon,title,description}) => <article key={title} className="glass-card p-6 transition hover:-translate-y-1 hover:border-violet-400/30"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-500/10 text-violet-200"><Icon className="h-6 w-6"/></div><h3 className="mt-5 text-xl font-semibold text-white">{title}</h3><p className="mt-3 leading-7 text-slate-300">{description}</p></article>)}
+          </div>
+          <div className="mt-5 grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-center">
+            <div className="rounded-2xl border border-violet-400/20 bg-violet-500/[0.07] p-5 text-center"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">Piko</p><p className="mt-2 text-lg font-bold text-white">What you play</p><p className="mt-1 text-sm text-slate-400">The game’s identity and library record.</p></div>
+            <div className="hidden text-2xl text-slate-500 md:block">→</div>
+            <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/[0.06] p-5 text-center"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">Tofu</p><p className="mt-2 text-lg font-bold text-white">How you play it</p><p className="mt-1 text-sm text-slate-400">A specific environment, setup, or configuration.</p></div>
+          </div>
         </div>
       </section>
-
       <section>
         <div className="max-w-3xl">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-300">From library to launch</p>
