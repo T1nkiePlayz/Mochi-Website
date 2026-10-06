@@ -87,7 +87,7 @@ const providerOptions = [
   'Google',
 ]
 
-function useAuthHeader() {
+function AuthHeader() {
   const { user, profile } = useAuth()
   if (!user) {
     return (
@@ -148,7 +148,7 @@ function App() {
               >
                 Download
               </Link>
-              {useAuthHeader()}
+              <AuthHeader />
             </div>
           </div>
         </header>
