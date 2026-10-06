@@ -130,7 +130,8 @@ function GettingStarted(){return <div className="space-y-9">
 </Section>
 <Section id="igdb" title="7. IGDB metadata">
   <p>When an IGDB API configuration is provided, Mochi can use it to improve the metadata associated with a game. The intended user experience is deliberately confirmable rather than silently guessing.</p>
-  <p>After the user supplies the game, the flow can present the match Mochi believes is correct. The user can approve that result or correct it by choosing one of the similar matches returned by the lookup. This keeps external metadata from silently changing the identity of a user's game.</p>
+  <p>After the user supplies the game, Mochi can present candidates returned by IGDB. The current lookup requests up to six candidates and includes the game name, summary, cover/artwork URLs, genres, and first release date. The user can approve a candidate or choose a different match instead of silently accepting an external guess.</p>
+  <p>When IGDB is configured, its credentials are stored in Mochi's local settings and the browser calls IGDB directly. They are not sent through Mochi's cloud-sync layer. If IGDB is not configured or no useful match is found, the game can still be added without IGDB metadata.</p>
   <p>IGDB credentials are launcher configuration rather than part of the Piko/Tofu cloud library. This keeps an external API credential separate from ordinary synchronised game metadata.</p>
 </Section>
 <Section id="tofu" title="8. Creating a Tofu">
@@ -243,6 +244,7 @@ function PikosTofus(){return <div className="space-y-9">
 <Section id="piko" title="3. Piko model">
   <p>The current Piko model contains a stable identifier, name, description, accent, artwork, optional artwork URL, optional executable path, source classification, and a collection of Tofus.</p>
   <p>Source classification distinguishes built-in and custom entries. This gives Mochi room to add detected or integrated sources later without changing the fundamental game model.</p>
+  <p>Custom games can also carry categories. When IGDB metadata is accepted, Mochi derives categories from the returned genres; without metadata, a custom game falls back to <strong>Other</strong>. The current library groups visible Pikos by their first category.</p>
   <p>The executable path is machine-specific integration data. A path that works on one computer may not exist on another, even when the Piko's descriptive metadata is identical.</p>
 </Section>
 <Section id="tofu" title="4. Tofu model">
@@ -297,20 +299,20 @@ function CloudSync(){return <div className="space-y-9">
   <p>The synchronisation layer is responsible for moving supported metadata between these sides. It is not responsible for uploading a complete game installation.</p>
 </Section>
 <Section id="data" title="3. Synchronised data">
-  <p>The current schema stores <code>profiles</code>, <code>pikos</code>, and <code>tofus</code>. Profile records contain account-level preferences and access state. Pikos contain game metadata. Tofus contain environment metadata.</p>
+  <p>The current schema stores <code>profiles</code>, <code>pikos</code>, and <code>tofus</code>. Profile records contain account-level profile and cloud-sync preferences. Pikos contain game metadata. Tofus contain environment metadata.</p>
   <p>Piko records can include names, descriptions, accents, artwork, source classification, and executable-path metadata. Tofu records include names, versions, runtimes, mod counts, and status.</p>
   <p>Optional IGDB credentials remain local launcher settings rather than becoming ordinary cloud Piko/Tofu data.</p>
 </Section>
 <Section id="pull" title="4. Pull behaviour">
-  <p>A pull begins after the launcher has an authenticated identity and is permitted to use cloud metadata. Mochi retrieves Pikos owned by that account and then retrieves their related Tofus.</p>
-  <p>If cloud data exists, it can populate or update the local library. If the account has no cloud library yet, the local library can initialise the cloud representation.</p>
+  <p>A pull begins after the launcher has an authenticated identity. Mochi retrieves Pikos owned by that account and then retrieves their related Tofus through the Piko relationship.</p>
+  <p>If cloud data exists, it can populate or update the local library. If the account has no cloud library yet, the local library can initialise the cloud representation. In the current implementation, an authenticated session first attempts a pull; an empty cloud library triggers an initial push of the local library. Later local library changes trigger another push while the session remains active.</p>
   <Diagram title="Pull flow">
     <div className="flex min-w-[760px] items-center justify-center gap-2 text-xs"><Box title="Authenticated Mochi" /><span>→</span><Box title="Request Pikos" muted/><span>→</span><Box title="Load Tofus" muted/><span>→</span><Box title="Merge into local state" /></div>
   </Diagram>
 </Section>
 <Section id="push" title="5. Push behaviour">
   <p>A push takes supported local library records and writes them to the cloud using the authenticated account and stable identifiers. Pikos are written before their child Tofus so the parent relationship can be established safely.</p>
-  <p>Records that no longer exist locally can be removed from the cloud representation. This prevents old entries from accumulating forever when the user cleans up their library.</p>
+  <p>Records that no longer exist locally can be removed from the cloud representation. The current push implementation upserts Pikos first, removes stale Pikos, removes stale Tofus, and then upserts the remaining Tofus.</p>
   <p>The current implementation is a straightforward replication model, not a complete multi-device conflict-resolution engine.</p>
   <Diagram title="Push flow">
     <div className="flex min-w-[820px] items-center justify-center gap-2 text-xs"><Box title="Local library" /><span>→</span><Box title="Stable IDs" /><span>→</span><Box title="Upsert Pikos" muted/><span>→</span><Box title="Upsert Tofus" muted/><span>→</span><Box title="Cloud library" /></div>
@@ -321,7 +323,7 @@ function CloudSync(){return <div className="space-y-9">
   <Diagram title="Database relationships">
     <div className="flex min-w-[700px] flex-col items-center gap-3 text-xs"><Box title="auth identity" muted>authenticated user</Box><div>↓</div><Box title="profiles" >one profile per account</Box><div>↓ ownership</div><Box title="pikos" >many Pikos per account</Box><div>↓ parent_id</div><Box title="tofus" >many Tofus per Piko</Box></div>
   </Diagram>
-  <p>Unique constraints prevent duplicate local identifiers within their ownership scope, while indexes support common account and parent-child queries. Tofu records use their Piko relationship rather than pretending a Tofu is an independent top-level library item.</p>
+  <p>Unique constraints prevent duplicate local identifiers within their ownership scope, while indexes support common account and parent-child queries. Tofu records use their Piko relationship rather than pretending a Tofu is an independent top-level library item. Deleting a Piko cascades to its Tofus in the current schema.</p>
 </Section>
 <Section id="security" title="7. Access control">
   <p>Row-level security is enabled on the application tables. Profile policies restrict records to the owning account. Piko policies restrict records to the authenticated owner. Tofu policies verify ownership through the parent Piko.</p>
