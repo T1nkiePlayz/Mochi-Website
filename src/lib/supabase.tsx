@@ -16,7 +16,12 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? ''
 export const supabase =
   supabaseUrl && supabaseAnonKey
     ? createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          experimental: { passkey: true },
+        },
       })
     : null
 
@@ -49,6 +54,53 @@ export async function signOutCurrentUser() {
   if (!supabase) return { error: new Error(notConfigured) }
   return supabase.auth.signOut()
 }
+
+export async function signInWithPasskey() {
+  if (!supabase) return { data: { user: null, session: null }, error: new Error(notConfigured) }
+  return supabase.auth.signInWithPasskey()
+}
+
+export async function registerPasskey() {
+  if (!supabase) return { data: null, error: new Error(notConfigured) }
+  return supabase.auth.registerPasskey()
+}
+
+export async function listPasskeys() {
+  if (!supabase) return { data: null, error: new Error(notConfigured) }
+  return supabase.auth.passkey.list()
+}
+
+export async function deletePasskey(passkeyId: string) {
+  if (!supabase) return { error: new Error(notConfigured) }
+  return supabase.auth.passkey.delete({ passkeyId })
+}
+
+export async function listMfaFactors() {
+  if (!supabase) return { data: null, error: new Error(notConfigured) }
+  return supabase.auth.mfa.listFactors()
+}
+
+export async function enrollTotp(friendlyName = 'Mochi authenticator') {
+  if (!supabase) return { data: null, error: new Error(notConfigured) }
+  return supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName })
+}
+
+export async function verifyTotpEnrollment(factorId: string, code: string) {
+  if (!supabase) return { data: null, error: new Error(notConfigured) }
+  const challenge = await supabase.auth.mfa.challenge({ factorId })
+  if (challenge.error) return { data: null, error: challenge.error }
+  return supabase.auth.mfa.verify({ factorId, challengeId: challenge.data.id, code })
+}
+
+export async function verifyMfaLogin(code: string) {
+  if (!supabase) return { data: null, error: new Error(notConfigured) }
+  const factors = await supabase.auth.mfa.listFactors()
+  if (factors.error) return { data: null, error: factors.error }
+  const factor = factors.data.totp.find((item) => item.status === 'verified')
+  if (!factor) return { data: null, error: new Error('No verified authenticator app is available for this account.') }
+  return supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code })
+}
+
 
 export async function updateMyProfile(values: Pick<Profile, 'display_name' | 'avatar_url' | 'cloud_sync_enabled' | 'metadata_sync_allowed'>) {
   if (!supabase) return { error: new Error(notConfigured) }
