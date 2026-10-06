@@ -67,12 +67,12 @@ export async function registerPasskey() {
 
 export async function listPasskeys() {
   if (!supabase) return { data: null, error: new Error(notConfigured) }
-  return supabase.auth.listPasskeys()
+  return supabase.auth.passkey.list()
 }
 
 export async function deletePasskey(passkeyId: string) {
   if (!supabase) return { error: new Error(notConfigured) }
-  return supabase.auth.deletePasskey(passkeyId)
+  return supabase.auth.passkey.delete({ passkeyId })
 }
 
 export async function listMfaFactors() {
