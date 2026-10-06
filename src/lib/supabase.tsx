@@ -37,12 +37,17 @@ export async function signUpWithPassword(email: string, password: string) {
   return supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } })
 }
 
+export async function sendMagicLink(email: string) {
+  if (!supabase) return { data: null, error: new Error(notConfigured) }
+  return supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } })
+}
+
 export async function resetPassword(email: string) {
   if (!supabase) return { error: new Error(notConfigured) }
   return supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin })
 }
 
-export async function signInWithProvider(provider: 'github' | 'google' | 'discord' | 'azure' | 'apple') {
+export async function signInWithProvider(provider: 'github' | 'google') {
   if (!supabase) return { error: new Error(notConfigured) }
   return supabase.auth.signInWithOAuth({
     provider,
