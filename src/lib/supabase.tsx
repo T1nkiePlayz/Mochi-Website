@@ -38,9 +38,14 @@ export async function signUpWithPassword(email: string, password: string) {
   return supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } })
 }
 
-export async function sendMagicLink(email: string) {
+export async function sendSignInCode(email: string) {
   if (!supabase) return { data: null, error: new Error(notConfigured) }
-  return supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } })
+  return supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } })
+}
+
+export async function verifySignInCode(email: string, token: string) {
+  if (!supabase) return { data: null, error: new Error(notConfigured) }
+  return supabase.auth.verifyOtp({ email, token, type: 'email' })
 }
 
 export async function resetPassword(email: string) {
