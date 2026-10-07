@@ -60,6 +60,8 @@ const DocumentationArticlePage = lazy(() => import('./Documentation').then((modu
 const navItems = [
   { label: 'Features', to: '/features' },
   { label: 'How it works', to: '/how-it-works' },
+  { label: 'Roadmap', to: '/roadmap' },
+  { label: 'Changelog', to: '/changelog' },
   { label: 'Download', to: '/download' },
   { label: 'Docs', to: '/documentation' },
   { label: 'FAQ', to: '/faq' },
@@ -176,6 +178,8 @@ function App() {
             <Route path="/features" element={<FeaturePage />} />
             <Route path="/how-it-works" element={<HowItWorksPage />} />
             <Route path="/download" element={<DownloadPage />} />
+            <Route path="/roadmap" element={<RoadmapPage />} />
+            <Route path="/changelog" element={<ChangelogPage />} />
             <Route
               path="/documentation"
               element={
