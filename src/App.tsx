@@ -739,27 +739,60 @@ function SignInPage() {
         </div>
 
         <div className="glass-card p-6">
-          <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); void run(async () => { const result = await signInWithPassword(email, password); if (!result.error) window.setTimeout(() => void afterPrimaryAuth(), 0); return result }) }}>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-slate-200">Email</label>
-              <input type="email" placeholder="you@example.com" value={email} onChange={(event) => setEmail(event.target.value)} className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none placeholder:text-slate-500 focus:border-violet-400/60" />
+          {codeMode ? (
+            <div className="space-y-5">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-300">Check your email</p>
+                <h3 className="mt-3 text-2xl font-bold text-white">Enter your sign-in code</h3>
+                <p className="mt-3 leading-7 text-slate-400">
+                  We sent an 8-digit code to <strong className="text-slate-200">{email}</strong>. Enter it below to continue.
+                </p>
+              </div>
+              <input
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={8}
+                pattern="[0-9]{8}"
+                autoFocus
+                value={code}
+                onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 8))}
+                onKeyDown={(event) => { if (event.key === 'Enter') void verifyCode() }}
+                placeholder="12345678"
+                className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-4 text-center font-mono text-2xl tracking-[0.45em] text-white outline-none placeholder:text-slate-600 focus:border-violet-400/60"
+              />
+              <button type="button" disabled={busy || code.length !== 8} onClick={() => void verifyCode()} className="w-full rounded-xl bg-gradient-to-r from-violet-500 to-cyan-400 px-4 py-3 font-semibold text-white disabled:opacity-40">
+                {busy ? 'Verifying…' : 'Continue'}
+              </button>
+              <div className="flex flex-wrap justify-center gap-4 text-sm">
+                <button type="button" disabled={busy} onClick={() => { setCodeMode(false); setCode(''); setMessage('') }} className="text-slate-400 hover:text-white">Use a different email</button>
+                <button type="button" disabled={busy} onClick={() => void sendCode()} className="text-slate-400 hover:text-white">Send another code</button>
+              </div>
+              {message && <p className="text-sm text-rose-200">{message}</p>}
             </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-slate-200">Password</label>
-              <input type="password" placeholder="••••••••" value={password} onChange={(event) => setPassword(event.target.value)} className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none placeholder:text-slate-500 focus:border-violet-400/60" />
-            </div>
-            <div className="grid gap-2 pt-2 sm:grid-cols-2">
-              <button type="submit" disabled={busy || !email.trim() || !password} className="rounded-xl bg-gradient-to-r from-violet-500 to-cyan-400 px-4 py-3 font-semibold text-white shadow-lg shadow-violet-500/20 transition disabled:cursor-not-allowed disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-400 disabled:shadow-none">{busy ? 'Signing in…' : 'Sign in'}</button>
-              <button type="button" disabled={busy || !email.trim()} onClick={() => void run(() => resetPassword(email.trim().toLowerCase()))} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">Reset password</button>
-              <button type="button" disabled={busy || !email.trim()} onClick={() => void sendCode()} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">Send sign-in code</button>
-              <button type="button" disabled={busy || !email.trim() || !password} onClick={() => void run(() => signUpWithPassword(email.trim().toLowerCase(), password, appMode ? mochiVerifyUrl : undefined))} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">Create account</button>
-            </div>
-            {message && <p className="text-sm text-cyan-200">{message}</p>}
-            <div className="grid gap-2 pt-3 sm:grid-cols-2">
-              <button type="button" disabled={busy} onClick={() => void run(() => signInWithProvider('github', appMode ? mochiSignInUrl : undefined))} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold text-slate-100 transition hover:border-white/20 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40"><span className="text-lg font-bold leading-none" aria-hidden="true">⌘</span> Continue with GitHub</button>
-              <button type="button" disabled={busy} onClick={() => void run(() => signInWithProvider('google', appMode ? mochiSignInUrl : undefined))} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold text-slate-100 transition hover:border-white/20 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40"><svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.35 12.27c0-.71-.06-1.39-.18-2.04H12v3.86h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.69 2.91-4.18 2.91-7.21Z"/><path fill="#34A853" d="M12 21.6c2.63 0 4.84-.87 6.45-2.36l-3.14-2.45c-.87.58-1.98.93-3.31.93-2.54 0-4.69-1.72-5.46-4.03H3.3v2.53A9.74 9.74 0 0 0 12 21.6Z"/><path fill="#FBBC05" d="M6.54 13.69A5.84 5.84 0 0 1 6.23 12c0-.59.11-1.16.31-1.69V7.78H3.3A9.72 9.72 0 0 0 2.27 12c0 1.57.38 3.05 1.03 4.22l3.24-2.53Z"/><path fill="#EA4335" d="M12 6.28c1.43 0 2.71.49 3.72 1.46l2.79-2.79C16.83 3.3 14.63 2.4 12 2.4a9.74 9.74 0 0 0-8.7 5.38l3.24 2.53C7.31 8 9.46 6.28 12 6.28Z"/></svg> Continue with Google</button>
-            </div>
-          </form>
+          ) : (
+            <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); void run(async () => { const result = await signInWithPassword(email, password); if (!result.error) window.setTimeout(() => void afterPrimaryAuth(), 0); return result }) }}>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-200">Email</label>
+                <input type="email" placeholder="you@example.com" value={email} onChange={(event) => setEmail(event.target.value)} className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none placeholder:text-slate-500 focus:border-violet-400/60" />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-200">Password</label>
+                <input type="password" placeholder="••••••••" value={password} onChange={(event) => setPassword(event.target.value)} className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none placeholder:text-slate-500 focus:border-violet-400/60" />
+              </div>
+              <div className="grid gap-2 pt-2 sm:grid-cols-2">
+                <button type="submit" disabled={busy || !email.trim() || !password} className="rounded-xl bg-gradient-to-r from-violet-500 to-cyan-400 px-4 py-3 font-semibold text-white shadow-lg shadow-violet-500/20 transition disabled:cursor-not-allowed disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-400 disabled:shadow-none">{busy ? 'Signing in…' : 'Sign in'}</button>
+                <button type="button" disabled={busy || !email.trim()} onClick={() => void run(() => resetPassword(email.trim().toLowerCase()))} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">Reset password</button>
+                <button type="button" disabled={busy || !email.trim()} onClick={() => void sendCode()} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">Send sign-in code</button>
+                <button type="button" disabled={busy || !email.trim() || !password} onClick={() => void run(() => signUpWithPassword(email.trim().toLowerCase(), password, appMode ? mochiVerifyUrl : undefined))} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">Create account</button>
+              </div>
+              {message && <p className="text-sm text-cyan-200">{message}</p>}
+              <div className="grid gap-2 pt-3 sm:grid-cols-2">
+                <button type="button" disabled={busy} onClick={() => void run(() => signInWithProvider('github', appMode ? mochiSignInUrl : undefined))} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold text-slate-100 transition hover:border-white/20 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40"><span className="text-lg font-bold leading-none" aria-hidden="true">⌘</span> Continue with GitHub</button>
+                <button type="button" disabled={busy} onClick={() => void run(() => signInWithProvider('google', appMode ? mochiSignInUrl : undefined))} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold text-slate-100 transition hover:border-white/20 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40"><svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.35 12.27c0-.71-.06-1.39-.18-2.04H12v3.86h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.69 2.91-4.18 2.91-7.21Z"/><path fill="#34A853" d="M12 21.6c2.63 0 4.84-.87 6.45-2.36l-3.14-2.45c-.87.58-1.98.93-3.31.93-2.54 0-4.69-1.72-5.46-4.03H3.3v2.53A9.74 9.74 0 0 0 12 21.6Z"/><path fill="#FBBC05" d="M6.54 13.69A5.84 5.84 0 0 1 6.23 12c0-.59.11-1.16.31-1.69V7.78H3.3A9.72 9.72 0 0 0 2.27 12c0 1.57.38 3.05 1.03 4.22l3.24-2.53Z"/><path fill="#EA4335" d="M12 6.28c1.43 0 2.71.49 3.72 1.46l2.79-2.79C16.83 3.3 14.63 2.4 12 2.4a9.74 9.74 0 0 0-8.7 5.38l3.24 2.53C7.31 8 9.46 6.28 12 6.28Z"/></svg> Continue with Google</button>
+              </div>
+            </form>
+          )}
+        </div>
         </div>
       </div>
     </PageShell>
