@@ -56,6 +56,8 @@ import {
 
 const DocumentationPage = lazy(() => import('./Documentation').then((module) => ({ default: module.DocumentationPage })))
 const DocumentationArticlePage = lazy(() => import('./Documentation').then((module) => ({ default: module.DocumentationArticlePage })))
+const RoadmapPage = lazy(() => import('./Roadmap').then((module) => ({ default: module.RoadmapPage })))
+const ChangelogPage = lazy(() => import('./Changelog').then((module) => ({ default: module.ChangelogPage })))
 
 const navItems = [
   { label: 'Features', to: '/features' },
