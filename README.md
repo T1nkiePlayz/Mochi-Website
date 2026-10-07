@@ -16,184 +16,111 @@
   <img src="https://img.shields.io/badge/router-hash%20routing-purple?style=flat-square" alt="Hash routing">
 </p>
 
-## Table of contents
-
-- [Overview](#overview)
-- [Purpose](#purpose)
-- [What the website does](#what-the-website-does)
-- [Public pages](#public-pages)
-- [Documentation](#documentation)
-- [Authentication and accounts](#authentication-and-accounts)
-- [Cloud metadata](#cloud-metadata)
-- [Privacy and legal pages](#privacy-and-legal-pages)
-- [Design system](#design-system)
-- [Routing and GitHub Pages](#routing-and-github-pages)
-- [Technology stack](#technology-stack)
-- [Repository structure](#repository-structure)
-- [Development setup](#development-setup)
-- [Environment configuration](#environment-configuration)
-- [Building and linting](#building-and-linting)
-- [Deployment](#deployment)
-- [Development principles](#development-principles)
-- [Current limitations](#current-limitations)
-- [Related project](#related-project)
-- [Contributing](#contributing)
-- [License](#license)
-
 ## Overview
 
-**Mochi Website** is the public-facing website and authenticated web portal for [Mochi Launcher](https://github.com/T1nkiePlayz/Mochi).
+**Mochi Website** is the public website and authenticated companion portal for [Mochi Launcher](https://github.com/T1nkiePlayz/Mochi). It explains the project, documents current launcher behaviour, provides account access, and exposes account-scoped cloud controls.
 
-It has two main roles:
+The desktop launcher is maintained separately. This repository documents the launcher without duplicating its native implementation.
 
-1. **Public project website** — explains what Mochi is, how it works, and why it is designed the way it is.
-2. **Authenticated portal** — provides account access and web-facing controls for Mochi's metadata and account system.
+## Current Mochi launcher
 
-The desktop launcher and website are deliberately kept in separate repositories. Mochi remains the native desktop application, while this repository contains the web experience around it.
+The website documentation is kept aligned with the current launcher implementation. Mochi is currently a **Linux-first Tauri desktop game launcher**, with a macOS native layer under development.
 
-## Purpose
+The current launcher includes:
 
-The website exists so that a person discovering Mochi can understand the project without first reading the source code.
+- Local-first Piko game library and Tofu environments
+- Native game launching
+- Linux Flatpak discovery and launching
+- Steam game and Steam non-Steam shortcut importing
+- Heroic Games Launcher importing
+- Lutris importing
+- Bottles importing
+- itch.io importing
+- Manual source/library scanning
+- Optional IGDB game identification and metadata
+- User confirmation of IGDB matches before metadata is applied
+- Account sign-in and account switching, with up to five saved accounts
+- Email/password, email sign-in codes, Google, and GitHub authentication
+- TOTP authenticator-app MFA and passkeys
+- Optional cloud metadata synchronisation
+- Local themes and user-imported themes
+- Configurable Mochi data location
+- In-app notifications and Linux desktop notifications
+- Playtime tracking and a system tray menu showing most-played games
+- Modrinth discovery for mods, modpacks, resource packs, and shaders
+- Modrinth version/loader filtering
+- Installation of Modrinth content into Tofu folders
+- Installed Modrinth content management, including enable/disable and deletion
+- Background Modrinth downloads with progress and recent completion/failure state
 
-It provides:
+Mochi does **not** upload complete game installations as part of normal cloud synchronisation.
 
-- A detailed project introduction
-- Feature explanations
-- Launcher concepts
-- Getting-started information
-- Technical documentation
-- Frequently asked questions
-- Account access
-- Dashboard and account controls
-- Project status information
-- Privacy information
-- Terms of Use
+## Website responsibilities
 
-The site also acts as the documentation and information layer surrounding the launcher.
+The website has four main jobs:
 
-## What the website does
-
-### Explains Mochi
-
-The homepage introduces the launcher, its local-first philosophy, Piko/Tofu model, supported launch concepts, cloud boundaries, and overall architecture.
-
-### Documents the project
-
-The documentation pages provide more detailed explanations for users and developers who want to understand how Mochi behaves internally.
-
-### Provides account access
-
-Authenticated users can sign in to the web portal and access the parts of the account and metadata system exposed by the website.
-
-### Communicates privacy and legal information
-
-The website hosts standalone Privacy Policy and Terms of Use pages so those documents remain directly accessible outside the React application.
-
-## Public pages
-
-The current site includes:
-
-- **Home** — the main introduction to Mochi.
-- **Features** — feature-focused explanations.
-- **How Mochi Works** — high-level launcher architecture and concepts.
-- **Download** — download and release information.
-- **Documentation** — detailed user and technical documentation.
-- **FAQ** — common questions about Mochi, accounts, cloud sync, Pikos, Tofus, and platforms.
-- **Sign In** — account authentication.
-- **Dashboard** — authenticated user portal.
-- **Account settings** — account controls.
-- **Admin metadata-access panel** — administrative metadata controls.
-- **Privacy Policy** — public privacy information.
-- **Terms of Use** — public usage and legal terms.
-
-Some sections remain under active development and may change as the launcher develops.
+1. **Explain Mochi** — product pages, features, architecture, and project direction.
+2. **Document Mochi** — detailed user and developer documentation based on the launcher source.
+3. **Provide account access** — sign-in, account settings, security controls, and cloud metadata administration.
+4. **Provide project information** — roadmap, changelog, privacy policy, terms, and support information.
 
 ## Documentation
 
-Documentation is organised into four primary sections.
+The documentation hub covers:
 
 ### Getting Started
+Installation concepts, first launch, source importing, adding games, IGDB identification, Pikos, Tofus, and launching.
 
-Covers the path from first launch to adding and launching a game, including:
+### Library Management
+The Piko/Tofu model, categories, source metadata, local storage, machine-specific launch paths, and library organisation.
 
-- Pikos
-- Launch targets
-- Native file selection
-- Flatpak selection
-- IGDB matching
-- Default Tofus
-- Local-first behavior
-- Current limitations
+### Launching Games
+Executables, .desktop entries, Flatpak application IDs, shell/Python/JavaScript scripts, source-launcher handoff URIs, platform adapters, and launch errors.
 
-### Account Management
+### Integrations & Metadata
+IGDB matching, metadata confirmation, artwork, local/provider credentials, Modrinth discovery and downloads, and integration boundaries.
 
-Explains:
+### Account & Security
+Email/password, email sign-in codes, Google/GitHub OAuth, TOTP MFA, passkeys, account switching, connected identities, sessions, avatars, and security principles.
 
-- Account structure
-- Email/password, email sign-in codes, Google, and GitHub
-- Sessions and persistence
-- Profiles and avatars
-- Authenticator-app 2FA and passkeys
-- Cloud access permissions
-- Account data flow
+### Mochi Cloud
+Cloud eligibility, Piko/Tofu records, synchronisation boundaries, ownership, row-level security, pull/push behaviour, and machine-specific data.
 
-### Pikos & Tofus
+### Development
+React/TypeScript frontend, Tauri/Rust native layer, platform/source adapters, build commands, themes, data boundaries, and contribution guidance.
 
-Defines the Mochi data model and explains how a Piko relates to one or more Tofus.
+### Reference
+Terminology, feature-state meanings, important paths, support information, and product principles.
 
-### Cloud Sync
+## Authentication and cloud
 
-Documents:
+The website and launcher can use the same Mochi account.
 
-- Synchronization principles
-- Cloud architecture
-- Stored metadata
-- Pull behavior
-- Push behavior
-- Database relationships
-- Security boundaries
-- Identifiers
-- Failure handling
-- Conflict considerations
-
-The homepage answers **"What is Mochi?"** while the documentation is intended to answer **"How does Mochi work?"**
-
-## Authentication and accounts
-
-The website provides access to Mochi account functionality.
-
-The current authentication experience includes:
+Supported authentication includes:
 
 - Email and password
 - Email sign-in codes
 - Google
 - GitHub
-- Authenticator-app two-factor authentication where configured
-- Passkey authentication where configured
+- TOTP authenticator-app MFA
+- Passkeys
 
-Authentication is intended to let the same Mochi account be used across the web portal and desktop launcher.
+Mochi Cloud is intentionally metadata-focused. It can synchronise supported Piko and Tofu information, but local installations, arbitrary files, and machine-specific resources remain local.
 
-Signing in does not upload a user's installed games.
+Provider credentials such as IGDB and Nexus Mods credentials are handled separately from ordinary library metadata. Sensitive provider secrets are stored through the backend credential system rather than committed to the repository.
 
-## Cloud metadata
+## Roadmap and changelog
 
-The website participates in Mochi's optional metadata synchronization system.
+The website includes:
 
-The cloud model currently contains records for:
+- **Roadmap** — the current direction of Mochi. It is directional and may change.
+- **Changelog** — reads published releases directly from the Mochi GitHub repository. When there are no published releases, the page reports that instead of inventing release notes.
 
-- Profiles
-- Pikos
-- Tofus
-- Piko/Tofu relationships
-- Other launcher metadata required by the account system
+The launcher repository is the source of truth for shipped implementation details.
 
-The cloud system is **not a general-purpose game file storage service**.
+## Legal and privacy pages
 
-A Piko may contain a machine-specific launch path. That path can be useful on one computer but invalid on another, so account-owned metadata and local installation resources are intentionally treated as different things.
-
-## Privacy and legal pages
-
-Standalone legal documents live under public/:
+Standalone Privacy Policy and Terms of Use pages are stored under:
 
     public/
     ├── policy/
@@ -201,199 +128,85 @@ Standalone legal documents live under public/:
     └── terms/
         └── index.html
 
-The Privacy Policy explains information collection, account information, cloud metadata, third-party services, storage, security, retention, access/correction, and related privacy topics.
+## Design and routing
 
-The Terms of Use cover acceptable use, user responsibilities, third-party content, intellectual property, cloud features, service changes, disclaimers, and restrictions including misuse of the launcher for unlawful content.
+The website uses the Mochi visual language: dark surfaces, glass-style navigation, purple/cyan accents, rounded cards, responsive layouts, Lucide icons, and reduced-motion support.
 
-These documents are intended to evolve with the project and should be reviewed as the service, business structure, and applicable obligations change.
-
-## Design system
-
-The website follows the Mochi visual identity rather than presenting itself as a generic software dashboard.
-
-The current design direction includes:
-
-- Dark high-contrast surfaces
-- Soft glass-style navigation
-- Mint/green Mochi accents
-- Purple secondary accents
-- Rounded cards
-- Lucide icons
-- Responsive layouts
-- Subtle animated background elements
-- Reduced-motion support
-- Structured documentation navigation
-
-The homepage is intentionally detailed so a first-time visitor can understand the project before moving into the deeper documentation.
-
-## Routing and GitHub Pages
-
-The application is designed for static hosting and uses hash-based client-side routing for compatibility with GitHub Pages.
-
-This avoids depending on server-side route rewriting that static hosting does not provide in the same way as a traditional application server.
-
-Standalone pages under public/policy/ and public/terms/ are served as normal static paths.
-
-Documentation in-page navigation uses explicit scrolling behavior rather than relying on router-conflicting hash navigation. This prevents actions such as Back to top from accidentally changing the application route and rendering an empty page.
+The application uses client-side routing with a hash-compatible deployment model for GitHub Pages. Documentation navigation uses explicit scrolling so Back to top and section links do not corrupt the current route.
 
 ## Technology stack
 
 | Technology | Purpose |
 | --- | --- |
-| React 19 | Website UI |
+| React | Website UI |
 | TypeScript | Type-safe application code |
-| Vite | Development server and production build |
+| Vite | Development and production builds |
 | React Router | Client-side navigation |
-| Tailwind CSS 4 | Utility styling and build integration |
+| Tailwind CSS | Styling |
 | Lucide React | Interface icons |
-| Auth/cloud client | Account and cloud metadata integration |
+| Supabase client | Authentication and cloud metadata |
 
 ## Repository structure
 
     Mochi-Website/
-    ├── public/
-    │   ├── mochi.png         # Branding asset
-    │   ├── policy/           # Privacy Policy
-    │   └── terms/            # Terms of Use
-    │
-    ├── src/
-    │   ├── App.tsx           # Main application and routes
-    │   ├── Documentation.tsx # Documentation pages
-    │   └── lib/              # Authentication/cloud helpers
-    │
-    ├── supabase/             # Backend/database definitions
-    ├── index.html             # Vite entry point
-    ├── package.json           # Scripts and dependencies
-    ├── vite.config.ts
+    ├── public/              # Branding and standalone legal pages
+    ├── src/                 # React application
+    │   ├── App.tsx
+    │   ├── Documentation.tsx
+    │   ├── Roadmap.tsx
+    │   ├── Changelog.tsx
+    │   └── lib/             # Auth, cloud and provider helpers
+    ├── supabase/             # Database migrations and edge functions
+    ├── .github/workflows/    # GitHub Pages deployment
+    ├── package.json
     └── README.md
 
-## Development setup
-
-### Clone
+## Development
 
     git clone https://github.com/T1nkiePlayz/Mochi-Website.git
     cd Mochi-Website
-
-### Install dependencies
-
     npm install
+    npm run dev
 
-### Configure environment
+For a production build:
 
-Create a local `.env` file with:
+    npm run build
+
+For static analysis:
+
+    npm run lint
+
+Create a local `.env` containing the required build variables:
 
     VITE_SUPABASE_URL=...
     VITE_SUPABASE_PUBLISHABLE_KEY=...
 
-Never commit real secrets.
+Never commit real secrets, service-role credentials, provider secrets, or local environment files.
 
-### Start development
+## Keeping documentation accurate
 
-    npm run dev
+When Mochi Launcher changes, update this repository's documentation alongside the launcher.
 
-For network-accessible development, the project's current workflow can also use:
+In particular, check:
 
-    npm run dev -- --host 0.0.0.0 --port 4173
+- New or removed launch targets
+- New game-source integrations
+- Piko/Tofu model changes
+- Authentication and MFA changes
+- Cloud data and permissions
+- Provider integrations
+- Modrinth functionality
+- Theme system changes
+- Playtime/download/tray behaviour
+- Platform support
+- Configuration and storage locations
 
-## Environment configuration
-
-The website uses build-time environment configuration for its backend integration.
-
-The publishable key is safe to embed in the browser application when paired with the database's access policies; service-role keys and other privileged secrets must never be exposed to the frontend.
-
-The public site intentionally avoids exposing sensitive backend configuration. Authentication and cloud implementation details are kept in the application code and environment rather than embedded into public copy unnecessarily.
-
-## Building and linting
-
-### Production build
-
-    npm run build
-
-This runs TypeScript compilation and creates the Vite production output.
-
-### Lint
-
-    npm run lint
-
-The project uses Oxlint for static code-quality checks.
-
-### Preview
-
-    npm run preview
-
-Previewing the production build is useful for checking routes, assets, documentation navigation, and static pages before deployment.
-
-## Deployment
-
-The website is designed to remain GitHub Pages friendly.
-
-Before deploying, verify:
-
-1. The production build completes.
-2. The homepage loads correctly.
-3. Client-side navigation works.
-4. Documentation cards open the correct sections.
-5. Documentation in-page navigation scrolls correctly.
-6. Back to top does not alter the route unexpectedly.
-7. The Privacy Policy loads directly.
-8. The Terms of Use loads directly.
-9. Static images resolve from the deployed base path.
-10. Authentication redirects return to the correct site location.
-
-## Development principles
-
-When changing the website:
-
-- Keep the homepage understandable to someone who has never used Mochi.
-- Keep detailed technical behavior in documentation.
-- Preserve the local-first message.
-- Never imply that complete game installations are stored in cloud metadata.
-- Keep privacy and legal pages directly accessible.
-- Preserve responsive layouts.
-- Respect reduced-motion preferences.
-- Test navigation after changing router or documentation code.
-- Keep public copy consistent with actual launcher behavior.
-- Avoid exposing unnecessary implementation details in user-facing copy.
-- Update this README when major architecture or user-facing behavior changes.
-
-## Current limitations
-
-The website is evolving alongside Mochi Launcher.
-
-Current limitations include:
-
-- Some pages and features remain under development, and the launcher itself is still pre-release.
-- The desktop launcher is not yet a stable release.
-- Cloud metadata behavior may evolve as the data model matures.
-- Documentation can temporarily lag behind implementation during rapid development.
-- GitHub Pages imposes static-hosting constraints on routing.
-- Account functionality depends on the configured backend environment.
+The website should describe what the launcher **actually does**, not what is merely planned.
 
 ## Related project
 
-The desktop launcher is maintained separately:
-
 - Mochi Launcher: https://github.com/T1nkiePlayz/Mochi
-
-The two repositories share the Mochi concepts and account/cloud model but can be developed and deployed independently.
-
-## Contributing
-
-Mochi Website is under active development.
-
-For changes:
-
-1. Understand the existing component and route structure.
-2. Keep changes focused.
-3. Run the production build before committing.
-4. Check both navigation and direct static paths.
-5. Check responsive layouts when changing shared components.
-6. Test documentation anchors and scrolling after documentation changes.
-7. Keep public wording aligned with the actual launcher.
-8. Never commit secrets or private environment files.
 
 ## License
 
-No final open-source license is currently declared for the website repository. Until a license is explicitly added, the source should not be assumed to be freely reusable, redistributed, or relicensed.
-
-License information will be added as the project approaches a first public release.
+No final open-source license is currently declared for this website repository. Until a license is explicitly added, the source should not be assumed to be freely reusable, redistributed, or relicensed.
