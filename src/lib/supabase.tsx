@@ -53,14 +53,14 @@ export async function resetPassword(email: string) {
   return supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin })
 }
 
-export async function signInWithProvider(provider: 'github' | 'google') {
+export async function signInWithProvider(provider: 'github' | 'google', redirectTo?: string) {
   if (!supabase) return { error: new Error(notConfigured) }
   return supabase.auth.signInWithOAuth({
     provider,
     // HashRouter routes live in the URL fragment. OAuth/PKCE codes must stay in
     // the real query string, so redirect to the site origin and let Supabase
     // detect the returned session before HashRouter takes over.
-    options: { redirectTo: window.location.origin },
+    options: { redirectTo: redirectTo ?? window.location.origin },
   })
 }
 
