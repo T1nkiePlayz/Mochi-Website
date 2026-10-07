@@ -19,6 +19,7 @@ import {
   AlertTriangle,
   RefreshCw,
   Users,
+  Github,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import md5 from 'blueimp-md5'
@@ -85,7 +86,7 @@ const pillars = [
 
 const providerOptions = [
   'Email / password',
-  'Magic link',
+  'Email sign-in code',
   'GitHub',
   'Google',
 ]
@@ -490,12 +491,12 @@ function SignInPage() {
 
   const verifyCode = async () => {
     const normalizedEmail = email.trim().toLowerCase()
-    const normalizedCode = code.replace(/\\s/g, '')
+    const normalizedCode = code.replace(/\s/g, '')
     if (!normalizedEmail) {
       setMessage('Please enter your email address.')
       return
     }
-    if (!/^\\d{6}$/.test(normalizedCode)) {
+    if (!/^\d{6}$/.test(normalizedCode)) {
       setMessage('Enter the 6-digit sign-in code from your email.')
       return
     }
@@ -518,7 +519,7 @@ function SignInPage() {
             {providerOptions.map((provider) => (
               <div key={provider} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3 text-slate-200">
                 <Lock className="h-4 w-4 text-violet-300" />
-                <span>{provider === 'Magic link' ? 'Email sign-in code' : provider}</span>
+                <span>{provider}</span>
               </div>
             ))}
           </div>
@@ -548,7 +549,7 @@ function SignInPage() {
                   pattern="[0-9]{6}"
                   autoFocus
                   value={code}
-                  onChange={(event) => setCode(event.target.value.replace(/\\D/g, '').slice(0, 6))}
+                  onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
                   onKeyDown={(event) => { if (event.key === 'Enter') void verifyCode() }}
                   placeholder="123456"
                   className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-4 text-center font-mono text-2xl tracking-[0.45em] text-white outline-none placeholder:text-slate-600 focus:border-violet-400/60"
@@ -577,19 +578,22 @@ function SignInPage() {
                 <label className="mb-2 block text-sm font-medium text-slate-200">Password</label>
                 <input type="password" placeholder="••••••••" value={password} onChange={(event) => setPassword(event.target.value)} className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none placeholder:text-slate-500 focus:border-violet-400/60" />
               </div>
-              <div className="flex flex-wrap gap-3 pt-2">
-                <button type="submit" disabled={busy} className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-5 py-3 font-semibold text-white shadow-lg shadow-violet-500/30 disabled:opacity-50">{busy ? 'Working…' : 'Sign in'}</button>
-                <button type="button" onClick={() => void run(() => resetPassword(email))} className="rounded-full border border-white/15 bg-white/5 px-5 py-3 font-semibold text-slate-100">Reset password</button>
-                <button type="button" disabled={busy} onClick={() => void sendCode()} className="rounded-full border border-white/15 bg-white/5 px-5 py-3 font-semibold text-slate-100">Send sign-in code</button>
-                <button type="button" onClick={() => void run(() => signUpWithPassword(email, password))} className="rounded-full border border-white/15 bg-white/5 px-5 py-3 font-semibold text-slate-100">Create account</button>
+              <div className="grid gap-2 pt-2 sm:grid-cols-2">
+                <button type="submit" disabled={busy || !email.trim() || !password} className="rounded-xl bg-gradient-to-r from-violet-500 to-cyan-400 px-4 py-3 font-semibold text-white shadow-lg shadow-violet-500/20 transition disabled:cursor-not-allowed disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-400 disabled:shadow-none">
+                  {busy ? 'Signing in…' : 'Sign in'}
+                </button>
+                <button type="button" disabled={busy || !email.trim()} onClick={() => void run(() => resetPassword(email.trim().toLowerCase()))} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">Reset password</button>
+                <button type="button" disabled={busy || !email.trim()} onClick={() => void sendCode()} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">Send sign-in code</button>
+                <button type="button" disabled={busy || !email.trim() || !password} onClick={() => void run(() => signUpWithPassword(email.trim().toLowerCase(), password))} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">Create account</button>
               </div>
               {message && <p className="text-sm text-cyan-200">{message}</p>}
-              <div className="flex flex-wrap gap-2 pt-2">
-                {(['github', 'google'] as const).map((provider) => (
-                  <button key={provider} type="button" onClick={() => void run(() => signInWithProvider(provider))} className="rounded-full border border-white/15 px-3 py-2 text-sm text-slate-200">
-                    Continue with {provider === 'github' ? 'GitHub' : 'Google'}
-                  </button>
-                ))}
+              <div className="grid gap-2 pt-3 sm:grid-cols-2">
+                <button type="button" disabled={busy} onClick={() => void run(() => signInWithProvider('github'))} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold text-slate-100 transition hover:border-white/20 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40">
+                  <Github className="h-5 w-5" aria-hidden="true" /> Continue with GitHub
+                </button>
+                <button type="button" disabled={busy} onClick={() => void run(() => signInWithProvider('google'))} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold text-slate-100 transition hover:border-white/20 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40">
+                  <span className="text-lg font-bold leading-none" aria-hidden="true">G</span> Continue with Google
+                </button>
               </div>
             </form>
           )}
