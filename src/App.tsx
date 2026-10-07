@@ -459,6 +459,27 @@ function SignInPage() {
   const [busy, setBusy] = useState(false)
   const [codeMode, setCodeMode] = useState(false)
   const [code, setCode] = useState('')
+  const appMode = new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('app') === 'mochi'
+  const mochiSignInUrl = 'https://t1nkieplayz.github.io/Mochi-Website/#/signin?app=mochi'
+
+  const handoffToMochi = async () => {
+    if (!supabase) return
+    const { data, error } = await supabase.auth.getSession()
+    if (error || !data.session) {
+      setMessage(error?.message ?? 'Your Mochi session could not be prepared.')
+      return
+    }
+    const params = new URLSearchParams({
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
+    })
+    window.location.href = `mochi://auth/callback?${params.toString()}`
+  }
+
+  useEffect(() => {
+    if (!appMode || !user) return
+    void handoffToMochi()
+  }, [appMode, user])
 
   const run = async (action: () => Promise<{ error: Error | null }>) => {
     setBusy(true)
@@ -501,7 +522,8 @@ function SignInPage() {
     }
     const verified = await run(() => verifySignInCode(normalizedEmail, normalizedCode))
     if (verified) {
-      window.location.hash = '#/dashboard'
+      if (appMode) await handoffToMochi()
+      else window.location.hash = '#/dashboard'
     }
   }
 
@@ -514,6 +536,7 @@ function SignInPage() {
           <p className="mt-3 text-slate-300">
             Sign in with your Mochi account. You can use Google, GitHub, a sign-in code, or email and password.
           </p>
+          {appMode && <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-500/[0.06] p-4 text-sm leading-6 text-cyan-100"><strong>Sign in for Mochi</strong><p className="mt-1 text-cyan-100/75">This sign-in was opened by the Mochi desktop app. After you authenticate, this page will return you to Mochi automatically.</p></div>}
           <div className="mt-6 space-y-3">
             {providerOptions.map((provider) => (
               <div key={provider} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3 text-slate-200">
@@ -587,11 +610,11 @@ function SignInPage() {
               </div>
               {message && <p className="text-sm text-cyan-200">{message}</p>}
               <div className="grid gap-2 pt-3 sm:grid-cols-2">
-                <button type="button" disabled={busy} onClick={() => void run(() => signInWithProvider('github'))} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold text-slate-100 transition hover:border-white/20 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40">
+                <button type="button" disabled={busy} onClick={() => void run(() => signInWithProvider('github', appMode ? mochiSignInUrl : undefined))} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold text-slate-100 transition hover:border-white/20 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40">
                   <span className="text-lg font-bold leading-none" aria-hidden="true">⌘</span> Continue with GitHub
                 </button>
-                <button type="button" disabled={busy} onClick={() => void run(() => signInWithProvider('google'))} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold text-slate-100 transition hover:border-white/20 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40">
-                  <span className="text-lg font-bold leading-none" aria-hidden="true">G</span> Continue with Google
+                <button type="button" disabled={busy} onClick={() => void run(() => signInWithProvider('google', appMode ? mochiSignInUrl : undefined))} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold text-slate-100 transition hover:border-white/20 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40">
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.35 12.27c0-.71-.06-1.39-.18-2.04H12v3.86h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.69 2.91-4.18 2.91-7.21Z"/><path fill="#34A853" d="M12 21.6c2.63 0 4.84-.87 6.45-2.36l-3.14-2.45c-.87.58-1.98.93-3.31.93-2.54 0-4.69-1.72-5.46-4.03H3.3v2.53A9.74 9.74 0 0 0 12 21.6Z"/><path fill="#FBBC05" d="M6.54 13.69A5.84 5.84 0 0 1 6.23 12c0-.59.11-1.16.31-1.69V7.78H3.3A9.72 9.72 0 0 0 2.27 12c0 1.57.38 3.05 1.03 4.22l3.24-2.53Z"/><path fill="#EA4335" d="M12 6.28c1.43 0 2.71.49 3.72 1.46l2.79-2.79C16.83 3.3 14.63 2.4 12 2.4a9.74 9.74 0 0 0-8.7 5.38l3.24 2.53C7.31 8 9.46 6.28 12 6.28Z"/></svg> Continue with Google
                 </button>
               </div>
             </form>
