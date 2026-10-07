@@ -144,6 +144,31 @@ export async function verifyMfaLogin(code: string) {
   return supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code })
 }
 
+export async function getSignInFactors() {
+  if (!supabase) return { data: null, error: new Error(notConfigured) }
+
+  const [mfaResult, passkeyResult] = await Promise.all([
+    supabase.auth.mfa.listFactors(),
+    supabase.auth.passkey.list(),
+  ])
+
+  if (mfaResult.error) return { data: null, error: mfaResult.error }
+  if (passkeyResult.error) return { data: null, error: passkeyResult.error }
+
+  return {
+    data: {
+      totp: mfaResult.data.totp.filter((factor) => factor.status === 'verified'),
+      passkeys: passkeyResult.data ?? [],
+    },
+    error: null,
+  }
+}
+
+export async function signInWithPasskey() {
+  if (!supabase) return { data: { user: null, session: null }, error: new Error(notConfigured) }
+  return supabase.auth.signInWithPasskey()
+}
+
 
 export type ApiCredentialProvider = 'nexus' | 'igdb'
 
