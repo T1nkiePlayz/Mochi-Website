@@ -33,9 +33,9 @@ export async function signInWithPassword(email: string, password: string) {
   return supabase.auth.signInWithPassword({ email, password })
 }
 
-export async function signUpWithPassword(email: string, password: string) {
+export async function signUpWithPassword(email: string, password: string, redirectTo?: string) {
   if (!supabase) return { data: { user: null, session: null }, error: new Error(notConfigured) }
-  return supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } })
+  return supabase.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo ?? window.location.origin } })
 }
 
 export async function sendSignInCode(email: string) {
