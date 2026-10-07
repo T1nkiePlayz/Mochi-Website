@@ -1508,3 +1508,37 @@ function EmptyState({ icon: Icon, title, text }: { icon: any; title: string; tex
 }
 function SettingsPage() { return <DashboardPage /> }
 function AdminPage() { return <DashboardPage /> }
+function PageShell({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return <div className={`space-y-8 pb-10 ${className}`}>{children}</div>
+}
+
+function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) {
+  return (
+    <div>
+      <p className="text-sm font-medium uppercase tracking-[0.2em] text-violet-200">{eyebrow}</p>
+      <h2 className="mt-3 max-w-3xl text-3xl font-bold tracking-tight text-white sm:text-4xl">{title}</h2>
+    </div>
+  )
+}
+
+function StepCard({ step, title, description }: { step: string; title: string; description: string }) {
+  return (
+    <div className="glass-card p-6">
+      <p className="text-sm uppercase tracking-[0.2em] text-violet-200">{step}</p>
+      <h3 className="mt-4 text-2xl font-semibold text-white">{title}</h3>
+      <p className="mt-3 text-slate-300">{description}</p>
+    </div>
+  )
+}
+
+
+function FaqItem({ question, answer }: { question: string; answer: string }) {
+  return (
+    <div className="glass-card p-5">
+      <p className="font-semibold text-white">{question}</p>
+      <p className="mt-2 text-slate-300">{answer}</p>
+    </div>
+  )
+}
+
+export default App
