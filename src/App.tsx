@@ -19,7 +19,6 @@ import {
   AlertTriangle,
   RefreshCw,
   Users,
-  GitHub,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import md5 from 'blueimp-md5'
@@ -589,7 +588,7 @@ function SignInPage() {
               {message && <p className="text-sm text-cyan-200">{message}</p>}
               <div className="grid gap-2 pt-3 sm:grid-cols-2">
                 <button type="button" disabled={busy} onClick={() => void run(() => signInWithProvider('github'))} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold text-slate-100 transition hover:border-white/20 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40">
-                  <Github className="h-5 w-5" aria-hidden="true" /> Continue with GitHub
+                  <span className="text-lg font-bold leading-none" aria-hidden="true">⌘</span> Continue with GitHub
                 </button>
                 <button type="button" disabled={busy} onClick={() => void run(() => signInWithProvider('google'))} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 font-semibold text-slate-100 transition hover:border-white/20 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40">
                   <span className="text-lg font-bold leading-none" aria-hidden="true">G</span> Continue with Google
