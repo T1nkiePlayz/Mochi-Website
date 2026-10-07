@@ -28,7 +28,8 @@ import {
   AuthProvider,
   supabase,
   resetPassword,
-  sendMagicLink,
+  sendSignInCode,
+  verifySignInCode,
   updateEmail,
   updatePassword,
   linkAuthIdentity,
@@ -456,18 +457,52 @@ function SignInPage() {
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
+  const [codeMode, setCodeMode] = useState(false)
+  const [code, setCode] = useState('')
 
   const run = async (action: () => Promise<{ error: Error | null }>) => {
     setBusy(true)
     setMessage('')
     const { error } = await action()
-    const message = error?.message ?? ''
+    const text = error?.message ?? ''
     const safeMessage =
-      message === 'missing email or phone' || message === 'One of email or phone must be set'
+      text === 'missing email or phone' || text === 'One of email or phone must be set'
         ? 'Please enter your email address.'
-        : message
-    setMessage(error ? safeMessage : 'Check your inbox or continue to the dashboard.')
+        : text
+    setMessage(error ? safeMessage : '')
     setBusy(false)
+    return !error
+  }
+
+  const sendCode = async () => {
+    const normalizedEmail = email.trim().toLowerCase()
+    if (!normalizedEmail) {
+      setMessage('Please enter your email address.')
+      return
+    }
+    const sent = await run(() => sendSignInCode(normalizedEmail))
+    if (sent) {
+      setEmail(normalizedEmail)
+      setCode('')
+      setCodeMode(true)
+    }
+  }
+
+  const verifyCode = async () => {
+    const normalizedEmail = email.trim().toLowerCase()
+    const normalizedCode = code.replace(/\\s/g, '')
+    if (!normalizedEmail) {
+      setMessage('Please enter your email address.')
+      return
+    }
+    if (!/^\\d{6}$/.test(normalizedCode)) {
+      setMessage('Enter the 6-digit sign-in code from your email.')
+      return
+    }
+    const verified = await run(() => verifySignInCode(normalizedEmail, normalizedCode))
+    if (verified) {
+      window.location.hash = '#/dashboard'
+    }
   }
 
   return (
@@ -477,14 +512,13 @@ function SignInPage() {
           <p className="text-sm uppercase tracking-[0.2em] text-violet-200">Welcome back</p>
           <h2 className="mt-3 text-3xl font-bold text-white">Create or access your account</h2>
           <p className="mt-3 text-slate-300">
-            Sign in with your Mochi account. You can use Google, GitHub, a magic link, or email and password.
+            Sign in with your Mochi account. You can use Google, GitHub, a sign-in code, or email and password.
           </p>
-
           <div className="mt-6 space-y-3">
             {providerOptions.map((provider) => (
               <div key={provider} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3 text-slate-200">
                 <Lock className="h-4 w-4 text-violet-300" />
-                <span>{provider}</span>
+                <span>{provider === 'Magic link' ? 'Email sign-in code' : provider}</span>
               </div>
             ))}
           </div>
@@ -496,52 +530,69 @@ function SignInPage() {
               <p className="text-slate-300">You are signed in as <strong className="text-white">{user.email}</strong>.</p>
               <Link to="/dashboard" className="inline-flex rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-5 py-3 font-semibold text-white">Open dashboard</Link>
             </div>
-          ) : <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); void run(() => signInWithPassword(email, password)) }}>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-slate-200">Email</label>
-              <input
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none ring-0 placeholder:text-slate-500 focus:border-violet-400/60"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium text-slate-200">Password</label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none placeholder:text-slate-500 focus:border-violet-400/60"
-              />
-            </div>
-
-            <div className="flex flex-wrap gap-3 pt-2">
-              <button type="submit" disabled={busy} className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-5 py-3 font-semibold text-white shadow-lg shadow-violet-500/30 disabled:opacity-50">
-                {busy ? 'Working…' : 'Sign in'}
-              </button>
-              <button type="button" onClick={() => void run(() => resetPassword(email))} className="rounded-full border border-white/15 bg-white/5 px-5 py-3 font-semibold text-slate-100">
-                Reset password
-              </button>
-              <button type="button" onClick={() => void run(() => sendMagicLink(email))} className="rounded-full border border-white/15 bg-white/5 px-5 py-3 font-semibold text-slate-100">
-                Send magic link
-              </button>
-              <button type="button" onClick={() => void run(() => signUpWithPassword(email, password))} className="rounded-full border border-white/15 bg-white/5 px-5 py-3 font-semibold text-slate-100">
-                Create account
-              </button>
-            </div>
-            {message && <p className="text-sm text-cyan-200">{message}</p>}
-            <div className="flex flex-wrap gap-2 pt-2">
-              {(['github', 'google'] as const).map((provider) => (
-                <button key={provider} type="button" onClick={() => void run(() => signInWithProvider(provider))} className="rounded-full border border-white/15 px-3 py-2 text-sm text-slate-200">
-                  Continue with {provider === 'github' ? 'GitHub' : 'Google'}
+          ) : codeMode ? (
+            <div className="space-y-5">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-300">Check your email</p>
+                <h3 className="mt-3 text-2xl font-bold text-white">Enter your sign-in code</h3>
+                <p className="mt-3 leading-7 text-slate-400">
+                  We sent a 6-digit code to <strong className="text-slate-200">{email}</strong>. Enter it below to sign in.
+                </p>
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-200">Sign-in code</label>
+                <input
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  pattern="[0-9]{6}"
+                  autoFocus
+                  value={code}
+                  onChange={(event) => setCode(event.target.value.replace(/\\D/g, '').slice(0, 6))}
+                  onKeyDown={(event) => { if (event.key === 'Enter') void verifyCode() }}
+                  placeholder="123456"
+                  className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-4 text-center font-mono text-2xl tracking-[0.45em] text-white outline-none placeholder:text-slate-600 focus:border-violet-400/60"
+                />
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <button type="button" disabled={busy} onClick={() => void verifyCode()} className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-5 py-3 font-semibold text-white disabled:opacity-50">
+                  {busy ? 'Verifying…' : 'Verify and sign in'}
                 </button>
-              ))}
+                <button type="button" disabled={busy} onClick={() => { setCodeMode(false); setCode(''); setMessage('') }} className="rounded-full border border-white/15 bg-white/5 px-5 py-3 font-semibold text-slate-100">
+                  Use a different email
+                </button>
+                <button type="button" disabled={busy} onClick={() => void sendCode()} className="rounded-full border border-white/15 bg-white/5 px-5 py-3 font-semibold text-slate-100">
+                  Send another code
+                </button>
+              </div>
+              {message && <p className="text-sm text-rose-200">{message}</p>}
             </div>
-          </form>}
+          ) : (
+            <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); void run(() => signInWithPassword(email, password)) }}>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-200">Email</label>
+                <input type="email" placeholder="you@example.com" value={email} onChange={(event) => setEmail(event.target.value)} className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none placeholder:text-slate-500 focus:border-violet-400/60" />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-200">Password</label>
+                <input type="password" placeholder="••••••••" value={password} onChange={(event) => setPassword(event.target.value)} className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none placeholder:text-slate-500 focus:border-violet-400/60" />
+              </div>
+              <div className="flex flex-wrap gap-3 pt-2">
+                <button type="submit" disabled={busy} className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-5 py-3 font-semibold text-white shadow-lg shadow-violet-500/30 disabled:opacity-50">{busy ? 'Working…' : 'Sign in'}</button>
+                <button type="button" onClick={() => void run(() => resetPassword(email))} className="rounded-full border border-white/15 bg-white/5 px-5 py-3 font-semibold text-slate-100">Reset password</button>
+                <button type="button" disabled={busy} onClick={() => void sendCode()} className="rounded-full border border-white/15 bg-white/5 px-5 py-3 font-semibold text-slate-100">Send sign-in code</button>
+                <button type="button" onClick={() => void run(() => signUpWithPassword(email, password))} className="rounded-full border border-white/15 bg-white/5 px-5 py-3 font-semibold text-slate-100">Create account</button>
+              </div>
+              {message && <p className="text-sm text-cyan-200">{message}</p>}
+              <div className="flex flex-wrap gap-2 pt-2">
+                {(['github', 'google'] as const).map((provider) => (
+                  <button key={provider} type="button" onClick={() => void run(() => signInWithProvider(provider))} className="rounded-full border border-white/15 px-3 py-2 text-sm text-slate-200">
+                    Continue with {provider === 'github' ? 'GitHub' : 'Google'}
+                  </button>
+                ))}
+              </div>
+            </form>
+          )}
         </div>
       </div>
     </PageShell>
