@@ -109,7 +109,7 @@ function GettingStarted(){return <div className="space-y-9">
 </Section>
 <Section id="add-game" title="6. Adding a game">
   <p>When a user adds a game manually, Mochi creates a Piko representing that game and associates a default Tofu with it. The launch target can now be selected through a native file dialog rather than requiring the user to type a path manually.</p>
-  <p>The add-game flow accepts a normal executable or launcher path and is being extended around Linux-native launch targets. Flatpak games can also be selected from a picker populated by Mochi's native Flatpak discovery command.</p>
+  <p>The add-game flow accepts a normal executable or launcher path, with Linux-native launch targets supported alongside it. Flatpak games can also be selected from a picker populated by Mochi's native Flatpak discovery command.</p>
   <Diagram title="Game addition flow">
     <div className="flex min-w-[900px] items-center justify-center gap-2 text-xs">
       <Box title="Add a Piko" /><span>→</span><Box title="Name + launch target" /><span>→</span><Box title="Optional IGDB match" muted/><span>→</span><Box title="Confirmed Piko" /><span>→</span><Box title="Default Tofu" /><span>→</span><Box title="Library" />
@@ -158,7 +158,7 @@ function GettingStarted(){return <div className="space-y-9">
 </Section>
 <Section id="launching" title="9. Launching games">
   <p>The Play action operates on the selected Piko and its selected Tofu. The selected launch target is passed from the UI to the native Tauri/Rust layer, which decides how that target should be started.</p>
-  <p>Mochi currently supports ordinary executable targets plus Linux launch targets for <code>.desktop</code> files, Flatpak application IDs, and common script types. The launcher target is treated as one value, while the native layer selects the appropriate mechanism.</p>
+  <p>Mochi currently supports ordinary executable targets plus Linux launch targets for <code>.desktop</code> files, Flatpak application IDs, and supported script types. The launcher target is treated as one value, while the native layer selects the appropriate mechanism.</p>
   <ul className="list-disc space-y-2 pl-6">
     <li><strong>Executable:</strong> launched directly as a native process.</li>
     <li><strong>.desktop:</strong> launched with <code>gio launch</code>, falling back to <code>xdg-open</code> when necessary.</li>
@@ -195,47 +195,48 @@ function GettingStarted(){return <div className="space-y-9">
 
 function Account(){return <div className="space-y-9">
 <Section id="model" title="1. Account model">
-  <p>A Mochi account provides a shared identity between the launcher and companion website. Creating an account does not automatically make the launcher dependent on the cloud: local library functionality and cloud identity are separate concerns.</p>
-  <p>Authentication proves who the user is. Authorisation determines what that authenticated user is allowed to access. Synchronisation is another layer again: it determines which supported local metadata is copied between the device and the cloud.</p>
+  <p>A Mochi account provides a shared identity between the launcher and companion website. Creating an account does not make the local launcher dependent on cloud services: local library functionality and account identity are separate concerns.</p>
+  <p>Authentication proves who the user is. Authorisation determines what that authenticated user is allowed to access. Synchronisation is another layer: it determines which supported metadata is copied between the device and the cloud.</p>
 </Section>
 <Section id="architecture" title="2. Account architecture">
   <p>The account system can be thought of as a chain from identity to permissions to application data. Each layer has a different responsibility.</p>
   <Diagram title="Account architecture">
-    <div className="flex min-w-[760px] items-center justify-center gap-2 text-xs">
-      <Box title="User" >person using Mochi</Box><span>→</span><Box title="Authentication" >Google · GitHub · email/password · magic link</Box><span>→</span><Box title="Session" >authenticated identity</Box><span>→</span><Box title="Authorisation" >ownership + feature access</Box><span>→</span><Box title="Mochi data" >profile · Pikos · Tofus</Box>
+    <div className="flex min-w-[820px] items-center justify-center gap-2 text-xs">
+      <Box title="User">person using Mochi</Box><span>→</span><Box title="Primary sign-in">Google · GitHub · email/password · email code</Box><span>→</span><Box title="Session">authenticated identity</Box><span>→</span><Box title="Additional security">TOTP or passkey when configured</Box><span>→</span><Box title="Mochi data">profile · Pikos · Tofus</Box>
     </div>
   </Diagram>
 </Section>
 <Section id="signin" title="3. Sign-in methods">
-  <p>The current interface supports Google, GitHub, email and password, and passwordless magic links delivered by email. Phone-number sign-in is not supported.</p>
-  <p>Google and GitHub provide external identity flows. Email/password provides a traditional credential flow, while a magic link allows the user to authenticate through a time-limited email action without entering a password.</p>
-  <p>The user-facing documentation intentionally describes the product-level authentication methods rather than exposing implementation-specific service branding.</p>
+  <p>The current website supports Google, GitHub, email and password, and passwordless email sign-in codes. Phone-number sign-in is not supported.</p>
+  <p>Google and GitHub provide external identity flows. Email/password provides a traditional credential flow. Email sign-in codes provide a passwordless flow: Mochi sends a time-limited numeric code to the address entered on the sign-in screen, and the user enters that code to complete authentication.</p>
+  <p>New accounts can be created through the email/password flow or the passwordless email-code flow. Email verification may also be required depending on the account flow and configured email settings.</p>
 </Section>
 <Section id="sessions" title="4. Sessions & persistence">
-  <p>After successful authentication, Mochi retains the authenticated session so the user does not have to complete the entire sign-in process every time the application starts. Session refresh is handled by the account layer.</p>
-  <p>Signing out ends the authenticated session. It does not mean that the local game library, installed games, or local launcher preferences should be deleted. Identity state and local application state have different lifetimes.</p>
+  <p>After successful authentication, Mochi retains the authenticated session so the user does not have to complete the entire sign-in process every time the application starts. The account layer refreshes an expiring session when needed.</p>
+  <p>Signing out ends the authenticated session. It does not delete the local game library, installed games, or local launcher preferences. Identity state and local application state have different lifetimes.</p>
   <Diagram title="Returning to Mochi">
     <div className="flex min-w-[700px] flex-col items-center gap-3 text-xs"><div className="flex gap-3"><Box title="First sign-in" /><Box title="Session stored" /><Box title="Close Mochi" /></div><div className="text-slate-500">↓ reopen</div><div className="flex gap-3"><Box title="Restore session" /><span className="pt-3">→</span><Box title="Continue signed in" /></div></div>
   </Diagram>
 </Section>
 <Section id="profiles" title="5. Profiles">
   <p>Each account has a corresponding profile record. The profile is application-level information rather than the authentication credential itself.</p>
-  <p>The current profile model supports a display name, avatar URL, cloud-sync preference, metadata access state, and timestamps. A database-side creation flow ensures a profile is created when a new account is established.</p>
+  <p>The current profile model supports a display name, avatar URL, cloud-sync preference, metadata access state, and account email metadata.</p>
 </Section>
-<Section id="security" title="6. Security & 2FA">
-  <p>Mochi supports time-based one-time-password authentication through an authenticator application. A verified factor can be challenged when additional verification is required.</p>
-  <p>Two-factor authentication should be considered an additional layer rather than a replacement for good account hygiene. Users should protect their email account, external identity provider account, recovery methods, and local device.</p>
-  <p>Client-side IDs are never sufficient proof of ownership. Database-level policies must also verify that the authenticated user owns the records being requested.</p>
+<Section id="security" title="6. Security, 2FA & passkeys">
+  <p>Mochi supports time-based one-time-password authentication through an authenticator application. A verified TOTP factor can be challenged during sign-in when the account has additional verification configured.</p>
+  <p>Mochi also supports passkeys when one is registered on the account. During the post-sign-in security check, a registered passkey can be used as an additional verification method. Passkeys and TOTP are separate security mechanisms; TOTP is the authenticator-app two-factor factor.</p>
+  <p>Users should protect their email account, external identity provider account, recovery methods, passkeys, authenticator device, and local computer.</p>
+  <p>Client-side IDs are never sufficient proof of ownership. Server-side database policies and protected administrative operations must verify that the authenticated user is allowed to access or change the requested records.</p>
 </Section>
 <Section id="cloud-access" title="7. Cloud access">
-  <p>Account creation and cloud metadata access are intentionally separate. Administrative controls can allow or disable cloud metadata synchronisation for individual accounts.</p>
+  <p>Account creation and cloud metadata access are intentionally separate. Administrative controls can allow or disable cloud metadata access for individual accounts, while cloud sync can be enabled or disabled separately.</p>
   <p>This creates a useful permission boundary: someone can use a Mochi identity for website and launcher features without automatically receiving every cloud capability.</p>
 </Section>
 <Section id="data-flow" title="8. Authentication flow">
-  <p>The exact provider internals can vary, but the product-level flow remains consistent: the user chooses a method, completes authentication, Mochi receives an authenticated session, and application requests are then associated with that identity.</p>
+  <p>The product-level flow is: choose a primary sign-in method, complete authentication, receive an authenticated session, check configured additional security methods, then load the application profile. Cloud synchronisation remains optional and separately controlled.</p>
   <Diagram title="Authentication flow">
-    <div className="flex min-w-[760px] items-center justify-center gap-2 text-xs">
-      <Box title="Sign in" /><span>→</span><Box title="Identity provider" muted/><span>→</span><Box title="Authenticated session" /><span>→</span><Box title="Load profile" /><span>→</span><Box title="Optional cloud sync" muted/>
+    <div className="flex min-w-[900px] items-center justify-center gap-2 text-xs">
+      <Box title="Primary sign-in" /><span>→</span><Box title="Email / provider" muted/><span>→</span><Box title="Authenticated session" /><span>→</span><Box title="TOTP / passkey check" muted/><span>→</span><Box title="Load profile" /><span>→</span><Box title="Optional cloud sync" muted/>
     </div>
   </Diagram>
 </Section>
