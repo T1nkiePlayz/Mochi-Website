@@ -240,7 +240,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(null)
       return
     }
-    const { data, error } = await supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle()
+    const { data, error } = await supabase.from('profiles').select('id, display_name, avatar_url, cloud_sync_enabled, metadata_sync_allowed, email').eq('id', session.user.id).maybeSingle()
     if (!error) setProfile(data ? { ...(data as Profile), is_admin: session.user.app_metadata?.role === 'admin' } : null)
   }
 
@@ -253,13 +253,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(async ({ data }) => {
       if (!active) return
 
-      // Refresh once on startup so server-managed app_metadata (including the
-      // admin role) is reflected in the current JWT without requiring the
-      // user to discover that they need to sign out and back in.
       if (data.session) {
-        const refreshed = await supabase.auth.refreshSession()
+        // Avoid an extra network round-trip on every page load. Refresh only
+        // when the persisted session is close to expiry.
+        const expiresSoon =
+          !data.session.expires_at ||
+          data.session.expires_at - Math.floor(Date.now() / 1000) < 60
+        const session = expiresSoon
+          ? (await supabase.auth.refreshSession()).data.session ?? data.session
+          : data.session
         if (active) {
-          setSession(refreshed.data.session ?? data.session)
+          setSession(session)
           setLoading(false)
         }
       } else {
