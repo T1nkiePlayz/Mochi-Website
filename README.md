@@ -99,7 +99,6 @@ The current site includes:
 - **Download** — download and release information.
 - **Documentation** — detailed user and technical documentation.
 - **FAQ** — common questions about Mochi, accounts, cloud sync, Pikos, Tofus, and platforms.
-- **Status** — project/service status information.
 - **Sign In** — account authentication.
 - **Dashboard** — authenticated user portal.
 - **Account settings** — account controls.
@@ -131,11 +130,11 @@ Covers the path from first launch to adding and launching a game, including:
 Explains:
 
 - Account structure
-- Sign-in methods
-- Sessions
-- Profiles
-- Security
-- Cloud access
+- Email/password, email sign-in codes, Google, and GitHub
+- Sessions and persistence
+- Profiles and avatars
+- Authenticator-app 2FA and passkeys
+- Cloud access permissions
 - Account data flow
 
 ### Pikos & Tofus
@@ -163,14 +162,14 @@ The homepage answers **"What is Mochi?"** while the documentation is intended to
 
 The website provides access to Mochi account functionality.
 
-The current authentication experience includes the configured methods exposed by the application, such as:
+The current authentication experience includes:
 
 - Email and password
-- Email magic links
+- Email sign-in codes
 - Google
 - GitHub
-- Authenticator-app two-factor authentication where enabled
-- Passkey authentication where enabled by the current application build
+- Authenticator-app two-factor authentication where configured
+- Passkey authentication where configured
 
 Authentication is intended to let the same Mochi account be used across the web portal and desktop launcher.
 
@@ -282,9 +281,12 @@ Documentation in-page navigation uses explicit scrolling behavior rather than re
 
 ### Configure environment
 
-    cp .env.example .env
+Create a local `.env` file with:
 
-Fill in the development values required by the project. Never commit real secrets.
+    VITE_SUPABASE_URL=...
+    VITE_SUPABASE_PUBLISHABLE_KEY=...
+
+Never commit real secrets.
 
 ### Start development
 
@@ -298,7 +300,7 @@ For network-accessible development, the project's current workflow can also use:
 
 The website uses build-time environment configuration for its backend integration.
 
-Keep local configuration in .env and use .env.example as the public template.
+The publishable key is safe to embed in the browser application when paired with the database's access policies; service-role keys and other privileged secrets must never be exposed to the frontend.
 
 The public site intentionally avoids exposing sensitive backend configuration. Authentication and cloud implementation details are kept in the application code and environment rather than embedded into public copy unnecessarily.
 
@@ -361,7 +363,7 @@ The website is evolving alongside Mochi Launcher.
 
 Current limitations include:
 
-- Some pages and features remain under development.
+- Some pages and features remain under development, and the launcher itself is still pre-release.
 - The desktop launcher is not yet a stable release.
 - Cloud metadata behavior may evolve as the data model matures.
 - Documentation can temporarily lag behind implementation during rapid development.
