@@ -88,6 +88,13 @@ export async function linkAuthIdentity(provider: 'github' | 'google') {
   return result
 }
 
+export async function unlinkAuthIdentity(provider: 'github' | 'google', user: User) {
+  if (!supabase) return { data: null, error: new Error(notConfigured) }
+  const identity = user.identities?.find((item) => item.provider === provider)
+  if (!identity) return { data: null, error: new Error('No ' + provider + ' identity is linked to this account.') }
+  return supabase.auth.unlinkIdentity(identity)
+}
+
 export async function refreshAuthSession() {
   if (!supabase) return { data: { session: null }, error: new Error(notConfigured) }
   return supabase.auth.refreshSession()
