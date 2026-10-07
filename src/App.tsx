@@ -517,8 +517,8 @@ function SignInPage() {
       setMessage('Please enter your email address.')
       return
     }
-    if (!/^\d{6}$/.test(normalizedCode)) {
-      setMessage('Enter the 6-digit sign-in code from your email.')
+    if (!/^\d{8}$/.test(normalizedCode)) {
+      setMessage('Enter the 8-digit sign-in code from your email.')
       return
     }
     const verified = await run(() => verifySignInCode(normalizedEmail, normalizedCode))
@@ -560,7 +560,7 @@ function SignInPage() {
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-300">Check your email</p>
                 <h3 className="mt-3 text-2xl font-bold text-white">Enter your sign-in code</h3>
                 <p className="mt-3 leading-7 text-slate-400">
-                  We sent a 6-digit code to <strong className="text-slate-200">{email}</strong>. Enter it below to sign in.
+                  We sent an 8-digit code to <strong className="text-slate-200">{email}</strong>. Enter it below to sign in.
                 </p>
               </div>
               <div>
@@ -568,13 +568,13 @@ function SignInPage() {
                 <input
                   inputMode="numeric"
                   autoComplete="one-time-code"
-                  maxLength={6}
-                  pattern="[0-9]{6}"
+                  maxLength={8}
+                  pattern="[0-9]{8}"
                   autoFocus
                   value={code}
-                  onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 8))}
                   onKeyDown={(event) => { if (event.key === 'Enter') void verifyCode() }}
-                  placeholder="123456"
+                  placeholder="12345678"
                   className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-4 text-center font-mono text-2xl tracking-[0.45em] text-white outline-none placeholder:text-slate-600 focus:border-violet-400/60"
                 />
               </div>
