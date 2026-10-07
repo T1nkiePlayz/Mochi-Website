@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Cloud, Code2, Download, Gamepad2, KeyRound, Layers3, Rocket, Search, ShieldCheck, Sparkles, Terminal, Wrench } from 'lucide-react'
+import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Cloud, Code2, Gamepad2, KeyRound, Layers3, Rocket, Search, ShieldCheck, Terminal, Wrench } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { useMemo, useState, type ReactNode } from 'react'
 
