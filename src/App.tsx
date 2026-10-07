@@ -489,8 +489,8 @@ function SignInPage() {
     else window.location.hash = '#/dashboard'
   }
 
-  const inspectSecurity = async () => {
-    if (!supabase || !user) return
+  const inspectSecurity = async (accountUser = user) => {
+    if (!supabase || !accountUser) return
     setBusy(true)
     setMessage('')
     const [aalResult, factorsResult] = await Promise.all([
@@ -512,7 +512,7 @@ function SignInPage() {
     const passkey = (factorsResult.data?.passkeys ?? []).length > 0
     setHasTotp(totp)
     setHasPasskey(passkey)
-    setPendingUserId(user.id)
+    setPendingUserId(accountUser.id)
 
     // AAL2 means a real Supabase MFA factor has already been verified.
     if (aalResult.data?.currentLevel === 'aal2') {
@@ -583,7 +583,7 @@ function SignInPage() {
       setMessage('The selected passkey belongs to a different Mochi account. Please sign in again.')
       return
     }
-    await inspectSecurity()
+    await inspectSecurity(currentUser)
   }
 
   const verifyCode = async () => {
@@ -608,19 +608,19 @@ function SignInPage() {
     }
     setBusy(true)
     setMessage('')
-    const { error } = await supabase!.auth.mfa.listFactors()
-    if (error) {
-      setMessage(error.message)
+    const factors = await supabase!.auth.mfa.listFactors()
+    if (factors.error) {
+      setMessage(factors.error.message)
       setBusy(false)
       return
     }
-    const verified = await (async () => {
-      const factors = await supabase!.auth.mfa.listFactors()
-      if (factors.error) return { error: factors.error }
-      const factor = factors.data.totp.find((item) => item.status === 'verified')
-      if (!factor) return { error: new Error('No verified authenticator app is available for this account.') }
-      return supabase!.auth.mfa.challengeAndVerify({ factorId: factor.id, code: code.trim() })
-    })()
+    const factor = factors.data.totp.find((item) => item.status === 'verified')
+    if (!factor) {
+      setMessage('No verified authenticator app is available for this account.')
+      setBusy(false)
+      return
+    }
+    const verified = await supabase!.auth.mfa.challengeAndVerify({ factorId: factor.id, code: code.trim() })
     if (verified.error) {
       setMessage(verified.error.message)
       setBusy(false)
