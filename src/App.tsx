@@ -793,7 +793,6 @@ function SignInPage() {
             </form>
           )}
         </div>
-        </div>
       </div>
     </PageShell>
   )
