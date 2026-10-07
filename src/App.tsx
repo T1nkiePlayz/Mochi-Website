@@ -938,7 +938,7 @@ function OverviewTab({ user, profile, isAdmin, onSecurity, onAccount, onCloud }:
   const mfaReady = Boolean(user.factors?.some((factor: any) => factor.factor_type === 'totp' && factor.status === 'verified'))
   const socialConnected = (user.identities ?? []).some((identity: any) => identity.provider === 'google' || identity.provider === 'github')
   return <div className="space-y-6"><div className="grid gap-4 sm:grid-cols-2"><InfoCard icon={Mail} label="Email" value={user.email || 'No email'} /><InfoCard icon={KeyRound} label="User ID" value={user.id} mono /></div>
-    <section className="glass-card p-6"><div className="flex items-center justify-between gap-4"><div><p className="text-sm uppercase tracking-[0.2em] text-violet-300">Security health</p><h3 className="mt-2 text-xl font-semibold text-white">Keep your account protected</h3></div><ShieldCheck className="h-7 w-7 text-violet-300" /></div><div className="mt-5 grid gap-3 sm:grid-cols-2"><StatusRow label="Email verification" ok={verified} detail={verified ? 'Verified' : 'Verification required'} /><StatusRow label="Authenticator app" ok={mfaReady} detail={mfaReady ? 'Enabled' : 'Not configured'} /><StatusRow label="Google / GitHub" ok={socialConnected} detail={socialConnected ? 'Connected' : 'Not connected'} /><StatusRow label="Admin access" ok={isAdmin} detail={isAdmin ? 'Administrator' : 'Standard account'} /></div>{(!mfaReady || !socialConnected) && <button onClick={onSecurity} className="mt-5 inline-flex items-center gap-2 rounded-full border border-violet-400/25 bg-violet-500/10 px-4 py-2 text-sm font-semibold text-violet-200">Improve security <Shield className="h-4 w-4" /></button>}</section>
+    <section className="glass-card p-6"><div className="flex items-center justify-between gap-4"><div><p className="text-sm uppercase tracking-[0.2em] text-violet-300">Security health</p><h3 className="mt-2 text-xl font-semibold text-white">Keep your account protected</h3></div><ShieldCheck className="h-7 w-7 text-violet-300" /></div><div className="mt-5 grid gap-3 sm:grid-cols-2"><StatusRow label="Email verification" ok={verified} detail={verified ? 'Verified' : 'Verification required'} /><StatusRow label="Authenticator app" ok={mfaReady} detail={mfaReady ? 'Enabled' : 'Not configured'} /><StatusRow label="Google / GitHub" ok={socialConnected} detail={socialConnected ? 'Connected' : 'Not connected'} /></div>{(!mfaReady || !socialConnected) && <button onClick={onSecurity} className="mt-5 inline-flex items-center gap-2 rounded-full border border-violet-400/25 bg-violet-500/10 px-4 py-2 text-sm font-semibold text-violet-200">Improve security <Shield className="h-4 w-4" /></button>}</section>
     <div className="grid gap-4 md:grid-cols-2"><button onClick={onAccount} className="glass-card group p-6 text-left transition hover:-translate-y-0.5 hover:border-violet-400/30"><UserRound className="h-6 w-6 text-violet-300" /><h3 className="mt-4 text-lg font-semibold text-white">Account details</h3><p className="mt-2 text-sm leading-6 text-slate-400">Change your display name, email address, or password.</p><span className="mt-4 inline-flex text-sm font-semibold text-violet-200">Manage account →</span></button><button onClick={onCloud} className="glass-card group p-6 text-left transition hover:-translate-y-0.5 hover:border-cyan-400/30"><Cloud className="h-6 w-6 text-cyan-300" /><h3 className="mt-4 text-lg font-semibold text-white">Cloud experience</h3><p className="mt-2 text-sm leading-6 text-slate-400">{profile?.metadata_sync_allowed ? (profile.cloud_sync_enabled ? 'Cloud sync is enabled for this account.' : 'Cloud sync is available but currently turned off.') : 'Cloud features are not enabled for this account.'}</p><span className="mt-4 inline-flex text-sm font-semibold text-cyan-200">View cloud settings →</span></button></div>
   </div>
 }
@@ -1508,37 +1508,3 @@ function EmptyState({ icon: Icon, title, text }: { icon: any; title: string; tex
 }
 function SettingsPage() { return <DashboardPage /> }
 function AdminPage() { return <DashboardPage /> }
-function PageShell({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return <div className={`space-y-8 pb-10 ${className}`}>{children}</div>
-}
-
-function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) {
-  return (
-    <div>
-      <p className="text-sm font-medium uppercase tracking-[0.2em] text-violet-200">{eyebrow}</p>
-      <h2 className="mt-3 max-w-3xl text-3xl font-bold tracking-tight text-white sm:text-4xl">{title}</h2>
-    </div>
-  )
-}
-
-function StepCard({ step, title, description }: { step: string; title: string; description: string }) {
-  return (
-    <div className="glass-card p-6">
-      <p className="text-sm uppercase tracking-[0.2em] text-violet-200">{step}</p>
-      <h3 className="mt-4 text-2xl font-semibold text-white">{title}</h3>
-      <p className="mt-3 text-slate-300">{description}</p>
-    </div>
-  )
-}
-
-
-function FaqItem({ question, answer }: { question: string; answer: string }) {
-  return (
-    <div className="glass-card p-5">
-      <p className="font-semibold text-white">{question}</p>
-      <p className="mt-2 text-slate-300">{answer}</p>
-    </div>
-  )
-}
-
-export default App
