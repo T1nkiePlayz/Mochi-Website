@@ -246,7 +246,7 @@ Documentation in-page navigation uses explicit scrolling behavior rather than re
 | React Router | Client-side navigation |
 | Tailwind CSS 4 | Utility styling and build integration |
 | Lucide React | Interface icons |
-| Supabase client | Account and cloud metadata integration |
+| Auth/cloud client | Account and cloud metadata integration |
 
 ## Repository structure
 
@@ -259,7 +259,6 @@ Documentation in-page navigation uses explicit scrolling behavior rather than re
     ├── src/
     │   ├── App.tsx           # Main application and routes
     │   ├── Documentation.tsx # Documentation pages
-    │   ├── components/       # Reusable UI components
     │   └── lib/              # Authentication/cloud helpers
     │
     ├── supabase/             # Backend/database definitions
