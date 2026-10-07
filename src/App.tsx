@@ -20,9 +20,7 @@ import {
   RefreshCw,
   Users,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import md5 from 'blueimp-md5'
-import { DocumentationPage, DocumentationArticlePage } from './Documentation'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { HashRouter, NavLink, Route, Routes, Link } from 'react-router-dom'
 import {
   AuthProvider,
@@ -54,6 +52,9 @@ import {
   listProfiles,
   type Profile,
 } from './lib/supabase'
+
+const DocumentationPage = lazy(() => import('./Documentation').then((module) => ({ default: module.DocumentationPage })))
+const DocumentationArticlePage = lazy(() => import('./Documentation').then((module) => ({ default: module.DocumentationArticlePage })))
 
 const navItems = [
   { label: 'Features', to: '/features' },
@@ -104,8 +105,13 @@ function AuthHeader() {
       </Link>
     )
   }
-  const email = user.email?.trim().toLowerCase() ?? ''
-  const avatar = profile?.avatar_url || (email ? `https://www.gravatar.com/avatar/${md5(email)}?d=identicon&s=96` : '')
+  const initials = (profile?.display_name || user.email || 'Mochi')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('') || 'M'
+  const avatar = profile?.avatar_url || ''
   return (
     <Link
       to="/dashboard"
@@ -113,7 +119,7 @@ function AuthHeader() {
       title="Account dashboard"
       className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-white/5 transition hover:border-violet-400/60 hover:bg-violet-500/10"
     >
-      {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : <UserRound className="h-5 w-5 text-slate-100" />}
+      {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" /> : <span className="text-xs font-bold text-slate-100">{initials}</span>}
     </Link>
   )
 }
@@ -164,8 +170,22 @@ function App() {
             <Route path="/features" element={<FeaturePage />} />
             <Route path="/how-it-works" element={<HowItWorksPage />} />
             <Route path="/download" element={<DownloadPage />} />
-            <Route path="/documentation" element={<DocumentationPage />} />
-            <Route path="/documentation/:section" element={<DocumentationArticlePage />} />
+            <Route
+              path="/documentation"
+              element={
+                <Suspense fallback={<PageLoading />}>
+                  <DocumentationPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/documentation/:section"
+              element={
+                <Suspense fallback={<PageLoading />}>
+                  <DocumentationArticlePage />
+                </Suspense>
+              }
+            />
             <Route path="/faq" element={<FaqPage />} />
             <Route path="/signin" element={<SignInPage />} />
             <Route path="/auth/verify" element={<EmailVerificationPage />} />
@@ -210,12 +230,20 @@ function App() {
   )
 }
 
+function PageLoading() {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center" aria-live="polite">
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-3 text-sm text-slate-400">Loading…</div>
+    </div>
+  )
+}
+
 function HomePage() {
   const featureHighlights = [
-    { icon: Rocket, title: 'Launch almost anything', text: 'Executables, .desktop files, Flatpaks, shell scripts, Python, and JavaScript targets are routed through the native launcher.' },
+    { icon: Rocket, title: 'Launch almost anything', text: 'Executables, .desktop files, Flatpaks, and supported scripts are routed through the native launcher.' },
     { icon: Gamepad2, title: 'Organise games your way', text: 'Keep one Piko for a game and create multiple Tofus for different versions, modded setups, performance profiles, or testing environments.' },
     { icon: Cloud, title: 'Optional cloud sync', text: 'When enabled for your account, Mochi can synchronise supported metadata and settings without uploading complete game installations.' },
-    { icon: ShieldCheck, title: 'Account controls', text: 'Use Google, GitHub, magic links, or email and password, with authenticator-app two-factor authentication available in account settings.' },
+    { icon: ShieldCheck, title: 'Account controls', text: 'Use Google, GitHub, an email sign-in code, or email and password, with authenticator-app two-factor authentication and passkeys available when configured.' },
   ]
 
   const steps = [
@@ -432,12 +460,12 @@ function FaqPage() {
         <FaqItem question="What is a Tofu?" answer="A Tofu is an individual game environment or configuration, such as vanilla, performance, Fabric, a modded setup, or another profile you create." />
         <FaqItem question="Does Mochi upload entire games to the cloud?" answer="No. Mochi is local-first. Game installations and large game files stay on your device. Cloud features are intended for supported account information, metadata, configurations, launcher settings, and device state." />
         <FaqItem question="Can I use the same account on the website and launcher?" answer="Yes. Your Mochi account can be used across the Mochi website and launcher." />
-        <FaqItem question="What can I use to sign in?" answer="Mochi currently supports Google, GitHub, magic links, and email and password. Phone-number sign-in is not supported." />
-        <FaqItem question="What is a magic link?" answer="A magic link lets you sign in through a secure link sent to your email address instead of entering a password." />
+        <FaqItem question="What can I use to sign in?" answer="Mochi currently supports Google, GitHub, email sign-in codes, and email and password. Phone-number sign-in is not supported." />
+        <FaqItem question="What is an email sign-in code?" answer="An email sign-in code lets you sign in without a password. Mochi emails a time-limited code that you enter on the sign-in screen." />
         <FaqItem question="Can I use a phone number instead of an email address?" answer="No. Mochi account sign-in uses an email address. Phone-number sign-in is not supported." />
         <FaqItem question="Can I use Google or GitHub without creating a separate Mochi password?" answer="Yes. If you choose Google or GitHub, you authenticate through that provider rather than entering a separate Mochi password on the sign-in form." />
         <FaqItem question="Does Mochi support two-factor authentication?" answer="Yes. Accounts can use an authenticator app for two-factor authentication when the feature is available to the account." />
-        <FaqItem question="Does Mochi support passkeys?" answer="Mochi's current website sign-in options do not include passkey sign-in. The supported sign-in methods are Google, GitHub, magic link, and email and password." />
+        <FaqItem question="Does Mochi support passkeys?" answer="Passkeys are supported when one is registered on your account. If your account has a passkey or authenticator app configured, Mochi can ask for that additional verification after your primary sign-in." />
         <FaqItem question="Is Mochi local-first?" answer="Yes. Mochi is designed to keep your games and large game files on your own device while using online services only where account or supported cloud features require them." />
         <FaqItem question="What does Mochi Cloud sync?" answer="For users with cloud features enabled, Mochi can sync supported metadata, configurations, launcher settings, account information, and device state. It is not intended to upload complete game installations." />
         <FaqItem question="Will my games work if I am offline?" answer="Mochi is designed around local game management, so locally installed games do not need to be uploaded to the cloud. Features that depend on an online account or cloud service may require an internet connection." />
