@@ -461,6 +461,7 @@ function SignInPage() {
   const [code, setCode] = useState('')
   const appMode = new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('app') === 'mochi'
   const mochiSignInUrl = 'https://t1nkieplayz.github.io/Mochi-Website/#/signin?app=mochi'
+  const mochiVerifyUrl = 'mochi://auth/verify'
 
   const handoffToMochi = async () => {
     if (!supabase) return
@@ -606,7 +607,7 @@ function SignInPage() {
                 </button>
                 <button type="button" disabled={busy || !email.trim()} onClick={() => void run(() => resetPassword(email.trim().toLowerCase()))} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">Reset password</button>
                 <button type="button" disabled={busy || !email.trim()} onClick={() => void sendCode()} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">Send sign-in code</button>
-                <button type="button" disabled={busy || !email.trim() || !password} onClick={() => void run(() => signUpWithPassword(email.trim().toLowerCase(), password))} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">Create account</button>
+                <button type="button" disabled={busy || !email.trim() || !password} onClick={() => void run(() => signUpWithPassword(email.trim().toLowerCase(), password, appMode ? mochiVerifyUrl : undefined))} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">Create account</button>
               </div>
               {message && <p className="text-sm text-cyan-200">{message}</p>}
               <div className="grid gap-2 pt-3 sm:grid-cols-2">
