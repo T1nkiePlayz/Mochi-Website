@@ -93,6 +93,15 @@ const providerOptions = [
   'Google',
 ]
 
+function getInitials(value?: string | null) {
+  return value
+    ?.trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('') || 'M'
+}
+
 function AuthHeader() {
   const { user, profile } = useAuth()
   if (!user) {
@@ -105,12 +114,7 @@ function AuthHeader() {
       </Link>
     )
   }
-  const initials = (profile?.display_name || user.email || 'Mochi')
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('') || 'M'
+  const initials = getInitials(profile?.display_name || user.email)
   const avatar = profile?.avatar_url || ''
   return (
     <Link
@@ -916,7 +920,11 @@ function DashboardPage() {
   return <PageShell className="max-w-6xl">
     <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-violet-500/[0.12] via-slate-950/70 to-cyan-500/[0.08] p-6 sm:p-8">
       <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div className="flex items-center gap-4"><img src={profile?.avatar_url || `https://www.gravatar.com/avatar/${md5((user.email || '').trim().toLowerCase())}?d=identicon&s=128`} alt="" className="h-16 w-16 shrink-0 rounded-full border border-white/15 bg-slate-900 object-cover" /><div><div className="flex flex-wrap items-center gap-2"><p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-300">Mochi account</p>{isAdmin && <span className="inline-flex items-center gap-1.5 rounded-md border border-violet-400/30 bg-violet-500/15 px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-violet-200"><Shield className="h-3 w-3" /> Admin</span>}</div><h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">Welcome back, {profile?.display_name || 'player'}</h2></div></div>
+        <div className="flex items-center gap-4">{profile?.avatar_url ? (
+          <img src={profile.avatar_url} alt="" className="h-16 w-16 shrink-0 rounded-full border border-white/15 bg-slate-900 object-cover" loading="lazy" decoding="async" />
+        ) : (
+          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-white/15 bg-slate-900 text-lg font-bold text-slate-100">{getInitials(profile?.display_name || user.email)}</span>
+        )}<div><div className="flex flex-wrap items-center gap-2"><p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-300">Mochi account</p>{isAdmin && <span className="inline-flex items-center gap-1.5 rounded-md border border-violet-400/30 bg-violet-500/15 px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-violet-200"><Shield className="h-3 w-3" /> Admin</span>}</div><h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">Welcome back, {profile?.display_name || 'player'}</h2></div></div>
         <button onClick={() => void signOutCurrentUser()} className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-violet-400/50 hover:bg-violet-500/10">Sign out</button>
       </div>
     </div>
