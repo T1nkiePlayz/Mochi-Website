@@ -19,7 +19,7 @@ import {
   AlertTriangle,
   RefreshCw,
   Users,
-  Github,
+  GitHub,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import md5 from 'blueimp-md5'
