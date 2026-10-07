@@ -34,6 +34,7 @@ import {
   updateEmail,
   updatePassword,
   linkAuthIdentity,
+  unlinkAuthIdentity,
   signInWithPassword,
   signInWithProvider,
   signOutCurrentUser,
@@ -1047,11 +1048,32 @@ function SecurityTab({ user }: { user: any }) {
     if (!error) await loadMfa()
   }
 
-  const providers = new Set((user.identities ?? []).map((identity: any) => identity.provider))
+  const [providers, setProviders] = useState<Set<string>>(
+    () => new Set((user.identities ?? []).map((identity: any) => identity.provider)),
+  )
+  useEffect(() => {
+    setProviders(new Set((user.identities ?? []).map((identity: any) => identity.provider)))
+  }, [user])
   const connect = async (provider: 'google' | 'github') => {
     setMessage('')
     const { error } = await linkAuthIdentity(provider)
     if (error) setMessage(error.message)
+  }
+  const unlink = async (provider: 'google' | 'github') => {
+    setBusy(true)
+    setMessage('')
+    const { error } = await unlinkAuthIdentity(provider, user)
+    if (error) {
+      setMessage(error.message)
+    } else {
+      setProviders((current) => {
+        const next = new Set(current)
+        next.delete(provider)
+        return next
+      })
+      setMessage(provider === 'google' ? 'Google account unlinked.' : 'GitHub account unlinked.')
+    }
+    setBusy(false)
   }
 
   const addPasskey = async () => {
@@ -1085,7 +1107,7 @@ function SecurityTab({ user }: { user: any }) {
         <div className="mt-4 flex flex-wrap gap-2"><input value={mfaCode} onChange={(e) => setMfaCode(e.target.value)} inputMode="numeric" maxLength={6} placeholder="123456" className="w-32 rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /><button onClick={() => void finish()} className="rounded-xl bg-violet-500 px-4 py-2 text-sm font-semibold text-white">Verify</button><button onClick={() => void cancelPending()} className="rounded-xl border border-white/15 px-4 py-2 text-sm text-slate-300">Cancel setup</button></div>
       </div>}
     </section>
-    <section className="glass-card p-6"><div><h3 className="text-xl font-semibold text-white">Connected accounts</h3><p className="mt-2 text-sm leading-6 text-slate-400">Connect Google or GitHub to this Mochi account. You will be redirected to the provider and returned here.</p></div><div className="mt-5 grid gap-3 sm:grid-cols-2">{(['google', 'github'] as const).map((provider) => <div key={provider} className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/50 p-4"><div className="flex items-center gap-3"><Link2 className="h-4 w-4 text-violet-300" /><span className="font-medium capitalize text-white">{provider}</span></div>{providers.has(provider) ? <span className="text-sm font-semibold text-emerald-300">Connected</span> : <button onClick={() => void connect(provider)} className="rounded-full border border-white/15 px-3 py-1.5 text-sm text-slate-200">Connect</button>}</div>)}</div></section>
+    <section className="glass-card p-6"><div><h3 className="text-xl font-semibold text-white">Connected accounts</h3><p className="mt-2 text-sm leading-6 text-slate-400">Connect Google or GitHub to this Mochi account. You will be redirected to the provider and returned here.</p></div><div className="mt-5 grid gap-3 sm:grid-cols-2">{(['google', 'github'] as const).map((provider) => <div key={provider} className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/50 p-4"><div className="flex items-center gap-3"><Link2 className="h-4 w-4 text-violet-300" /><span className="font-medium capitalize text-white">{provider}</span></div>{providers.has(provider) ? <button disabled={busy} onClick={() => void unlink(provider)} className="rounded-full border border-rose-400/20 bg-rose-500/5 px-3 py-1.5 text-sm font-semibold text-rose-200 disabled:cursor-not-allowed disabled:opacity-40">Unlink</button> : <button disabled={busy} onClick={() => void connect(provider)} className="rounded-full border border-white/15 px-3 py-1.5 text-sm text-slate-200 disabled:cursor-not-allowed disabled:opacity-40">Connect</button>}</div>)}</div></section>
     <section className="glass-card p-6"><div className="flex items-start justify-between gap-4"><div><h3 className="text-xl font-semibold text-white">Passkeys</h3><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">Use your device, password manager, biometrics, or security key to sign in without typing a password. Passkeys require WebAuthn to be enabled for the Mochi domain in Supabase.</p></div><KeyRound className="h-6 w-6 text-cyan-300" /></div><div className="mt-5 space-y-3">{passkeys.length ? passkeys.map((passkey) => <div key={passkey.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900/50 p-4"><div><p className="font-medium text-white">{passkey.friendly_name || 'Mochi passkey'}</p><p className="mt-1 text-xs text-slate-500">Added {passkey.created_at ? new Date(passkey.created_at).toLocaleDateString() : 'recently'}</p></div><button disabled={busy} onClick={() => void removePasskey(passkey.id)} className="rounded-full border border-rose-400/20 bg-rose-500/5 px-3 py-1.5 text-sm font-semibold text-rose-200">Remove</button></div>) : <p className="text-sm text-slate-400">No passkeys registered yet.</p>}<button disabled={busy} onClick={() => void addPasskey()} className="rounded-full bg-cyan-500/15 px-4 py-2 text-sm font-semibold text-cyan-200 ring-1 ring-cyan-400/20">{busy ? 'Opening passkey setup…' : 'Set up a passkey'}</button></div></section>
     {message && <p className="rounded-2xl border border-cyan-400/20 bg-cyan-500/5 p-4 text-sm text-cyan-200">{message}</p>}
   </div>
