@@ -928,12 +928,12 @@ function DashboardPage() {
     </div>
     <div className="grid gap-8 lg:grid-cols-[220px_1fr]">
       <aside className="h-fit rounded-3xl border border-white/10 bg-white/[0.025] p-2 lg:sticky lg:top-24"><nav className="grid gap-1">{tabs.map(({ id, label, icon: Icon }) => <button key={id} onClick={() => setTab(id)} className={tab === id ? 'flex items-center gap-3 rounded-2xl bg-violet-500/15 px-4 py-3 text-left text-sm font-medium text-white ring-1 ring-violet-400/20' : 'flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-medium text-slate-400 hover:bg-white/[0.04] hover:text-slate-200'}><Icon className="h-4 w-4" />{label}</button>)}</nav><div className="mt-3 border-t border-white/10 px-4 py-4"><p className="text-xs uppercase tracking-wider text-slate-500">Account ID</p><p className="mt-2 break-all font-mono text-[11px] text-slate-400">{user.id}</p></div></aside>
-      <div className="min-w-0">{tab === 'overview' && <OverviewTab user={user} profile={profile} isAdmin={isAdmin} onSecurity={() => setTab('security')} onAccount={() => setTab('account')} onCloud={() => setTab('cloud')} />}{tab === 'account' && <AccountTab user={user} profile={profile} refreshProfile={refreshProfile} />}{tab === 'security' && <SecurityTab user={user} />}{tab === 'api' && <ApiTab />}{tab === 'cloud' && <CloudTab profile={profile} />}{tab === 'admin' && isAdmin && <AdminTab />}</div>
+      <div className="min-w-0">{tab === 'overview' && <OverviewTab user={user} profile={profile} onSecurity={() => setTab('security')} onAccount={() => setTab('account')} onCloud={() => setTab('cloud')} />}{tab === 'account' && <AccountTab user={user} profile={profile} refreshProfile={refreshProfile} />}{tab === 'security' && <SecurityTab user={user} />}{tab === 'api' && <ApiTab />}{tab === 'cloud' && <CloudTab profile={profile} />}{tab === 'admin' && isAdmin && <AdminTab />}</div>
     </div>
   </PageShell>
 }
 
-function OverviewTab({ user, profile, isAdmin, onSecurity, onAccount, onCloud }: { user: any; profile: Profile | null; isAdmin: boolean; onSecurity: () => void; onAccount: () => void; onCloud: () => void }) {
+function OverviewTab({ user, profile, onSecurity, onAccount, onCloud }: { user: any; profile: Profile | null; onSecurity: () => void; onAccount: () => void; onCloud: () => void }) {
   const verified = Boolean(user.email_confirmed_at)
   const mfaReady = Boolean(user.factors?.some((factor: any) => factor.factor_type === 'totp' && factor.status === 'verified'))
   const socialConnected = (user.identities ?? []).some((identity: any) => identity.provider === 'google' || identity.provider === 'github')
