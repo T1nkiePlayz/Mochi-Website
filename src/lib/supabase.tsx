@@ -26,6 +26,10 @@ export const supabase =
       })
     : null
 
+// The site may be served from a sub-path (GitHub Pages project sites), so
+// redirects must include the pathname rather than only the origin.
+export const siteUrl = () => window.location.origin + window.location.pathname.replace(/index\.html$/, '')
+
 const notConfigured = 'Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.'
 
 export async function signInWithPassword(email: string, password: string) {
@@ -35,7 +39,7 @@ export async function signInWithPassword(email: string, password: string) {
 
 export async function signUpWithPassword(email: string, password: string, redirectTo?: string) {
   if (!supabase) return { data: { user: null, session: null }, error: new Error(notConfigured) }
-  return supabase.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo ?? window.location.origin } })
+  return supabase.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo ?? siteUrl() } })
 }
 
 export async function sendSignInCode(email: string) {
@@ -50,7 +54,7 @@ export async function verifySignInCode(email: string, token: string) {
 
 export async function resetPassword(email: string) {
   if (!supabase) return { error: new Error(notConfigured) }
-  return supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin })
+  return supabase.auth.resetPasswordForEmail(email, { redirectTo: siteUrl() })
 }
 
 export async function signInWithProvider(provider: 'github' | 'google', redirectTo?: string) {
@@ -60,7 +64,7 @@ export async function signInWithProvider(provider: 'github' | 'google', redirect
     // HashRouter routes live in the URL fragment. OAuth/PKCE codes must stay in
     // the real query string, so redirect to the site origin and let Supabase
     // detect the returned session before HashRouter takes over.
-    options: { redirectTo: redirectTo ?? window.location.origin },
+    options: { redirectTo: redirectTo ?? siteUrl() },
   })
 }
 
@@ -81,7 +85,7 @@ export async function linkAuthIdentity(provider: 'github' | 'google') {
   if (!supabase) return { data: null, error: new Error(notConfigured) }
   const result = await supabase.auth.linkIdentity({
     provider,
-    options: { redirectTo: window.location.origin },
+    options: { redirectTo: siteUrl() },
   })
   if (result.error) return result
   if (result.data?.url) window.location.assign(result.data.url)

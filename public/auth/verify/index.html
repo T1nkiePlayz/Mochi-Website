@@ -14,7 +14,7 @@
       var target = params.get('target');
 
       if (!tokenHash || type !== 'email') {
-        window.location.replace('/#/auth/verify');
+        window.location.replace('../../#/auth/verify');
         return;
       }
 
@@ -27,7 +27,7 @@
         return;
       }
 
-      window.location.replace('/#/auth/verify' + encodedQuery);
+      window.location.replace('../../#/auth/verify' + encodedQuery);
     })();
   </script>
 </head>

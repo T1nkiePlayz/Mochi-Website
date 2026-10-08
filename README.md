@@ -176,12 +176,16 @@ For static analysis:
 
     npm run lint
 
-Create a local `.env` containing the required build variables:
+Copy `.env.example` to `.env` and fill in the required build variables:
 
     VITE_SUPABASE_URL=...
     VITE_SUPABASE_PUBLISHABLE_KEY=...
 
 Never commit real secrets, service-role credentials, provider secrets, or local environment files.
+
+## Hosting and base path
+
+The build uses a relative Vite `base` (`./`) and `import.meta.env.BASE_URL` for in-app links, so the same output works on a GitHub Pages project site (`/Mochi-Website/`) or a custom domain. Authentication redirects are built from `siteUrl()` (origin plus path), and that URL must be in the Supabase redirect allow-list. The standalone `policy/`, `terms/`, and `auth/verify/` pages use relative links for the same reason. React and Supabase are emitted as separate vendor chunks, and the documentation, roadmap, and changelog are lazy-loaded.
 
 ## Keeping documentation accurate
 

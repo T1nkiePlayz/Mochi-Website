@@ -26,6 +26,7 @@ import { HashRouter, NavLink, Route, Routes, Link } from 'react-router-dom'
 import {
   AuthProvider,
   supabase,
+  siteUrl,
   resetPassword,
   sendSignInCode,
   verifySignInCode,
@@ -55,6 +56,9 @@ import {
   listProfiles,
   type Profile,
 } from './lib/supabase'
+
+const base = import.meta.env.BASE_URL
+const logoSrc = `${base}mochi.png`
 
 const DocumentationPage = lazy(() => import('./Documentation').then((module) => ({ default: module.DocumentationPage })))
 const DocumentationArticlePage = lazy(() => import('./Documentation').then((module) => ({ default: module.DocumentationArticlePage })))
@@ -146,7 +150,7 @@ function App() {
         <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
             <Link to="/" className="flex items-center gap-3 text-lg font-semibold tracking-tight text-white">
-              <img src="/mochi.png" alt="Mochi" className="h-9 w-9 rounded-xl object-contain" />
+              <img src={logoSrc} alt="Mochi" className="h-9 w-9 rounded-xl object-contain" />
               Mochi
             </Link>
 
@@ -206,6 +210,7 @@ function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/admin" element={<AdminPage />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </main>
 
@@ -213,7 +218,7 @@ function App() {
           <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-10 text-sm text-slate-300 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
             <div>
               <div className="flex items-center gap-2">
-                <img src="/mochi.png" alt="" className="h-7 w-7 rounded-lg object-contain" />
+                <img src={logoSrc} alt="" className="h-7 w-7 rounded-lg object-contain" />
                 <p className="text-base font-semibold text-white">Mochi</p>
               </div>
               <p className="mt-1">Your games, your way.</p>
@@ -229,10 +234,10 @@ function App() {
               <Link to="/signin" className="transition hover:text-white">
                 Sign in
               </Link>
-              <a href="/policy/" className="transition hover:text-white">
+              <a href={`${base}policy/`} className="transition hover:text-white">
                 Privacy Policy
               </a>
-              <a href="/terms/" className="transition hover:text-white">
+              <a href={`${base}terms/`} className="transition hover:text-white">
                 Terms of Use
               </a>
             </div>
@@ -367,6 +372,15 @@ function HomePage() {
         <div className="relative"><Sparkles className="mx-auto h-7 w-7 text-violet-300"/><h2 className="mt-4 text-3xl font-bold text-white sm:text-4xl">Ready when you are.</h2><p className="mx-auto mt-4 max-w-2xl text-slate-300">Bring your library together, keep your setups separate, and let Mochi handle the boring parts.</p><Link to="/download" className="mt-7 inline-flex rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-6 py-3 font-semibold text-white shadow-lg shadow-violet-500/25">Get Mochi</Link></div>
       </section>
     </div>
+  )
+}
+
+function NotFoundPage() {
+  return (
+    <PageShell>
+      <SectionHeading eyebrow="404" title="That page doesn’t exist." />
+      <Link to="/" className="inline-flex rounded-full border border-white/15 bg-white/5 px-5 py-3 font-semibold text-slate-100">Back to home</Link>
+    </PageShell>
   )
 }
 
@@ -508,7 +522,7 @@ function SignInPage() {
   const [hasPasskey, setHasPasskey] = useState(false)
   const [pendingUserId, setPendingUserId] = useState<string | null>(null)
   const appMode = new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('app') === 'mochi'
-  const mochiSignInUrl = 'https://t1nkieplayz.github.io/Mochi-Website/#/signin?app=mochi'
+  const mochiSignInUrl = `${siteUrl()}#/signin?app=mochi`
   const mochiVerifyUrl = 'mochi://auth/verify'
 
   const handoffToMochi = async () => {
@@ -896,7 +910,7 @@ function EmailVerificationPage() {
   return (
     <PageShell className="max-w-2xl">
       <div className="glass-card p-8 text-center sm:p-10">
-        <img src="/mochi.png" alt="Mochi" className="mx-auto h-16 w-16 rounded-2xl object-contain" />
+        <img src={logoSrc} alt="Mochi" className="mx-auto h-16 w-16 rounded-2xl object-contain" />
         <p className="mt-6 text-sm font-semibold uppercase tracking-[0.2em] text-violet-300">Email verification</p>
         <h2 className="mt-3 text-3xl font-bold text-white">
           {status === 'verifying' ? 'Confirming your email…' : status === 'success' ? 'Email verified!' : 'Verification failed'}
