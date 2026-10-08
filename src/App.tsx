@@ -1146,6 +1146,17 @@ function ApiTab() {
       setMessage('Enter your Nexus Mods credential first.')
       return
     }
+    if (provider === 'nexus') {
+      const key = nexusKey.trim()
+      if (key.length < 32) {
+        setMessage('Nexus Mods Personal API Keys must be at least 32 characters.')
+        return
+      }
+      if (key.length > 4096 || /[^!-~]/.test(key)) {
+        setMessage('Use the full Nexus Mods Personal API Key without spaces or line breaks.')
+        return
+      }
+    }
     if (provider === 'igdb' && (!igdbClientId.trim() || !igdbClientSecret.trim())) {
       setMessage('Enter your IGDB Client ID and Client Secret first.')
       return
@@ -1263,20 +1274,22 @@ function ApiTab() {
                 type={isVisible ? 'text' : 'password'}
                 value={value}
                 onChange={(event) => setValue(event.target.value)}
-                placeholder={isConfigured ? 'Enter a new credential to replace it' : 'Paste your credential'}
+                placeholder={isConfigured ? 'Enter a new Personal API Key to replace it' : 'Paste your Nexus Mods Personal API Key'}
                 autoComplete="off"
                 spellCheck={false}
+                maxLength={4096}
                 className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 font-mono text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400/60"
               />
               <button type="button" onClick={() => setVisible((current) => ({ ...current, nexus: !current.nexus }))} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-200">
                 {isVisible ? 'Hide' : 'Show'}
               </button>
             </div>
+            {provider === 'nexus' && <p className="mt-2 text-xs leading-5 text-slate-400">Use the full Personal API Key (at least 32 characters, without spaces). Mochi verifies it with Nexus Mods before saving.</p>}
           </div>
         )}
         <div className="flex flex-wrap gap-3">
           <button
-            disabled={isSaving || (provider === 'igdb' ? !igdbClientId.trim() || !igdbClientSecret.trim() : !nexusKey.trim())}
+            disabled={isSaving || (provider === 'igdb' ? !igdbClientId.trim() || !igdbClientSecret.trim() : nexusKey.trim().length < 32 || nexusKey.trim().length > 4096 || /[^!-~]/.test(nexusKey.trim()))}
             onClick={() => void save(provider)}
             className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
           >
