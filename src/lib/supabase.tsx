@@ -230,6 +230,48 @@ export async function clearMyCloudData() {
   return supabase.rpc('clear_my_cloud_data')
 }
 
+export async function signOutEverywhere() {
+  if (!supabase) return { error: new Error(notConfigured) }
+  return supabase.auth.signOut({ scope: 'global' })
+}
+
+export async function deleteMyAccount() {
+  if (!supabase) return { error: new Error(notConfigured) }
+  const { error } = await supabase.rpc('delete_my_account')
+  if (error) return { error }
+  await supabase.auth.signOut({ scope: 'local' })
+  return { error: null }
+}
+
+export type AdminStats = {
+  users: number; new_7d: number; active_7d: number; cloud_access: number; cloud_sync: number
+  admins: number; banned: number; pikos: number; tofus: number
+}
+
+export type AdminUser = {
+  id: string; email: string | null; display_name: string | null; avatar_url: string | null
+  created_at: string; last_sign_in_at: string | null; email_confirmed: boolean; providers: string[]
+  authenticator_count: number; passkey_count: number; metadata_sync_allowed: boolean
+  cloud_sync_enabled: boolean; is_admin: boolean; banned: boolean
+  piko_count: number; tofu_count: number; total_count: number
+}
+
+export type AdminAuditEntry = {
+  id: number; created_at: string; actor_email: string | null; action: string
+  target_id: string | null; target_email: string | null; details: Record<string, unknown>
+}
+
+export const adminApi = {
+  stats: async () => supabase ? supabase.rpc('admin_overview_stats') : { data: null, error: new Error(notConfigured) },
+  users: async (search: string, limit: number, offset: number) =>
+    supabase ? supabase.rpc('admin_list_users', { p_search: search, p_limit: limit, p_offset: offset }) : { data: null, error: new Error(notConfigured) },
+  audit: async (limit = 50) => supabase ? supabase.rpc('admin_audit_log_list', { p_limit: limit }) : { data: null, error: new Error(notConfigured) },
+  clearCloud: async (id: string) => supabase ? supabase.rpc('admin_clear_user_cloud', { target_user_id: id }) : { data: null, error: new Error(notConfigured) },
+  revokeSessions: async (id: string) => supabase ? supabase.rpc('admin_revoke_sessions', { target_user_id: id }) : { data: null, error: new Error(notConfigured) },
+  setBanned: async (id: string, banned: boolean) => supabase ? supabase.rpc('admin_set_banned', { target_user_id: id, banned }) : { data: null, error: new Error(notConfigured) },
+  deleteUser: async (id: string) => supabase ? supabase.rpc('admin_delete_user', { target_user_id: id }) : { data: null, error: new Error(notConfigured) },
+}
+
 type AuthContextValue = {
   session: Session | null
   user: User | null
