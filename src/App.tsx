@@ -5,13 +5,14 @@ import {
   Download,
   Gamepad2,
   Layers3,
-  Lock,
   Rocket,
   ShieldCheck,
   Sparkles,
   Shield,
   UserRound,
   KeyRound,
+  Smartphone,
+  ChevronRight,
   Mail,
   Link2,
   CloudCog,
@@ -20,7 +21,7 @@ import {
   RefreshCw,
   Users,
 } from 'lucide-react'
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
 import md5 from 'blueimp-md5'
 import { HashRouter, NavLink, Route, Routes, Link } from 'react-router-dom'
 import {
@@ -96,13 +97,6 @@ const pillars = [
   },
 ]
 
-
-const providerOptions = [
-  'Email / password',
-  'Email sign-in code',
-  'GitHub',
-  'Google',
-]
 
 function getInitials(value?: string | null) {
   return value
@@ -516,6 +510,7 @@ function SignInPage() {
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
   const [codeMode, setCodeMode] = useState(false)
+  const [method, setMethod] = useState<'password' | 'code'>('password')
   const [code, setCode] = useState('')
   const [securityMode, setSecurityMode] = useState<'checking' | 'choose' | 'totp' | 'passkey' | 'complete'>('checking')
   const [hasTotp, setHasTotp] = useState(false)
@@ -709,152 +704,146 @@ function SignInPage() {
     await finishLogin()
   }
 
-  if (user && securityMode !== 'complete' && securityMode !== 'checking') {
+  const switchFactor = (mode: 'passkey' | 'totp') => { setCode(''); setMessage(''); setSecurityMode(mode) }
+  const inputClass = 'w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none placeholder:text-slate-500 focus:border-violet-400/60'
+  const primaryButton = 'w-full rounded-xl bg-gradient-to-r from-violet-500 to-cyan-400 px-4 py-3 font-semibold text-white shadow-lg shadow-violet-500/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-400 disabled:shadow-none'
+  const linkButton = 'text-slate-400 transition hover:text-white disabled:opacity-40'
+  const codeInput = 'w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-4 text-center font-mono text-2xl tracking-[0.4em] text-white outline-none placeholder:text-slate-600 focus:border-violet-400/60'
+
+  if (user && securityMode === 'checking') {
+    return <AuthCard title="Checking your account" subtitle="One moment while we check your account security…" />
+  }
+
+  if (user && securityMode !== 'complete') {
     return (
-      <PageShell className="max-w-2xl">
-        <div className="glass-card p-8 sm:p-10">
-          <div className="text-center">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-300">Additional verification</p>
-            <h2 className="mt-3 text-3xl font-bold text-white">Secure your sign-in</h2>
-            <p className="mx-auto mt-4 max-w-lg leading-7 text-slate-400">
-              Your account has an additional sign-in method enabled. Complete one of the methods below before accessing Mochi.
-            </p>
+      <AuthCard
+        eyebrow="Additional verification"
+        title={securityMode === 'passkey' ? 'Use your passkey' : securityMode === 'totp' ? 'Enter your code' : 'Verify it’s you'}
+        subtitle={securityMode === 'choose' ? 'Choose how you’d like to finish signing in.' : undefined}
+      >
+        {securityMode === 'choose' && (
+          <div className="space-y-2">
+            {[
+              { mode: 'passkey' as const, icon: KeyRound, title: 'Passkey', text: 'Device, password manager, or security key' },
+              { mode: 'totp' as const, icon: Smartphone, title: 'Authenticator app', text: '6-digit code from your app' },
+            ].map(({ mode, icon: Icon, title, text }) => (
+              <button key={mode} type="button" disabled={busy} onClick={() => switchFactor(mode)} className="group flex w-full items-center gap-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3.5 text-left transition hover:border-violet-400/40 hover:bg-violet-500/[0.07] disabled:opacity-40">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-200"><Icon className="h-5 w-5" /></span>
+                <span className="min-w-0 flex-1"><span className="block font-semibold text-white">{title}</span><span className="block text-sm text-slate-400">{text}</span></span>
+                <ChevronRight className="h-4 w-4 shrink-0 text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-violet-300" />
+              </button>
+            ))}
           </div>
+        )}
 
-          {securityMode === 'choose' && (
-            <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              <button type="button" disabled={busy} onClick={() => { setCode(''); setMessage(''); setSecurityMode('passkey') }} className="rounded-2xl border border-violet-400/25 bg-violet-500/10 p-5 text-left transition hover:border-violet-300/50 hover:bg-violet-500/15 disabled:opacity-40">
-                <p className="font-semibold text-white">Use passkey</p>
-                <p className="mt-1 text-sm leading-6 text-slate-400">Authenticate with your device, password manager, or security key.</p>
-              </button>
-              <button type="button" disabled={busy} onClick={() => { setCode(''); setMessage(''); setSecurityMode('totp') }} className="rounded-2xl border border-cyan-400/25 bg-cyan-500/10 p-5 text-left transition hover:border-cyan-300/50 hover:bg-cyan-500/15 disabled:opacity-40">
-                <p className="font-semibold text-white">Use authenticator app</p>
-                <p className="mt-1 text-sm leading-6 text-slate-400">Enter the 6-digit code from your authenticator app.</p>
-              </button>
-            </div>
-          )}
+        {securityMode === 'passkey' && (
+          <div className="space-y-4 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-200"><KeyRound className="h-7 w-7" /></div>
+            <p className="text-sm leading-6 text-slate-400">Use the passkey you registered for this Mochi account.</p>
+            <button type="button" disabled={busy} onClick={() => void verifyPasskey()} className={primaryButton}>{busy ? 'Waiting for passkey…' : 'Continue with passkey'}</button>
+            {hasTotp && <button type="button" disabled={busy} onClick={() => switchFactor('totp')} className={`${linkButton} text-sm`}>Use authenticator app instead</button>}
+          </div>
+        )}
 
-          {securityMode === 'passkey' && (
-            <div className="mt-8 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-500/10 text-3xl">🔐</div>
-              <h3 className="mt-5 text-xl font-semibold text-white">Authenticate with your passkey</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-400">Use the passkey you previously registered for this Mochi account.</p>
-              <button type="button" disabled={busy} onClick={() => void verifyPasskey()} className="mt-6 rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-6 py-3 font-semibold text-white disabled:opacity-50">
-                {busy ? 'Waiting for passkey…' : 'Continue with passkey'}
-              </button>
-              {hasTotp && <button type="button" disabled={busy} onClick={() => { setCode(''); setMessage(''); setSecurityMode('totp') }} className="mt-3 block mx-auto text-sm font-medium text-slate-400 hover:text-white">Use authenticator app instead</button>}
-            </div>
-          )}
+        {securityMode === 'totp' && (
+          <div className="space-y-4">
+            <p className="text-center text-sm leading-6 text-slate-400">Open your authenticator app and enter the current 6-digit code.</p>
+            <input inputMode="numeric" autoComplete="one-time-code" maxLength={6} autoFocus aria-label="Authenticator code" value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))} onKeyDown={(event) => { if (event.key === 'Enter') void verifyTotp() }} placeholder="123456" className={codeInput} />
+            <button type="button" disabled={busy || code.length !== 6} onClick={() => void verifyTotp()} className={primaryButton}>{busy ? 'Verifying…' : 'Verify and continue'}</button>
+            {hasPasskey && <div className="text-center"><button type="button" disabled={busy} onClick={() => switchFactor('passkey')} className={`${linkButton} text-sm`}>Use passkey instead</button></div>}
+          </div>
+        )}
 
-          {securityMode === 'totp' && (
-            <div className="mt-8">
-              <h3 className="text-xl font-semibold text-white">Enter your authenticator code</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-400">Open your authenticator app and enter the current 6-digit code.</p>
-              <input
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={6}
-                pattern="[0-9]{6}"
-                autoFocus
-                value={code}
-                onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
-                onKeyDown={(event) => { if (event.key === 'Enter') void verifyTotp() }}
-                placeholder="123456"
-                className="mt-5 w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-4 text-center font-mono text-2xl tracking-[0.45em] text-white outline-none placeholder:text-slate-600 focus:border-violet-400/60"
-              />
-              <button type="button" disabled={busy || code.length !== 6} onClick={() => void verifyTotp()} className="mt-4 w-full rounded-xl bg-gradient-to-r from-violet-500 to-cyan-400 px-4 py-3 font-semibold text-white disabled:opacity-40">
-                {busy ? 'Verifying…' : 'Verify and continue'}
-              </button>
-              {hasPasskey && <button type="button" disabled={busy} onClick={() => { setCode(''); setMessage(''); setSecurityMode('passkey') }} className="mt-3 block mx-auto text-sm font-medium text-slate-400 hover:text-white">Use passkey instead</button>}
-            </div>
-          )}
-
-          {message && <p className="mt-5 rounded-xl border border-rose-400/20 bg-rose-500/5 p-4 text-sm text-rose-200">{message}</p>}
-        </div>
-      </PageShell>
+        {message && <p className="mt-4 rounded-xl border border-rose-400/20 bg-rose-500/5 p-3 text-center text-sm text-rose-200">{message}</p>}
+        <div className="mt-6 text-center"><button type="button" onClick={() => void signOutCurrentUser()} className={`${linkButton} text-xs`}>Cancel and sign out</button></div>
+      </AuthCard>
     )
   }
 
-  if (user && securityMode === 'checking') {
-    return <PageShell className="max-w-2xl"><div className="glass-card p-8 text-center text-slate-300">Checking your account security…</div></PageShell>
+  const normalizedEmail = email.trim().toLowerCase()
+
+  if (codeMode) {
+    return (
+      <AuthCard eyebrow="Check your email" title="Enter your sign-in code" subtitle={<>We sent an 8-digit code to <strong className="text-slate-200">{email}</strong>.</>}>
+        <div className="space-y-4">
+          <input inputMode="numeric" autoComplete="one-time-code" maxLength={8} autoFocus aria-label="Sign-in code" value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 8))} onKeyDown={(event) => { if (event.key === 'Enter') void verifyCode() }} placeholder="12345678" className={codeInput} />
+          <button type="button" disabled={busy || code.length !== 8} onClick={() => void verifyCode()} className={primaryButton}>{busy ? 'Verifying…' : 'Continue'}</button>
+          <div className="flex justify-center gap-5 text-sm">
+            <button type="button" disabled={busy} onClick={() => { setCodeMode(false); setCode(''); setMessage('') }} className={linkButton}>Use a different email</button>
+            <button type="button" disabled={busy} onClick={() => void sendCode()} className={linkButton}>Resend code</button>
+          </div>
+          {message && <p className="text-center text-sm text-rose-200">{message}</p>}
+        </div>
+      </AuthCard>
+    )
   }
 
-  return (
-    <PageShell className="max-w-5xl">
-      <div className="grid gap-8 lg:grid-cols-[1fr_1.15fr]">
-        <div className="glass-card p-6">
-          <p className="text-sm uppercase tracking-[0.2em] text-violet-200">Welcome back</p>
-          <h2 className="mt-3 text-3xl font-bold text-white">Create or access your account</h2>
-          <p className="mt-3 text-slate-300">Sign in with your Mochi account. You can use Google, GitHub, a sign-in code, or email and password.</p>
-          {appMode && <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-500/[0.06] p-4 text-sm leading-6 text-cyan-100"><strong>Sign in for Mochi</strong><p className="mt-1 text-cyan-100/75">This sign-in was opened by the Mochi desktop app. After you authenticate, this page will return you to Mochi automatically.</p></div>}
-          <div className="mt-6 space-y-3">
-            {providerOptions.map((provider) => (
-              <div key={provider} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3 text-slate-200"><Lock className="h-4 w-4 text-violet-300" /><span>{provider}</span></div>
-            ))}
-          </div>
-        </div>
+  const socialButton = 'inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-white/20 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40'
 
-        <div className="glass-card p-6">
-          {codeMode ? (
-            <div className="space-y-5">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-300">Check your email</p>
-                <h3 className="mt-3 text-2xl font-bold text-white">Enter your sign-in code</h3>
-                <p className="mt-3 leading-7 text-slate-400">
-                  We sent an 8-digit code to <strong className="text-slate-200">{email}</strong>. Enter it below to continue.
-                </p>
-              </div>
-              <input
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={8}
-                pattern="[0-9]{8}"
-                autoFocus
-                value={code}
-                onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 8))}
-                onKeyDown={(event) => { if (event.key === 'Enter') void verifyCode() }}
-                placeholder="12345678"
-                className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-4 text-center font-mono text-2xl tracking-[0.45em] text-white outline-none placeholder:text-slate-600 focus:border-violet-400/60"
-              />
-              <button type="button" disabled={busy || code.length !== 8} onClick={() => void verifyCode()} className="w-full rounded-xl bg-gradient-to-r from-violet-500 to-cyan-400 px-4 py-3 font-semibold text-white disabled:opacity-40">
-                {busy ? 'Verifying…' : 'Continue'}
-              </button>
-              <div className="flex flex-wrap justify-center gap-4 text-sm">
-                <button type="button" disabled={busy} onClick={() => { setCodeMode(false); setCode(''); setMessage('') }} className="text-slate-400 hover:text-white">Use a different email</button>
-                <button type="button" disabled={busy} onClick={() => void sendCode()} className="text-slate-400 hover:text-white">Send another code</button>
-              </div>
-              {message && <p className="text-sm text-rose-200">{message}</p>}
-            </div>
-          ) : (
-            <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); void run(async () => { const result = await signInWithPassword(email, password); if (!result.error) window.setTimeout(() => void afterPrimaryAuth(), 0); return result }) }}>
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-200">Email</label>
-                <input type="email" placeholder="you@example.com" value={email} onChange={(event) => setEmail(event.target.value)} className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none placeholder:text-slate-500 focus:border-violet-400/60" />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-200">Password</label>
-                <input type="password" placeholder="••••••••" value={password} onChange={(event) => setPassword(event.target.value)} className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none placeholder:text-slate-500 focus:border-violet-400/60" />
-              </div>
-              <div className="grid gap-2 pt-2 sm:grid-cols-2">
-                <button type="submit" disabled={busy || !email.trim() || !password} className="rounded-xl bg-gradient-to-r from-violet-500 to-cyan-400 px-4 py-3 font-semibold text-white shadow-lg shadow-violet-500/20 transition disabled:cursor-not-allowed disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-400 disabled:shadow-none">{busy ? 'Signing in…' : 'Sign in'}</button>
-                <button type="button" disabled={busy || !email.trim()} onClick={() => void run(() => resetPassword(email.trim().toLowerCase()))} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">Reset password</button>
-                <button type="button" disabled={busy || !email.trim()} onClick={() => void sendCode()} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">Send sign-in code</button>
-                <button type="button" disabled={busy || !email.trim() || !password} onClick={() => void run(() => signUpWithPassword(email.trim().toLowerCase(), password, appMode ? mochiVerifyUrl : undefined))} className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">Create account</button>
-              </div>
-              {message && <p className="text-sm text-cyan-200">{message}</p>}
-              <div className="flex justify-center gap-2 pt-3">
-                <button type="button" aria-label="Continue with GitHub" title="Continue with GitHub" disabled={busy} onClick={() => void run(() => signInWithProvider('github', appMode ? mochiSignInUrl : undefined))} className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-100 transition hover:border-white/20 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40">
-                  <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .7C5.73.7.8 5.63.8 11.9c0 4.94 3.2 9.13 7.64 10.61.56.1.76-.24.76-.54v-2.1c-3.1.67-3.75-1.31-3.75-1.31-.51-1.3-1.24-1.65-1.24-1.65-1.01-.69.08-.67.08-.67 1.12.08 1.71 1.15 1.71 1.15.99 1.7 2.6 1.21 3.23.93.1-.72.39-1.21.71-1.49-2.47-.28-5.07-1.24-5.07-5.5 0-1.22.44-2.22 1.15-3-.12-.28-.5-1.42.11-2.96 0 0 .94-.3 3.08 1.15a10.7 10.7 0 0 1 5.6 0c2.14-1.45 3.08-1.15 3.08-1.15.61 1.54.23 2.68.11 2.96.72.78 1.15 1.78 1.15 3 0 4.27-2.61 5.21-5.09 5.49.4.34.76 1.01.76 2.04v3.02c0 .3.2.65.77.54A11.2 11.2 0 0 0 23.2 11.9C23.2 5.63 18.27.7 12 .7Z"/></svg>
-                </button>
-                <button type="button" aria-label="Continue with Google" title="Continue with Google" disabled={busy} onClick={() => void run(() => signInWithProvider('google', appMode ? mochiSignInUrl : undefined))} className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] transition hover:border-white/20 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40">
-                  <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.35 12.27c0-.71-.06-1.39-.18-2.04H12v3.86h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.69 2.91-4.18 2.91-7.21Z"/><path fill="#34A853" d="M12 21.6c2.63 0 4.84-.87 6.45-2.36l-3.14-2.45c-.87.58-1.98.93-3.31.93-2.54 0-4.69-1.72-5.46-4.03H3.3v2.53A9.74 9.74 0 0 0 12 21.6Z"/><path fill="#FBBC05" d="M6.54 13.69A5.84 5.84 0 0 1 6.23 12c0-.59.11-1.16.31-1.69V7.78H3.3A9.72 9.72 0 0 0 2.27 12c0 1.57.38 3.05 1.03 4.22l3.24-2.53Z"/><path fill="#EA4335" d="M12 6.28c1.43 0 2.71.49 3.72 1.46l2.79-2.79C16.83 3.3 14.63 2.4 12 2.4a9.74 9.74 0 0 0-8.7 5.38l3.24 2.53C7.31 8 9.46 6.28 12 6.28Z"/></svg>
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
+  return (
+    <AuthCard eyebrow="Welcome" title="Sign in to Mochi" subtitle="One account for the Mochi website and launcher.">
+      {appMode && <div className="mb-5 rounded-xl border border-cyan-400/20 bg-cyan-500/[0.06] p-3 text-sm leading-6 text-cyan-100"><strong>Signing in for the Mochi app.</strong> You’ll be returned to Mochi automatically afterwards.</div>}
+
+      <div className="grid grid-cols-2 gap-2">
+        <button type="button" disabled={busy} onClick={() => void run(() => signInWithProvider('github', appMode ? mochiSignInUrl : undefined))} className={socialButton}>
+          <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .7C5.73.7.8 5.63.8 11.9c0 4.94 3.2 9.13 7.64 10.61.56.1.76-.24.76-.54v-2.1c-3.1.67-3.75-1.31-3.75-1.31-.51-1.3-1.24-1.65-1.24-1.65-1.01-.69.08-.67.08-.67 1.12.08 1.71 1.15 1.71 1.15.99 1.7 2.6 1.21 3.23.93.1-.72.39-1.21.71-1.49-2.47-.28-5.07-1.24-5.07-5.5 0-1.22.44-2.22 1.15-3-.12-.28-.5-1.42.11-2.96 0 0 .94-.3 3.08 1.15a10.7 10.7 0 0 1 5.6 0c2.14-1.45 3.08-1.15 3.08-1.15.61 1.54.23 2.68.11 2.96.72.78 1.15 1.78 1.15 3 0 4.27-2.61 5.21-5.09 5.49.4.34.76 1.01.76 2.04v3.02c0 .3.2.65.77.54A11.2 11.2 0 0 0 23.2 11.9C23.2 5.63 18.27.7 12 .7Z"/></svg> GitHub
+        </button>
+        <button type="button" disabled={busy} onClick={() => void run(() => signInWithProvider('google', appMode ? mochiSignInUrl : undefined))} className={socialButton}>
+          <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.35 12.27c0-.71-.06-1.39-.18-2.04H12v3.86h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.69 2.91-4.18 2.91-7.21Z"/><path fill="#34A853" d="M12 21.6c2.63 0 4.84-.87 6.45-2.36l-3.14-2.45c-.87.58-1.98.93-3.31.93-2.54 0-4.69-1.72-5.46-4.03H3.3v2.53A9.74 9.74 0 0 0 12 21.6Z"/><path fill="#FBBC05" d="M6.54 13.69A5.84 5.84 0 0 1 6.23 12c0-.59.11-1.16.31-1.69V7.78H3.3A9.72 9.72 0 0 0 2.27 12c0 1.57.38 3.05 1.03 4.22l3.24-2.53Z"/><path fill="#EA4335" d="M12 6.28c1.43 0 2.71.49 3.72 1.46l2.79-2.79C16.83 3.3 14.63 2.4 12 2.4a9.74 9.74 0 0 0-8.7 5.38l3.24 2.53C7.31 8 9.46 6.28 12 6.28Z"/></svg> Google
+        </button>
       </div>
-    </PageShell>
+
+      <div className="my-5 flex items-center gap-3 text-xs uppercase tracking-wider text-slate-500"><span className="h-px flex-1 bg-white/10" />or with email<span className="h-px flex-1 bg-white/10" /></div>
+
+      <div role="tablist" aria-label="Sign-in method" className="mb-4 grid grid-cols-2 rounded-xl border border-white/10 bg-slate-900/60 p-1 text-sm font-medium">
+        {([['password', 'Password'], ['code', 'Email code']] as const).map(([id, label]) => (
+          <button key={id} type="button" role="tab" aria-selected={method === id} onClick={() => { setMethod(id); setMessage('') }} className={method === id ? 'rounded-lg bg-violet-500/20 py-2 text-white' : 'rounded-lg py-2 text-slate-400 hover:text-white'}>{label}</button>
+        ))}
+      </div>
+
+      <form
+        className="space-y-3"
+        onSubmit={(event) => {
+          event.preventDefault()
+          if (method === 'code') void sendCode()
+          else void run(async () => { const result = await signInWithPassword(email, password); if (!result.error) window.setTimeout(() => void afterPrimaryAuth(), 0); return result })
+        }}
+      >
+        <input type="email" autoComplete="email" aria-label="Email" placeholder="you@example.com" value={email} onChange={(event) => setEmail(event.target.value)} className={inputClass} />
+        {method === 'password' && <input type="password" autoComplete="current-password" aria-label="Password" placeholder="Password" value={password} onChange={(event) => setPassword(event.target.value)} className={inputClass} />}
+        <button type="submit" disabled={busy || !normalizedEmail || (method === 'password' && !password)} className={primaryButton}>
+          {method === 'code' ? (busy ? 'Sending…' : 'Email me a code') : busy ? 'Signing in…' : 'Sign in'}
+        </button>
+        {message && <p className="text-sm text-cyan-200" role="status">{message}</p>}
+      </form>
+
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-2 text-sm">
+        {method === 'password' ? (
+          <>
+            <button type="button" disabled={busy || !normalizedEmail} onClick={() => void run(async () => { const result = await resetPassword(normalizedEmail); if (!result.error) setMessage('Check your email for a password reset link.'); return result })} className={linkButton} title={normalizedEmail ? undefined : 'Enter your email first'}>Forgot password?</button>
+            <button type="button" disabled={busy || !normalizedEmail || !password} onClick={() => void run(async () => { const result = await signUpWithPassword(normalizedEmail, password, appMode ? mochiVerifyUrl : undefined); if (!result.error) setMessage('Check your email to confirm your new account.'); return result })} className={linkButton} title="Enter an email and password first">Create account</button>
+          </>
+        ) : (
+          <p className="w-full text-center text-slate-500">New here? We’ll create your account when you verify the code.</p>
+        )}
+      </div>
+    </AuthCard>
+  )
+}
+
+function AuthCard({ eyebrow, title, subtitle, children }: { eyebrow?: string; title: string; subtitle?: ReactNode; children?: ReactNode }) {
+  return (
+    <div className="mx-auto flex w-full max-w-md flex-col items-stretch pb-10 pt-2 sm:pt-6">
+      <div className="glass-card p-6 sm:p-8">
+        <div className="mb-6 text-center">
+          <img src={logoSrc} alt="" className="mx-auto h-12 w-12 rounded-2xl object-contain" />
+          {eyebrow && <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">{eyebrow}</p>}
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-white">{title}</h1>
+          {subtitle && <p className="mt-2 text-sm leading-6 text-slate-400">{subtitle}</p>}
+        </div>
+        {children}
+      </div>
+    </div>
   )
 }
 
