@@ -221,6 +221,11 @@ export async function setUserCloudSync(userId: string, enabled: boolean) {
   return supabase.rpc('admin_set_cloud_sync', { target_user_id: userId, enabled })
 }
 
+export async function clearMyCloudData() {
+  if (!supabase) return { data: null, error: new Error(notConfigured) }
+  return supabase.rpc('clear_my_cloud_data')
+}
+
 type AuthContextValue = {
   session: Session | null
   user: User | null
