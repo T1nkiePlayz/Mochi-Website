@@ -1323,28 +1323,72 @@ function ApiTab() {
   )
 }
 function CloudTab({ profile }: { profile: Profile | null }) {
+  type SyncedGame = {
+    id: string
+    name: string
+    artwork: string | null
+  }
+
   const [sync, setSync] = useState(profile?.cloud_sync_enabled ?? false)
+  const [games, setGames] = useState<SyncedGame[]>([])
   const [pikoCount, setPikoCount] = useState(0)
   const [tofuCount, setTofuCount] = useState(0)
+  const [igdbConfigured, setIgdbConfigured] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
 
   useEffect(() => { setSync(profile?.cloud_sync_enabled ?? false) }, [profile?.cloud_sync_enabled])
+
   useEffect(() => {
-    if (!profile?.cloud_sync_enabled || !supabase) { setLoading(false); return }
+    if (!profile?.metadata_sync_allowed || !supabase) {
+      setGames([])
+      setPikoCount(0)
+      setTofuCount(0)
+      setIgdbConfigured(false)
+      setLoading(false)
+      return
+    }
+
     let active = true
+    setLoading(true)
+
     Promise.all([
-      supabase.from('pikos').select('id', { count: 'exact', head: true }),
-      supabase.from('tofus').select('id', { count: 'exact', head: true }),
-    ]).then(([pikos, tofus]) => {
+      supabase
+        .from('pikos')
+        .select('id, name, artwork, created_at')
+        .order('created_at'),
+      supabase
+        .from('tofus')
+        .select('id', { count: 'exact', head: true }),
+      manageApiCredential('status'),
+    ]).then(([pikos, tofus, apiStatus]) => {
       if (!active) return
-      setPikoCount(pikos.count ?? 0)
+
+      if (pikos.error) {
+        setMessage(pikos.error.message)
+        setGames([])
+        setPikoCount(0)
+      } else {
+        const syncedGames = (pikos.data ?? []) as SyncedGame[]
+        setGames(syncedGames)
+        setPikoCount(syncedGames.length)
+      }
+
       setTofuCount(tofus.count ?? 0)
+
+      if (apiStatus.error) {
+        setIgdbConfigured(false)
+      } else {
+        const providers = (apiStatus.data?.providers ?? []) as string[]
+        setIgdbConfigured(providers.includes('igdb'))
+      }
+
       setLoading(false)
     })
+
     return () => { active = false }
-  }, [profile?.cloud_sync_enabled])
+  }, [profile?.metadata_sync_allowed])
 
   const saveSync = async (enabled: boolean) => {
     if (!profile?.metadata_sync_allowed) return
@@ -1367,6 +1411,7 @@ function CloudTab({ profile }: { profile: Profile | null }) {
     if (error) {
       setMessage(error.message)
     } else {
+      setGames([])
       setPikoCount(0)
       setTofuCount(0)
       const deleted = data as { deleted_pikos?: number; deleted_tofus?: number } | null
@@ -1405,10 +1450,39 @@ function CloudTab({ profile }: { profile: Profile | null }) {
         {saving ? 'Clearing…' : 'Clear all cloud data'}
       </button>
     </section>
-    {!sync ? <EmptyState icon={Cloud} title="Cloud sync is turned off" text="Your Mochi data remains local-first until you enable cloud sync." /> :
+    {!sync && games.length === 0 ? <EmptyState icon={Cloud} title="Cloud sync is turned off" text="Your Mochi data remains local-first until you enable cloud sync." /> :
       loading ? <div className="glass-card p-8 text-slate-400">Loading cloud data…</div> :
-      pikoCount > 0 || tofuCount > 0 ? <div className="grid gap-4 sm:grid-cols-2"><InfoCard icon={Gamepad2} label="Synced Pikos" value={String(pikoCount)} /><InfoCard icon={Layers3} label="Synced Tofus" value={String(tofuCount)} /></div> :
-      <EmptyState icon={Cloud} title="No cloud data yet" text="Cloud sync is enabled, but there is nothing to show yet. Your local-first library remains on your device until supported metadata is synced." />
+      games.length > 0 ? <>
+        <section>
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-300">Synced games</p>
+              <h3 className="mt-2 text-2xl font-bold text-white">{pikoCount} {pikoCount === 1 ? 'game' : 'games'}</h3>
+            </div>
+            <div className="text-sm text-slate-500">{tofuCount} {tofuCount === 1 ? 'Tofu' : 'Tofus'} synced</div>
+          </div>
+          <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            {games.map((game) => (
+              <article key={game.id} className="group min-w-0">
+                {igdbConfigured && game.artwork ? (
+                  <div
+                    className="aspect-[3/4] overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 bg-cover bg-center shadow-lg shadow-black/20 transition duration-200 group-hover:-translate-y-1 group-hover:border-violet-400/40"
+                    style={{ backgroundImage: game.artwork }}
+                    aria-label={game.name}
+                    role="img"
+                  />
+                ) : igdbConfigured ? (
+                  <div className="flex aspect-[3/4] items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-violet-500/15 to-cyan-500/10 text-slate-500">
+                    <Gamepad2 className="h-10 w-10" />
+                  </div>
+                ) : null}
+                <p className={igdbConfigured ? 'mt-3 truncate text-center text-sm font-semibold text-white' : 'truncate rounded-xl border border-white/10 bg-white/[0.03] px-3 py-3 text-sm font-semibold text-white'} title={game.name}>{game.name}</p>
+              </article>
+            ))}
+          </div>
+          {!igdbConfigured && <p className="mt-5 text-sm text-slate-500">Add an IGDB API credential in Dashboard → API to display game thumbnails.</p>}
+        </section>
+      </> : <EmptyState icon={Cloud} title="No cloud data yet" text="Cloud access is enabled, but there are no synced games or environments to show. Your local-first library remains on your device until supported metadata is synced." />
     }
     <div className="glass-card p-6"><p className="text-sm uppercase tracking-[0.2em] text-cyan-300">Local-first</p><p className="mt-3 leading-7 text-slate-300">Mochi does not upload complete game installations. Cloud features are limited to supported account settings and metadata.</p></div>
   </div>
