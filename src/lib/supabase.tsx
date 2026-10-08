@@ -266,14 +266,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!active) return
 
       if (data.session) {
-        // Avoid an extra network round-trip on every page load. Refresh only
-        // when the persisted session is close to expiry.
-        const expiresSoon =
-          !data.session.expires_at ||
-          data.session.expires_at - Math.floor(Date.now() / 1000) < 60
-        const session = expiresSoon
-          ? (await supabase.auth.refreshSession()).data.session ?? data.session
-          : data.session
+        // Supabase persists the browser session and refresh token locally.
+        // Refresh the persisted session when the site is opened again so a
+        // long gap between visits does not leave the UI holding an expired
+        // access token. Supabase handles refresh-token rotation and expiry.
+        const refreshed = await supabase.auth.refreshSession()
+        const session = refreshed.data.session ?? data.session
         if (active) {
           setSession(session)
           setLoading(false)
