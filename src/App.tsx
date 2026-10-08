@@ -48,6 +48,7 @@ import {
   signUpWithPassword,
   setUserMetadataAccess,
   setUserCloudSync,
+  clearMyCloudData,
   updateMyProfile,
   manageApiCredential,
   useAuth,
@@ -1359,6 +1360,21 @@ function CloudTab({ profile }: { profile: Profile | null }) {
     setSaving(false)
   }
 
+  const clearCloudData = async () => {
+    if (!window.confirm('Clear all Mochi Cloud data for this account? This permanently deletes your cloud Pikos and Tofus. Local data and your account will not be affected.')) return
+    setSaving(true); setMessage('')
+    const { data, error } = await clearMyCloudData()
+    if (error) {
+      setMessage(error.message)
+    } else {
+      setPikoCount(0)
+      setTofuCount(0)
+      const deleted = data as { deleted_pikos?: number; deleted_tofus?: number } | null
+      setMessage(`Cloud data cleared. Removed ${deleted?.deleted_pikos ?? 0} Pikos and ${deleted?.deleted_tofus ?? 0} Tofus.`)
+    }
+    setSaving(false)
+  }
+
   if (!profile?.metadata_sync_allowed) return <EmptyState icon={Cloud} title="Cloud features are unavailable" text="Cloud metadata access has not been enabled for this account." />
 
   return <div className="space-y-6">
@@ -1375,6 +1391,19 @@ function CloudTab({ profile }: { profile: Profile | null }) {
         {sync && <span className="text-xs text-slate-500">Admin eligibility: enabled</span>}
       </div>
       {message && <p className="mt-4 text-sm text-rose-300">{message}</p>}
+    </section>
+    <section className="glass-card border-rose-400/20 p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose-300">Danger zone</p>
+          <h3 className="mt-2 text-xl font-semibold text-white">Clear all cloud data</h3>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">Permanently delete every Piko and Tofu stored in Mochi Cloud for this account. This does not delete your local library or your Mochi account.</p>
+        </div>
+        <AlertTriangle className="h-6 w-6 text-rose-300" />
+      </div>
+      <button disabled={saving} onClick={() => void clearCloudData()} className="mt-5 rounded-full border border-rose-400/30 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-200 transition hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-40">
+        {saving ? 'Clearing…' : 'Clear all cloud data'}
+      </button>
     </section>
     {!sync ? <EmptyState icon={Cloud} title="Cloud sync is turned off" text="Your Mochi data remains local-first until you enable cloud sync." /> :
       loading ? <div className="glass-card p-8 text-slate-400">Loading cloud data…</div> :
