@@ -1,22 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
+import { AuthContext } from './auth-context'
 import { supabase, type Profile } from './supabase'
-
-type AuthContextValue = {
-  session: Session | null
-  user: User | null
-  profile: Profile | null
-  loading: boolean
-  refreshProfile: () => Promise<void>
-}
-
-const AuthContext = createContext<AuthContextValue>({
-  session: null,
-  user: null,
-  profile: null,
-  loading: true,
-  refreshProfile: async () => undefined,
-})
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
@@ -28,14 +13,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(null)
       return
     }
-    const { data, error } = await supabase.from('profiles').select('id, display_name, avatar_url, cloud_sync_enabled, metadata_sync_allowed, email').eq('id', session.user.id).maybeSingle()
+    const client = supabase
+    const { data, error } = await client.from('profiles').select('id, display_name, avatar_url, cloud_sync_enabled, metadata_sync_allowed, email').eq('id', session.user.id).maybeSingle()
     if (!error) setProfile(data ? { ...(data as Profile), is_admin: session.user.app_metadata?.role === 'admin' } : null)
   }, [session])
 
   useEffect(() => {
     if (!supabase) return
+    const client = supabase
     let active = true
-    supabase.auth.getSession().then(async ({ data }) => {
+    client.auth.getSession().then(async ({ data }) => {
       if (!active) return
 
       if (data.session) {
@@ -43,11 +30,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Refresh the persisted session when the site is opened again so a
         // long gap between visits does not leave the UI holding an expired
         // access token. Supabase handles refresh-token rotation and expiry.
-        const refreshed = await supabase.auth.refreshSession()
+        const refreshed = await client.auth.refreshSession()
         // Do not resurrect an old session when refresh fails or returns no session.
         if (active) {
           if (refreshed.error || !refreshed.data.session) {
-            await supabase.auth.signOut({ scope: 'local' })
+            await client.auth.signOut({ scope: 'local' })
             setSession(null)
             setProfile(null)
           } else {
@@ -60,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false)
       }
     })
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: listener } = client.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession)
       setLoading(false)
     })
@@ -75,8 +62,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refreshProfile])
 
   return <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, loading, refreshProfile }}>{children}</AuthContext.Provider>
-}
-
-export function useAuth() {
-  return useContext(AuthContext)
 }
