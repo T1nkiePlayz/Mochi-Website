@@ -4,7 +4,7 @@ The website migrations extend the shared Mochi database; they are **not a standa
 
 1. `T1nkiePlayz/Mochi/supabase/migrations/20261006035100_create_mochi_metadata_schema.sql` — creates `profiles`, `pikos`, `tofus` and their ownership RLS policies.
 2. `T1nkiePlayz/Mochi/supabase/migrations/20261008130000_harden_and_reconcile.sql` — reconciles cloud policies and creates the private provider-credential storage objects, including `mochi_private.user_credentials`; it requires Supabase Vault to be available.
-3. Apply this repository's migrations in timestamp order, including `20261006120500_website_profile_controls.sql` and `20261008140000_admin_tools_and_account_deletion.sql`.
+3. Apply this repository's migrations in timestamp order, including `20261006120500_website_profile_controls.sql`, `20261008140000_admin_tools_and_account_deletion.sql`, and `20261009150000_security_hardening.sql`.
 
 The launcher repository also owns the `store-provider-credentials` Edge Function. Its implementation and deployed environment must be reviewed alongside these SQL migrations when changing service-key handling. Do not assume that a successful website build proves the database migrations or Edge Function are deployable.
 
