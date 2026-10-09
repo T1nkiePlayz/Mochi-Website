@@ -234,9 +234,9 @@ export async function signOutEverywhere() {
   return supabase.auth.signOut({ scope: 'global' })
 }
 
-export async function deleteMyAccount() {
+export async function deleteMyAccount(confirmationEmail: string) {
   if (!supabase) return { error: new Error(notConfigured) }
-  const { error } = await supabase.rpc('delete_my_account')
+  const { error } = await supabase.rpc('delete_my_account', { confirmation_email: confirmationEmail })
   if (error) return { error }
   await supabase.auth.signOut({ scope: 'local' })
   return { error: null }
