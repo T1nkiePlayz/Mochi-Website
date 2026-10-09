@@ -152,7 +152,7 @@ function DeletePanel({ user }: { user: User }) {
       <ConfirmAction label="Delete my account" confirmLabel="Permanently delete" prompt={`This will permanently delete ${user.email ?? 'your account'}.`} requireText={user.email ?? 'DELETE'} busy={busy}
         onConfirm={async () => {
           setBusy(true)
-          const { error } = await deleteMyAccount()
+          const { error } = await deleteMyAccount(user.email ?? '')
           if (error) n.error(error.message)
           setBusy(false)
         }} />
