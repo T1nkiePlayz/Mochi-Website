@@ -107,6 +107,34 @@ function AuthHeader() {
   )
 }
 
+function DashboardAccessGate({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth()
+  const [checking, setChecking] = useState(true)
+  const [allowed, setAllowed] = useState(false)
+  useEffect(() => {
+    let active = true
+    const check = async () => {
+      if (loading) return
+      if (!user || !supabase) { if (active) { setAllowed(false); setChecking(false) }; return }
+      const [aal, factors] = await Promise.all([supabase.auth.mfa.getAuthenticatorAssuranceLevel(), getSignInFactors()])
+      if (!active) return
+      if (aal.error || factors.error) setAllowed(false)
+      else {
+        const hasTotp = (factors.data?.totp ?? []).length > 0
+        const hasPasskey = (factors.data?.passkeys ?? []).length > 0
+        setAllowed((!hasTotp && !hasPasskey) || aal.data?.currentLevel === 'aal2')
+      }
+      setChecking(false)
+    }
+    void check()
+    return () => { active = false }
+  }, [user?.id, loading])
+  useEffect(() => { if (!checking && !allowed) window.location.hash = '#/signin' }, [checking, allowed])
+  if (loading || checking) return <PageLoading />
+  if (!allowed) return <AuthCard title="Additional verification required" subtitle="Finish verifying your account before opening the dashboard." />
+  return <>{children}</>
+}
+
 function App() {
   return (
     <AuthProvider>
@@ -174,9 +202,9 @@ function App() {
             <Route path="/faq" element={<FaqPage />} />
             <Route path="/signin" element={<SignInPage />} />
             <Route path="/auth/verify" element={<EmailVerificationPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/settings" element={<DashboardPage />} />
-            <Route path="/admin" element={<DashboardPage />} />
+            <Route path="/dashboard" element={<DashboardAccessGate><DashboardPage /></DashboardAccessGate>} />
+            <Route path="/settings" element={<DashboardAccessGate><DashboardPage /></DashboardAccessGate>} />
+            <Route path="/admin" element={<DashboardAccessGate><DashboardPage /></DashboardAccessGate>} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </main>
