@@ -213,4 +213,6 @@ The website should describe what the launcher **actually does**, not what is mer
 
 ## License
 
-No final open-source license is currently declared for this website repository. Until a license is explicitly added, the source should not be assumed to be freely reusable, redistributed, or relicensed.
+The website source is released under the [MIT License](LICENSE).
+
+The Mochi name, logo and artwork (including `public/mochi.png` and the social preview card) are not covered by that license and may not be used to imply an official Mochi site. The Terms of Service and Privacy Policy text are specific to the Mochi service and are not licensed for reuse. The launcher itself is licensed separately under GPL-3.0-or-later.
