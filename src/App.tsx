@@ -12,7 +12,7 @@ import {
   Smartphone,
   ChevronRight,
 } from 'lucide-react'
-import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from 'react'
 import { avatarFor } from './lib/avatar'
 import { HashRouter, NavLink, Route, Routes, Link } from 'react-router-dom'
 import {
@@ -115,8 +115,17 @@ function DashboardAccessGate({ children }: { children: ReactNode }) {
     let active = true
     const check = async () => {
       if (loading) return
-      if (!user || !supabase) { if (active) { setAllowed(false); setChecking(false) }; return }
-      const [aal, factors] = await Promise.all([supabase.auth.mfa.getAuthenticatorAssuranceLevel(), getSignInFactors()])
+      if (!user || !supabase) {
+        if (active) {
+          setAllowed(false)
+          setChecking(false)
+        }
+        return
+      }
+      const [aal, factors] = await Promise.all([
+        supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+        getSignInFactors(),
+      ])
       if (!active) return
       if (aal.error || factors.error) setAllowed(false)
       else {
@@ -126,9 +135,9 @@ function DashboardAccessGate({ children }: { children: ReactNode }) {
       }
       setChecking(false)
     }
-    void check()
+    void Promise.resolve().then(check)
     return () => { active = false }
-  }, [user?.id, loading])
+  }, [user, loading])
   useEffect(() => { if (!checking && !allowed) window.location.hash = '#/signin' }, [checking, allowed])
   if (loading || checking) return <PageLoading />
   if (!allowed) return <AuthCard title="Additional verification required" subtitle="Finish verifying your account before opening the dashboard." />
@@ -521,7 +530,7 @@ function SignInPage() {
   const mochiSignInUrl = `${siteUrl()}#/signin?app=mochi`
   const mochiVerifyUrl = 'mochi://auth/verify'
 
-  const handoffToMochi = async () => {
+  const handoffToMochi = useCallback(async () => {
     if (!supabase) return
     const { data, error } = await supabase.auth.getSession()
     if (error || !data.session) {
@@ -533,15 +542,15 @@ function SignInPage() {
       refresh_token: data.session.refresh_token,
     })
     window.location.href = `mochi://auth/callback?${params.toString()}`
-  }
+  }, [])
 
-  const finishLogin = async () => {
+  const finishLogin = useCallback(async () => {
     setSecurityMode('complete')
     if (appMode) await handoffToMochi()
     else window.location.hash = '#/dashboard'
-  }
+  }, [appMode, handoffToMochi])
 
-  const inspectSecurity = async (accountUser = user) => {
+  const inspectSecurity = useCallback(async (accountUser = user) => {
     if (!supabase || !accountUser) return
     setBusy(true)
     setMessage('')
@@ -583,16 +592,15 @@ function SignInPage() {
     else if (totp) setSecurityMode('totp')
     else setSecurityMode('passkey')
     setBusy(false)
-  }
+  }, [user, finishLogin])
 
   useEffect(() => {
-    if (!user) {
+    void Promise.resolve().then(() => {
+      if (user) return inspectSecurity(user)
       setSecurityMode('checking')
       setPendingUserId(null)
-      return
-    }
-    void inspectSecurity()
-  }, [user?.id])
+    })
+  }, [user, inspectSecurity])
 
   const run = async (action: () => Promise<{ error: Error | null }>) => {
     setBusy(true)
