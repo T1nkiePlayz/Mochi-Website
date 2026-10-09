@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components -- This module intentionally exports shared utilities alongside components. */
 import { Check, Copy, type LucideIcon } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 
