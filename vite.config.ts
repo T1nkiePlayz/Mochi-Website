@@ -8,6 +8,9 @@ export default defineConfig({
   base: './',
   plugins: [react(), tailwindcss()],
   build: {
+    target: 'es2022',
+    sourcemap: false,
+    cssCodeSplit: true,
     rolldownOptions: {
       output: {
         codeSplitting: {

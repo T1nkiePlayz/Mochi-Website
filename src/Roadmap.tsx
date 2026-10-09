@@ -15,75 +15,37 @@ import { Link } from 'react-router-dom'
 
 const phases = [
   {
-    title: 'Foundation',
-    status: 'Available',
+    title: 'Built so far',
+    status: 'In early development',
     tone: 'emerald',
-    description: 'The core launcher experience and the foundations needed to build the rest of Mochi.',
+    description: 'Mochi is at version 0.1.0 and has no stable release yet. These parts exist in the project today, but storage formats and the interface may still change.',
     items: [
-      ['Game library', 'Manage Pikos and their Tofus in a local-first library.'],
-      ['Flexible launching', 'Launch executables, .desktop files, supported scripts, and installed Flatpaks.'],
-      ['IGDB enrichment', 'Optionally identify games and confirm metadata before applying it.'],
-      ['Account system', 'Use email, GitHub, Google, sign-in codes, authenticator-app 2FA, and passkeys where configured.'],
+      ['Library and launching', 'Pikos and their Tofus, imports from Steam, Heroic, itch.io, Flatpak, Lutris, Bottles and more, launch handoff, and process tracking.'],
+      ['Big Picture and Steam Deck', 'Controller-first fullscreen mode, 11 built-in themes, bundled fonts, and accessibility options.'],
+      ['Metadata, playtime and achievements', 'IGDB, SteamGridDB and Steam Store metadata, playtime and stats, 77 Mochi achievements, and Steam achievements.'],
+      ['Discover and mods', 'Modrinth, CurseForge and Nexus Mods discovery with per-Tofu mod management.'],
+      ['Accounts and optional cloud sync', 'Sign-in with email, Google or GitHub, passkeys, authenticator-app MFA, and optional metadata-only sync.'],
+      ['Linux and macOS builds', 'AppImage, deb, rpm and an Arch PKGBUILD on Linux; a universal DMG on macOS. Linux is the primary, best-tested platform.'],
     ],
   },
   {
-    title: 'Polish & reliability',
+    title: 'Recent and upcoming',
     status: 'In progress',
     tone: 'violet',
-    description: 'Make everyday Mochi usage faster, clearer, and easier to recover from.',
+    description: 'Work that is under way and not yet part of a release.',
     items: [
-      ['Better game management', 'Richer game details, improved editing, categories, filtering, and library organisation.'],
-      ['Launcher feedback', 'Clearer launch states, errors, and diagnostics when a target cannot be started.'],
-      ['Metadata quality', 'More predictable artwork, metadata refresh, and manual correction workflows.'],
-      ['Cross-platform groundwork', 'Continue separating platform-specific native behaviour from the shared interface.'],
+      ['Achievements in Mochi Cloud', 'Optionally saving Mochi achievements to your account. This is in development and has not been released.'],
+      ['Ongoing polish', 'Continued work on layout, theming, Big Picture options, and everyday library usability.'],
     ],
   },
   {
-    title: 'Mochi Cloud',
+    title: 'Planned',
     status: 'Planned',
     tone: 'cyan',
-    description: 'Turn the existing cloud foundation into a dependable companion to the local library.',
+    description: 'Items the project lists as not done yet. No dates are promised.',
     items: [
-      ['Library synchronisation', 'Synchronise supported Piko and Tofu metadata without uploading game installations.'],
-      ['Sync history', 'Show when data was synchronised and whether an operation succeeded or failed.'],
-      ['Conflict handling', 'Define predictable rules for changes made on multiple devices.'],
-      ['Device awareness', 'Give users visibility into the devices using their Mochi account.'],
-    ],
-  },
-  {
-    title: 'Library expansion',
-    status: 'Planned',
-    tone: 'cyan',
-    description: 'Give Mochi the tools needed to become a genuinely powerful game library.',
-    items: [
-      ['Game statistics', 'Recently played, play history, favourites, and useful library insights.'],
-      ['Richer game pages', 'Artwork, metadata, launch environments, activity, and configuration in one place.'],
-      ['Discovery integrations', 'Explore additional metadata and mod/community integrations without making Mochi a store.'],
-      ['Installation awareness', 'Detect and understand installed games where the platform allows it.'],
-    ],
-  },
-  {
-    title: 'Developer ecosystem',
-    status: 'Exploring',
-    tone: 'slate',
-    description: 'Open up Mochi for people who want to build tools and integrations around it.',
-    items: [
-      ['Public API', 'Provide a documented way for approved integrations to interact with Mochi data.'],
-      ['Developer tooling', 'Diagnostics and utilities for testing launcher integrations.'],
-      ['Integration framework', 'Make providers and game metadata sources easier to extend.'],
-      ['Automation', 'Explore useful library and launcher actions for advanced users.'],
-    ],
-  },
-  {
-    title: 'Beyond the launcher',
-    status: 'Future',
-    tone: 'slate',
-    description: 'Longer-term ideas that depend on the foundation above being mature.',
-    items: [
-      ['Windows support', 'Bring the shared Mochi experience to Windows with native launch integration.'],
-      ['macOS support', 'Bring the shared Mochi experience to macOS with platform-appropriate integration.'],
-      ['Advanced environments', 'Richer runtime, mod-loader, compatibility, and per-Tofu configuration.'],
-      ['Community features', 'Only where they improve the launcher without compromising its local-first identity.'],
+      ['Signed and notarized macOS builds', 'macOS builds are currently only ad-hoc signed, so Gatekeeper blocks the first launch. Notarization needs an Apple Developer account.'],
+      ['Stable release', 'A first stable release, once the early-development caveats are behind us.'],
     ],
   },
 ]
@@ -104,14 +66,14 @@ export function RoadmapPage() {
         </div>
         <h1 className="mt-5 text-4xl font-black tracking-tight text-white sm:text-5xl">Where Mochi is going.</h1>
         <p className="mt-5 text-lg leading-8 text-slate-300">
-          Mochi is being built in layers: a dependable local launcher first, then richer library tools, cloud capabilities, and an ecosystem around them. The roadmap is directional rather than a promise of exact release dates.
+          Mochi is in early development (version 0.1.0, no stable release yet). This page separates what already exists from what is still planned. It is directional rather than a promise of exact release dates.
         </p>
       </header>
 
       <section className="grid gap-4 md:grid-cols-3">
-        <div className="glass-card p-5"><Gamepad2 className="h-5 w-5 text-violet-300" /><p className="mt-4 text-sm font-semibold text-white">Now</p><p className="mt-1 text-sm leading-6 text-slate-400">Polish the core launcher and make managing real libraries feel effortless.</p></div>
-        <div className="glass-card p-5"><Cloud className="h-5 w-5 text-cyan-300" /><p className="mt-4 text-sm font-semibold text-white">Next</p><p className="mt-1 text-sm leading-6 text-slate-400">Turn the existing cloud foundation into transparent, reliable metadata synchronisation.</p></div>
-        <div className="glass-card p-5"><Code2 className="h-5 w-5 text-emerald-300" /><p className="mt-4 text-sm font-semibold text-white">Later</p><p className="mt-1 text-sm leading-6 text-slate-400">Expand integrations, developer tooling, platforms, and advanced game environments.</p></div>
+        <div className="glass-card p-5"><Gamepad2 className="h-5 w-5 text-violet-300" /><p className="mt-4 text-sm font-semibold text-white">Now</p><p className="mt-1 text-sm leading-6 text-slate-400">Linux and macOS builds are available while Mochi is still in early development.</p></div>
+        <div className="glass-card p-5"><Cloud className="h-5 w-5 text-cyan-300" /><p className="mt-4 text-sm font-semibold text-white">In progress</p><p className="mt-1 text-sm leading-6 text-slate-400">Optional achievements sync to Mochi Cloud, plus ongoing polish.</p></div>
+        <div className="glass-card p-5"><Code2 className="h-5 w-5 text-emerald-300" /><p className="mt-4 text-sm font-semibold text-white">Planned</p><p className="mt-1 text-sm leading-6 text-slate-400">Notarized macOS builds and a stable release. Windows is not supported.</p></div>
       </section>
 
       <div className="relative space-y-5">

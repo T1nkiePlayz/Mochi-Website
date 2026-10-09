@@ -158,7 +158,7 @@ function App() {
         <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
             <Link to="/" className="flex items-center gap-3 text-lg font-semibold tracking-tight text-white">
-              <img src={logoSrc} alt="Mochi" className="h-9 w-9 rounded-xl object-contain" />
+              <img src={logoSrc} alt="Mochi" width={36} height={36} className="h-9 w-9 rounded-xl object-contain" />
               Mochi
             </Link>
 
@@ -263,7 +263,7 @@ function App() {
           <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-10 text-sm text-slate-300 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
             <div>
               <div className="flex items-center gap-2">
-                <img src={logoSrc} alt="" className="h-7 w-7 rounded-lg object-contain" />
+                <img src={logoSrc} alt="" width={28} height={28} loading="lazy" decoding="async" className="h-7 w-7 rounded-lg object-contain" />
                 <p className="text-base font-semibold text-white">Mochi</p>
               </div>
               <p className="mt-1">Your games, your way.</p>
@@ -294,6 +294,20 @@ function App() {
   )
 }
 
+const featureHighlights = [
+  { icon: Rocket, title: 'Launch almost anything', text: 'Add executables, .desktop files, Flatpak IDs, scripts, and Windows programs through Wine or Proton on Linux, or CrossOver and Whisky on macOS. Import from Steam, Heroic, itch.io, Lutris, Bottles and more; imports never move or uninstall anything.' },
+  { icon: Gamepad2, title: 'Organise games your way', text: 'Keep one Piko for a game and create multiple Tofus for different versions, modded setups, performance profiles, or testing environments.' },
+  { icon: Cloud, title: 'Optional cloud sync', text: 'When enabled for your account, Mochi can synchronise library metadata (Pikos and Tofus) without uploading game files. Syncing achievements to Mochi Cloud is a recent addition still in early development.' },
+  { icon: ShieldCheck, title: 'Account controls', text: 'Use Google, GitHub, an email sign-in code, or email and password, with authenticator-app two-factor authentication and passkeys available when configured.' },
+]
+
+const steps = [
+  ['01', 'Add a game', 'Import from your existing launchers, or choose a launch target with Mochi’s native file picker or select an installed Flatpak.'],
+  ['02', 'Identify it', 'Optionally use IGDB, SteamGridDB, or the Steam Store to find artwork and metadata. Custom artwork is never overwritten.'],
+  ['03', 'Create Tofus', 'Keep separate environments for vanilla, mods, performance, testing, or whatever makes sense for that game.'],
+  ['04', 'Play', 'Pick the Piko and Tofu you want and press Play. Mochi hands the launch target to its native desktop layer.'],
+]
+
 function PageLoading() {
   return (
     <div className="flex min-h-[40vh] items-center justify-center" aria-live="polite">
@@ -303,20 +317,6 @@ function PageLoading() {
 }
 
 function HomePage() {
-  const featureHighlights = [
-    { icon: Rocket, title: 'Launch almost anything', text: 'Executables, .desktop files, Flatpaks, and supported scripts are routed through the native launcher.' },
-    { icon: Gamepad2, title: 'Organise games your way', text: 'Keep one Piko for a game and create multiple Tofus for different versions, modded setups, performance profiles, or testing environments.' },
-    { icon: Cloud, title: 'Optional cloud sync', text: 'When enabled for your account, Mochi can synchronise supported metadata and settings without uploading complete game installations.' },
-    { icon: ShieldCheck, title: 'Account controls', text: 'Use Google, GitHub, an email sign-in code, or email and password, with authenticator-app two-factor authentication and passkeys available when configured.' },
-  ]
-
-  const steps = [
-    ['01', 'Add a game', 'Choose a name and launch target with Mochi’s native file picker, or select an installed Flatpak.'],
-    ['02', 'Identify it', 'Optionally use IGDB to find artwork, genres, release information, and other useful metadata. You stay in control of the match.'],
-    ['03', 'Create Tofus', 'Keep separate environments for vanilla, mods, performance, testing, or whatever makes sense for that game.'],
-    ['04', 'Play', 'Pick the Piko and Tofu you want and press Play. Mochi hands the launch target to its native desktop layer.'],
-  ]
-
   return (
     <div className="relative space-y-24 pb-12">
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
@@ -332,10 +332,10 @@ function HomePage() {
         <div className="absolute -right-32 bottom-0 h-96 w-96 rounded-full bg-cyan-500/15 blur-3xl mochi-glow mochi-glow-two" />
         <div className="relative z-10 mx-auto max-w-5xl text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-violet-200">
-            <Sparkles className="h-4 w-4" /> Linux-first game launcher
+            <Sparkles className="h-4 w-4" /> Linux-first game launcher · early development
           </div>
           <h1 className="mt-7 text-5xl font-black tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl">
-            Your games, <span className="bg-gradient-to-r from-violet-300 via-white to-cyan-300 bg-clip-text text-transparent">your way.</span>
+            Your games, <span className="gradient-text">your way.</span>
           </h1>
           <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl">
             Mochi is a flexible desktop game launcher built around local control. Bring your games together, give every setup its own environment, and use optional online services when they actually help.
@@ -347,7 +347,7 @@ function HomePage() {
           <div className="mt-12 grid gap-3 text-left sm:grid-cols-3">
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"><p className="font-semibold text-white">Local-first</p><p className="mt-1 text-sm text-slate-400">Games stay on your device.</p></div>
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"><p className="font-semibold text-white">Piko + Tofu</p><p className="mt-1 text-sm text-slate-400">Separate game identity from environment.</p></div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"><p className="font-semibold text-white">Linux today</p><p className="mt-1 text-sm text-slate-400">Windows and macOS are planned.</p></div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"><p className="font-semibold text-white">Linux and macOS</p><p className="mt-1 text-sm text-slate-400">Steam Deck and controller friendly.</p></div>
           </div>
         </div>
       </section>
@@ -409,7 +409,7 @@ function HomePage() {
       <section className="grid gap-5 md:grid-cols-3">
         <Link to="/documentation" className="glass-card group p-6 transition hover:-translate-y-1 hover:border-violet-400/30"><p className="text-sm text-violet-300">Documentation</p><h3 className="mt-2 text-xl font-semibold text-white">Understand the architecture</h3><p className="mt-3 text-sm leading-6 text-slate-400">Read about Pikos, Tofus, launching, authentication, storage, and cloud synchronisation.</p><span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white">Read docs <ArrowRight className="h-4 w-4"/></span></Link>
         <Link to="/faq" className="glass-card group p-6 transition hover:-translate-y-1 hover:border-violet-400/30"><p className="text-sm text-cyan-300">FAQ</p><h3 className="mt-2 text-xl font-semibold text-white">Have questions?</h3><p className="mt-3 text-sm leading-6 text-slate-400">Find answers about accounts, cloud sync, platforms, offline use, and what Mochi does with your data.</p><span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white">Read FAQ <ArrowRight className="h-4 w-4"/></span></Link>
-        <Link to="/download" className="glass-card group p-6 transition hover:-translate-y-1 hover:border-violet-400/30"><p className="text-sm text-emerald-300">Download</p><h3 className="mt-2 text-xl font-semibold text-white">Ready to try it?</h3><p className="mt-3 text-sm leading-6 text-slate-400">Linux is available now, with Windows and macOS planned.</p><span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white">Get Mochi <ArrowRight className="h-4 w-4"/></span></Link>
+        <Link to="/download" className="glass-card group p-6 transition hover:-translate-y-1 hover:border-violet-400/30"><p className="text-sm text-emerald-300">Download</p><h3 className="mt-2 text-xl font-semibold text-white">Ready to try it?</h3><p className="mt-3 text-sm leading-6 text-slate-400">Early-development builds for Linux and macOS, including Steam Deck and controller support.</p><span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white">Get Mochi <ArrowRight className="h-4 w-4"/></span></Link>
       </section>
 
       <section className="relative overflow-hidden rounded-[2rem] border border-violet-400/20 bg-violet-500/[0.06] p-10 text-center sm:p-14">
@@ -483,13 +483,13 @@ function HowItWorksPage() {
 function DownloadPage() {
   return (
     <PageShell>
-      <SectionHeading eyebrow="Download" title="Get the latest Mochi build" />
+      <SectionHeading eyebrow="Download" title="Get Mochi (early development)" />
 
       <div className="glass-card p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.2em] text-violet-200">Latest release</p>
-            <h3 className="mt-2 text-2xl font-bold text-white">Linux</h3>
+            <h3 className="mt-2 text-2xl font-bold text-white">Linux and macOS</h3>
           </div>
           <a
             href="https://github.com/T1nkiePlayz/Mochi/releases/latest"
@@ -505,12 +505,13 @@ function DownloadPage() {
 
       <div className="mt-8 grid gap-6 md:grid-cols-3">
         {[
-          { name: 'Linux', status: 'Available now', accent: 'bg-emerald-500/10 text-emerald-200 border-emerald-400/30' },
-          { name: 'Windows', status: 'Coming soon', accent: 'bg-slate-700/40 text-slate-200 border-white/10' },
-          { name: 'macOS', status: 'Coming soon', accent: 'bg-slate-700/40 text-slate-200 border-white/10' },
+          { name: 'Linux', status: 'Supported', note: 'AppImage, .deb, .rpm, Arch PKGBUILD. Best tested.', accent: 'bg-emerald-500/10 text-emerald-200 border-emerald-400/30' },
+          { name: 'macOS', status: 'Supported', note: 'macOS 12+, universal DMG. Builds are not notarized, so Gatekeeper blocks the first launch (right-click Open).', accent: 'bg-emerald-500/10 text-emerald-200 border-emerald-400/30' },
+          { name: 'Steam Deck', status: 'Supported', note: 'Controller-first Big Picture mode.', accent: 'bg-emerald-500/10 text-emerald-200 border-emerald-400/30' },
         ].map((platform) => (
           <article key={platform.name} className="glass-card p-6">
             <h3 className="text-xl font-semibold text-white">{platform.name}</h3>
+            <p className="mt-2 text-sm text-slate-400">{platform.note}</p>
             <div className={`mt-4 inline-flex rounded-full border px-3 py-1 text-sm ${platform.accent}`}>
               {platform.status}
             </div>
@@ -540,13 +541,13 @@ function FaqPage() {
         <FaqItem question="Does Mochi support two-factor authentication?" answer="Yes. Accounts can use an authenticator app for two-factor authentication when the feature is available to the account." />
         <FaqItem question="Does Mochi support passkeys?" answer="Passkeys are supported when one is registered on your account. If your account has a passkey or authenticator app configured, Mochi can ask for that additional verification after your primary sign-in." />
         <FaqItem question="Is Mochi local-first?" answer="Yes. Mochi is designed to keep your games and large game files on your own device while using online services only where account or supported cloud features require them." />
-        <FaqItem question="What does Mochi Cloud sync?" answer="For users with cloud features enabled, Mochi can sync supported metadata, configurations, launcher settings, account information, and device state. It is not intended to upload complete game installations." />
-        <FaqItem question="Will my games work if I am offline?" answer="Mochi is designed around local game management, so locally installed games do not need to be uploaded to the cloud. Features that depend on an online account or cloud service may require an internet connection." />
+        <FaqItem question="What does Mochi Cloud sync?" answer="For users with cloud features enabled, Mochi can sync library metadata (Pikos and Tofus). Game files and local paths are never uploaded. Syncing achievements to Mochi Cloud is a recent addition still in early development." />
+        <FaqItem question="Will my games work if I am offline?" answer="Yes. Your library, launching, playtime, stats, themes, settings and installed-mod management work offline. Metadata lookups, Discover, sign-in and downloads need a network connection." />
         <FaqItem question="Does Mochi replace the game stores or publishers?" answer="No. Mochi is a launcher and management layer. You remain responsible for owning or having permission to use the games, files, mods, and other content you add." />
         <FaqItem question="Can I create multiple Tofus for one game?" answer="Yes. Tofus are intended to let you keep separate environments and configurations for the same Piko, such as vanilla, modded, testing, or performance setups." />
         <FaqItem question="Is cloud sync available to everyone?" answer="Not currently. Cloud metadata features are available only to selected users, and access can be controlled from the Mochi account system." />
         <FaqItem question="Where can I download Mochi?" answer="The latest publicly available Mochi release can be found from the Download page and the project's release page." />
-        <FaqItem question="What platforms does Mochi support?" answer="Linux is currently available. Windows and macOS support are planned as future releases." />
+        <FaqItem question="What platforms does Mochi support?" answer="Mochi supports Linux (AppImage, .deb, .rpm and an Arch PKGBUILD) and macOS 12 or later (Apple silicon and Intel). Linux is the best tested. Windows is not supported. Steam Deck and controllers are supported, including a Big Picture mode. Mochi is in early development (0.1.0) and has no stable release yet." />
         <FaqItem question="How do I get help with my account?" answer="For account, privacy, or other support questions, contact support@ashtontink.com." />
         <FaqItem question="How is my personal information handled?" answer="Mochi's Privacy Policy explains what information may be collected, why it is used, how it may be disclosed, and how you can request access, correction, or deletion." />
       </div>
@@ -886,7 +887,7 @@ function AuthCard({ eyebrow, title, subtitle, children }: { eyebrow?: string; ti
     <div className="mx-auto flex w-full max-w-md flex-col items-stretch pb-10 pt-2 sm:pt-6">
       <div className="glass-card p-6 sm:p-8">
         <div className="mb-6 text-center">
-          <img src={logoSrc} alt="" className="mx-auto h-12 w-12 rounded-2xl object-contain" />
+          <img src={logoSrc} alt="" width={48} height={48} className="mx-auto h-12 w-12 rounded-2xl object-contain" />
           {eyebrow && <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">{eyebrow}</p>}
           <h1 className="mt-2 text-2xl font-bold tracking-tight text-white">{title}</h1>
           {subtitle && <p className="mt-2 text-sm leading-6 text-slate-400">{subtitle}</p>}
@@ -949,7 +950,7 @@ function EmailVerificationPage() {
   return (
     <PageShell className="max-w-2xl">
       <div className="glass-card p-8 text-center sm:p-10">
-        <img src={logoSrc} alt="Mochi" className="mx-auto h-16 w-16 rounded-2xl object-contain" />
+        <img src={logoSrc} alt="Mochi" width={64} height={64} className="mx-auto h-16 w-16 rounded-2xl object-contain" />
         <p className="mt-6 text-sm font-semibold uppercase tracking-[0.2em] text-violet-300">Email verification</p>
         <h2 className="mt-3 text-3xl font-bold text-white">
           {status === 'verifying' ? 'Confirming your email…' : status === 'success' ? 'Email verified!' : 'Verification failed'}
