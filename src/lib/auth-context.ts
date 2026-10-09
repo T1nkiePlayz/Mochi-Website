@@ -10,7 +10,7 @@ type AuthContextValue = {
   refreshProfile: () => Promise<void>
 }
 
-const AuthContext = createContext<AuthContextValue>({
+export const AuthContext = createContext<AuthContextValue>({
   session: null,
   user: null,
   profile: null,
