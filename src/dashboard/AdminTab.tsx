@@ -2,10 +2,13 @@ import { Activity, Ban, ChevronDown, Cloud, LogOut, RefreshCw, Search, ShieldChe
 import { useCallback, useEffect, useState } from 'react'
 import { avatarFor } from '../lib/avatar'
 import {
-  adminApi, setUserCloudSync, setUserMetadataAccess, useAuth,
+  adminApi, setUserCloudSync, setUserMetadataAccess,
   type AdminAuditEntry, type AdminStats, type AdminUser,
 } from '../lib/supabase'
-import { btn, Chip, ConfirmAction, CopyButton, formatDate, input, Panel, Row, Skeleton, timeAgo, useNotice } from './ui'
+import { useAuth } from '../lib/auth'
+import { Chip, ConfirmAction, CopyButton, Panel, Row, Skeleton } from './ui'
+import { btn, formatDate, input, timeAgo } from './ui-utils'
+import { useNotice } from './useNotice'
 
 const PAGE = 25
 const MIGRATION_HINT = 'The admin tools need the latest database migration (supabase/migrations/20261008140000_admin_tools_and_account_deletion.sql).'
