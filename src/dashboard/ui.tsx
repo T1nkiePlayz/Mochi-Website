@@ -1,5 +1,6 @@
 import { Check, Copy, type LucideIcon } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
+import { btn, input } from './ui-utils'
 
 export function Panel({
   title, description, icon: Icon, action, tone = 'default', children,
