@@ -317,9 +317,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // long gap between visits does not leave the UI holding an expired
         // access token. Supabase handles refresh-token rotation and expiry.
         const refreshed = await supabase.auth.refreshSession()
-        const session = refreshed.data.session ?? data.session
+        // Do not resurrect an old session when refresh fails or returns no session.
         if (active) {
-          setSession(session)
+          if (refreshed.error || !refreshed.data.session) {
+            await supabase.auth.signOut({ scope: 'local' })
+            setSession(null)
+            setProfile(null)
+          } else {
+            setSession(refreshed.data.session)
+          }
           setLoading(false)
         }
       } else {
