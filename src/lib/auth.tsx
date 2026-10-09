@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import type { Session } from '@supabase/supabase-js'
+import { isAuthRetryableFetchError, type Session } from '@supabase/supabase-js'
 import { AuthContext } from './auth-context'
 import { supabase, type Profile } from './supabase'
 
@@ -44,7 +44,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Refresh the persisted session on return; Supabase rotates refresh tokens.
         const refreshed = await client.auth.refreshSession()
         if (!active) return
-        if (refreshed.error || !refreshed.data.session) {
+        if (refreshed.error && isAuthRetryableFetchError(refreshed.error)) {
+          // Offline or the auth service is briefly unavailable: that says nothing about the session, so keep it
+          // (Supabase retries the refresh in the background) instead of signing the user out.
+          setSession(data.session)
+        } else if (refreshed.error || !refreshed.data.session) {
           await client.auth.signOut({ scope: 'local' })
           if (active) {
             setSession(null)

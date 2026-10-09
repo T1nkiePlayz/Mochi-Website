@@ -8,6 +8,13 @@ The website migrations extend the shared Mochi database; they are **not a standa
 
 The launcher repository also owns the `store-provider-credentials` Edge Function. Its implementation and deployed environment must be reviewed alongside these SQL migrations when changing service-key handling. Do not assume that a successful website build proves the database migrations or Edge Function are deployable.
 
+## Notes on `20261009150000_security_hardening.sql`
+
+- It is forward-only: migrations that were already applied (such as `20261008140000`) are never edited, because editing them changes nothing on a database that has run them.
+- It does not redefine `update_my_profile(jsonb)`. The launcher migration `20261008130000_harden_and_reconcile.sql` owns that function (it returns `public.profiles`, runs as SECURITY INVOKER, and relies on the `protect_profile_columns` trigger so users cannot grant themselves cloud access). A `returns void` redefinition would fail because a function's return type cannot change.
+- Administrator RPCs now require an AAL2 session, so an administrator must have an authenticator app or passkey set up.
+- `delete_my_account(confirmation_email text)` replaces the no-argument version. It checks the retyped email, a sign-in within the last 10 minutes (read from the `amr` claim; Supabase access tokens have no `auth_time`), and AAL2 when a second factor exists.
+
 ## Deployment checks
 
 - Apply the complete migration chain to a fresh local Supabase instance before deployment.

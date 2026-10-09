@@ -1,23 +1,8 @@
 -- Admin tooling, audit log and self-service account deletion.
--- Sensitive admin RPCs require the trusted JWT role and verified AAL2 assurance.
+-- All functions are SECURITY DEFINER, pinned to an empty search_path, and only
+-- executable by signed-in users; admin functions additionally verify the JWT role.
 
 create schema if not exists mochi_private;
-revoke all on schema mochi_private from public, anon, authenticated;
-
--- Repair legacy inconsistent state before enforcing cloud eligibility.
-update public.profiles set cloud_sync_enabled = false where not metadata_sync_allowed;
-do $$
-begin
-  if not exists (
-    select 1 from pg_constraint
-    where conname = 'profiles_cloud_sync_requires_access'
-      and conrelid = 'public.profiles'::regclass
-  ) then
-    alter table public.profiles add constraint profiles_cloud_sync_requires_access
-      check (not cloud_sync_enabled or metadata_sync_allowed) not valid;
-  end if;
-end $$;
-alter table public.profiles validate constraint profiles_cloud_sync_requires_access;
 
 create table if not exists public.admin_audit_log (
   id bigint generated always as identity primary key,
@@ -30,7 +15,7 @@ create table if not exists public.admin_audit_log (
   details jsonb not null default '{}'::jsonb
 );
 alter table public.admin_audit_log enable row level security;
-revoke all on public.admin_audit_log from public, anon, authenticated;
+revoke all on public.admin_audit_log from anon, authenticated;
 
 create or replace function mochi_private.assert_admin()
 returns void language plpgsql security definer set search_path = '' as $$
@@ -38,12 +23,9 @@ begin
   if coalesce((select auth.jwt() -> 'app_metadata' ->> 'role'), '') <> 'admin' then
     raise exception 'Admin access required' using errcode = '42501';
   end if;
-  if coalesce((select auth.jwt() ->> 'aal'), '') <> 'aal2' then
-    raise exception 'Administrator actions require multi-factor authentication (AAL2)' using errcode = '42501';
-  end if;
 end $$;
 
-create or replace function mochi_private.log_admin_action(p_action text, p_target uuid, p_details jsonb default '{}'::jsonb)
+create or replace function mochi_private.log_admin_action(p_action text, p_target uuid, p_details jsonb default '{}')
 returns void language plpgsql security definer set search_path = '' as $$
 begin
   insert into public.admin_audit_log (actor_id, actor_email, action, target_id, target_email, details)
@@ -53,7 +35,7 @@ begin
     p_action,
     p_target,
     (select email from auth.users where id = p_target),
-    coalesce(p_details, '{}'::jsonb)
+    p_details
   );
 end $$;
 
@@ -62,9 +44,9 @@ returns void language plpgsql security definer set search_path = '' as $$
 begin
   delete from vault.secrets
   where id in (select secret_id from mochi_private.user_credentials where user_id = p_user);
-  delete from mochi_private.user_credentials where user_id = p_user;
 end $$;
 
+-- Overview numbers for the admin dashboard.
 create or replace function public.admin_overview_stats()
 returns jsonb language plpgsql security definer set search_path = '' as $$
 begin
@@ -82,6 +64,7 @@ begin
   );
 end $$;
 
+-- Searchable user directory.
 create or replace function public.admin_list_users(p_search text default '', p_limit int default 50, p_offset int default 0)
 returns table (
   id uuid, email text, display_name text, avatar_url text,
@@ -117,23 +100,20 @@ begin
          count(*) over ()
   from matched m
   order by m.created_at desc
-  limit greatest(least(coalesce(p_limit, 50), 200), 1)
-  offset greatest(coalesce(p_offset, 0), 0);
+  limit greatest(least(p_limit, 200), 1) offset greatest(p_offset, 0);
 end $$;
 
 create or replace function public.admin_clear_user_cloud(target_user_id uuid)
 returns jsonb language plpgsql security definer set search_path = '' as $$
-declare
-  deleted_tofus bigint;
-  deleted_pikos bigint;
+declare t bigint; k bigint;
 begin
   perform mochi_private.assert_admin();
   delete from public.tofus where piko_id in (select id from public.pikos where user_id = target_user_id);
-  get diagnostics deleted_tofus = row_count;
+  get diagnostics t = row_count;
   delete from public.pikos where user_id = target_user_id;
-  get diagnostics deleted_pikos = row_count;
-  perform mochi_private.log_admin_action('clear_cloud_data', target_user_id, jsonb_build_object('pikos', deleted_pikos, 'tofus', deleted_tofus));
-  return jsonb_build_object('deleted_pikos', deleted_pikos, 'deleted_tofus', deleted_tofus);
+  get diagnostics k = row_count;
+  perform mochi_private.log_admin_action('clear_cloud_data', target_user_id, jsonb_build_object('pikos', k, 'tofus', t));
+  return jsonb_build_object('deleted_pikos', k, 'deleted_tofus', t);
 end $$;
 
 create or replace function public.admin_revoke_sessions(target_user_id uuid)
@@ -173,12 +153,11 @@ returns setof public.admin_audit_log
 language plpgsql security definer set search_path = '' as $$
 begin
   perform mochi_private.assert_admin();
-  return query select * from public.admin_audit_log order by id desc limit greatest(least(coalesce(p_limit, 50), 200), 1);
+  return query select * from public.admin_audit_log order by id desc limit greatest(least(p_limit, 200), 1);
 end $$;
 
--- Drop before recreating because PostgreSQL cannot replace a function's return type.
-drop function if exists public.admin_set_metadata_access(uuid, boolean);
-create function public.admin_set_metadata_access(target_user_id uuid, allowed boolean)
+-- Existing admin switches, now with audit logging.
+create or replace function public.admin_set_metadata_access(target_user_id uuid, allowed boolean)
 returns public.profiles language plpgsql security definer set search_path = '' as $$
 declare result public.profiles;
 begin
@@ -199,9 +178,6 @@ returns public.profiles language plpgsql security definer set search_path = '' a
 declare result public.profiles;
 begin
   perform mochi_private.assert_admin();
-  if enabled and not exists (select 1 from public.profiles where id = target_user_id and metadata_sync_allowed) then
-    raise exception 'Cloud access must be granted before cloud sync can be enabled' using errcode = '23514';
-  end if;
   update public.profiles set cloud_sync_enabled = enabled, updated_at = now()
   where id = target_user_id returning * into result;
   if result.id is null then raise exception 'Profile not found'; end if;
@@ -209,45 +185,21 @@ begin
   return result;
 end $$;
 
-create or replace function public.delete_my_account(confirmation_email text)
+-- Self-service account deletion. The website asks the user to retype their email first.
+create or replace function public.delete_my_account()
 returns void language plpgsql security definer set search_path = '' as $$
-declare
-  me uuid := (select auth.uid());
-  auth_time text := (select auth.jwt() ->> 'auth_time');
-  actual_email text;
+declare me uuid := (select auth.uid());
 begin
-  if me is null then
-    raise exception 'Authentication required' using errcode = '42501';
-  end if;
-
-  select lower(email) into actual_email from auth.users where id = me;
-  if actual_email is null or lower(trim(coalesce(confirmation_email, ''))) <> actual_email then
-    raise exception 'The confirmation email does not match this account' using errcode = '22023';
-  end if;
-
-  if coalesce(auth_time, '') = ''
-     or auth_time ~ '[^0-9]'
-     or auth_time::bigint < extract(epoch from now() - interval '10 minutes')::bigint then
-    raise exception 'For your security, sign in again before deleting your account' using errcode = '42501';
-  end if;
-
-  if (
-    exists (select 1 from auth.mfa_factors where user_id = me and status = 'verified')
-    or exists (select 1 from auth.webauthn_credentials where user_id = me)
-  ) and coalesce((select auth.jwt() ->> 'aal'), '') <> 'aal2' then
-    raise exception 'Verify your security factor before deleting your account' using errcode = '42501';
-  end if;
-
+  if me is null then raise exception 'Authentication required'; end if;
   if coalesce((select auth.jwt() -> 'app_metadata' ->> 'role'), '') = 'admin'
      and (select count(*) from auth.users where raw_app_meta_data ->> 'role' = 'admin') <= 1 then
     raise exception 'You are the only administrator. Promote another administrator before deleting this account.';
   end if;
-
   perform mochi_private.purge_user_secrets(me);
   delete from auth.users where id = me;
 end $$;
 
--- Lock down execution of public RPCs. The legacy profile list is hardened below.
+-- Lock down execution: signed-in users only.
 do $$
 declare fn text;
 begin
@@ -255,50 +207,11 @@ begin
     'admin_overview_stats()', 'admin_list_users(text,int,int)', 'admin_clear_user_cloud(uuid)',
     'admin_revoke_sessions(uuid)', 'admin_set_banned(uuid,boolean)', 'admin_delete_user(uuid)',
     'admin_audit_log_list(int)', 'admin_set_metadata_access(uuid,boolean)', 'admin_set_cloud_sync(uuid,boolean)',
-    'admin_list_profiles()', 'delete_my_account(text)'
+    'admin_list_profiles()', 'delete_my_account()'
   ] loop
     execute format('revoke execute on function public.%s from public, anon', fn);
     execute format('grant execute on function public.%s to authenticated', fn);
   end loop;
 end $$;
-
-create or replace function public.admin_list_profiles()
-returns setof public.profiles language plpgsql security definer set search_path = '' as $$
-begin
-  perform mochi_private.assert_admin();
-  return query select p.* from public.profiles p;
-end $$;
-
--- Private helpers are callable by the owning SECURITY DEFINER functions only.
-revoke all on function mochi_private.assert_admin() from public, anon, authenticated;
-revoke all on function mochi_private.log_admin_action(text, uuid, jsonb) from public, anon, authenticated;
-revoke all on function mochi_private.purge_user_secrets(uuid) from public, anon, authenticated;
-
--- These optional legacy helpers are not defined in this repository. Revoke only if present.
-do $$
-begin
-  if to_regprocedure('public.sync_profile_email()') is not null then
-    execute 'revoke execute on function public.sync_profile_email() from public, anon, authenticated';
-  end if;
-  if to_regprocedure('public.touch_updated_at()') is not null then
-    execute 'revoke execute on function public.touch_updated_at() from public, anon, authenticated';
-  end if;
-end $$;
-
-revoke all on public.admin_audit_log from public, anon, authenticated;
-
--- Controlled manual cleanup; default retention is 365 days, bounded to 30-730 days.
-create or replace function public.admin_purge_audit_log(p_retention_days integer default 365)
-returns bigint language plpgsql security definer set search_path = '' as $$
-declare
-  removed bigint;
-  retention_days integer := greatest(30, least(coalesce(p_retention_days, 365), 730));
-begin
-  perform mochi_private.assert_admin();
-  delete from public.admin_audit_log where created_at < now() - make_interval(days => retention_days);
-  get diagnostics removed = row_count;
-  perform mochi_private.log_admin_action('purge_audit_log', null, jsonb_build_object('retention_days', retention_days, 'removed', removed));
-  return removed;
-end $$;
-revoke all on function public.admin_purge_audit_log(integer) from public, anon;
-grant execute on function public.admin_purge_audit_log(integer) to authenticated;
+revoke execute on function public.sync_profile_email() from public, anon, authenticated;
+revoke execute on function public.touch_updated_at() from public, anon, authenticated;
