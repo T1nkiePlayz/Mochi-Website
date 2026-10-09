@@ -24,12 +24,18 @@ export default function SecurityTab({ user }: { user: User }) {
     else setPasskeys((keys.data ?? []) as Passkey[])
     setLoading(false)
   }, [])
-  useEffect(() => { void load() }, [load])
+  useEffect(() => {
+    let active = true
+    void Promise.resolve().then(async () => {
+      if (!active) return
+      await load()
+    })
+    return () => { active = false }
+  }, [load])
 
   const verified = factors.filter((factor) => factor.status === 'verified')
   const identities = new Set((user.identities ?? []).map((identity) => identity.provider))
   const hasPassword = identities.has('email')
-  const hasAlternativeIdentity = identities.size > 1
 
   const methods = [
     { icon: Lock, title: 'Password', on: hasPassword, detail: hasPassword ? 'Set' : 'Not set — add one under Account' },
@@ -150,6 +156,7 @@ function PasskeyPanel({ passkeys, reload }: { passkeys: Passkey[]; reload: () =>
 
 function LinkedAccountsPanel({ user }: { user: User }) {
   const [linked, setLinked] = useState(() => new Set((user.identities ?? []).map((identity) => identity.provider)))
+  const hasAlternativeIdentity = linked.size > 1 || (user.identities ?? []).some((identity) => identity.provider === 'email')
   const [busy, setBusy] = useState(false)
   const n = useNotice()
   return (
