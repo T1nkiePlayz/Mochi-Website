@@ -1,7 +1,9 @@
 import { Cloud, Gamepad2, Layers3, Search, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { clearMyCloudData, manageApiCredential, supabase, updateMyProfile, type Profile } from '../lib/supabase'
-import { Chip, ConfirmAction, input, Panel, Skeleton, Switch, useNotice } from './ui'
+import { Chip, ConfirmAction, Panel, Skeleton, Switch } from './ui'
+import { input } from './ui-utils'
+import { useNotice } from './useNotice'
 
 type SyncedGame = { id: string; name: string; artwork: string | null; artwork_url?: string | null; source: string | null; categories: string[] | null; tofus: { id: string }[] | null }
 
