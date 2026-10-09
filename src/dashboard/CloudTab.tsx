@@ -3,13 +3,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { clearMyCloudData, manageApiCredential, supabase, updateMyProfile, type Profile } from '../lib/supabase'
 import { Chip, ConfirmAction, input, Panel, Skeleton, Switch, useNotice } from './ui'
 
-type SyncedGame = { id: string; name: string; artwork: string | null; source: string | null; categories: string[] | null; tofus: { id: string }[] | null }
+type SyncedGame = { id: string; name: string; artwork: string | null; artwork_url?: string | null; source: string | null; categories: string[] | null; tofus: { id: string }[] | null }
 
 export default function CloudTab({ profile, refreshProfile }: { profile: Profile | null; refreshProfile: () => Promise<void> }) {
   const [sync, setSync] = useState(profile?.cloud_sync_enabled ?? false)
   const [games, setGames] = useState<SyncedGame[]>([])
   const [artwork, setArtwork] = useState(false)
-  const [loading, setLoading] = useState(Boolean(profile?.metadata_sync_allowed))
+  const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [clearing, setClearing] = useState(false)
   const [query, setQuery] = useState('')
@@ -19,10 +19,15 @@ export default function CloudTab({ profile, refreshProfile }: { profile: Profile
   useEffect(() => { setSync(profile?.cloud_sync_enabled ?? false) }, [profile?.cloud_sync_enabled])
 
   useEffect(() => {
+    setLoading(allowed)
+    if (!allowed) { setGames([]); setArtwork(false) }
+  }, [allowed])
+
+  useEffect(() => {
     if (!allowed || !supabase) return
     let active = true
     void Promise.all([
-      supabase.from('pikos').select('id, name, artwork, source, categories, tofus(id)').order('name'),
+      supabase.from('pikos').select('id, name, artwork, artwork_url, source, categories, tofus(id)').order('name'),
       manageApiCredential('status'),
     ]).then(([pikos, status]) => {
       if (!active) return
@@ -94,9 +99,9 @@ export default function CloudTab({ profile, refreshProfile }: { profile: Profile
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {visible.map((game) => (
               <li key={game.id} className="min-w-0">
-                <div role="img" aria-label={game.name} style={artwork && game.artwork ? { backgroundImage: game.artwork } : undefined}
+                <div role="img" aria-label={game.name} style={artwork && (game.artwork_url || game.artwork) ? { backgroundImage: `url("${(game.artwork_url || game.artwork || '').replace(/["\\\\\n\r]/g, '')}")` } : undefined}
                   className="flex aspect-[3/4] items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-violet-500/15 to-cyan-500/10 bg-cover bg-center text-slate-600">
-                  {!(artwork && game.artwork) && <Gamepad2 className="h-9 w-9" />}
+                  {!(artwork && (game.artwork_url || game.artwork)) && <Gamepad2 className="h-9 w-9" />}
                 </div>
                 <p className="mt-2 truncate text-sm font-semibold text-white" title={game.name}>{game.name}</p>
                 <p className="truncate text-xs text-slate-500">{game.tofus?.length ?? 0} {(game.tofus?.length ?? 0) === 1 ? 'Tofu' : 'Tofus'}{game.categories?.[0] ? ` · ${game.categories[0]}` : ''}</p>
