@@ -45,7 +45,9 @@ export function ChangelogPage() {
     }
   }
 
-  useEffect(() => { void load() }, [])
+  useEffect(() => {
+    void Promise.resolve().then(() => load())
+  }, [])
 
   return (
     <div className="space-y-10 pb-10">
