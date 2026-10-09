@@ -5,6 +5,17 @@
 create schema if not exists mochi_private;
 revoke all on schema mochi_private from public, anon, authenticated;
 
+-- Repair any legacy inconsistent state before enforcing the invariant.
+update public.profiles set cloud_sync_enabled = false where not metadata_sync_allowed;
+do $
+begin
+  if not exists (select 1 from pg_constraint where conname = 'profiles_cloud_sync_requires_access') then
+    alter table public.profiles add constraint profiles_cloud_sync_requires_access
+      check (not cloud_sync_enabled or metadata_sync_allowed) not valid;
+  end if;
+end $;
+alter table public.profiles validate constraint profiles_cloud_sync_requires_access;
+
 create table if not exists public.admin_audit_log (
   id bigint generated always as identity primary key,
   created_at timestamptz not null default now(),
