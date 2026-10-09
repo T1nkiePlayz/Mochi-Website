@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components -- This module intentionally exports shared utilities alongside components. */
 import { createClient, type Session, type User } from '@supabase/supabase-js'
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 
 export type Profile = {
   id: string
@@ -292,22 +292,19 @@ const AuthContext = createContext<AuthContextValue>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(Boolean(supabase))
 
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (!supabase || !session?.user) {
       setProfile(null)
       return
     }
     const { data, error } = await supabase.from('profiles').select('id, display_name, avatar_url, cloud_sync_enabled, metadata_sync_allowed, email').eq('id', session.user.id).maybeSingle()
     if (!error) setProfile(data ? { ...(data as Profile), is_admin: session.user.app_metadata?.role === 'admin' } : null)
-  }
+  }, [session])
 
   useEffect(() => {
-    if (!supabase) {
-      setLoading(false)
-      return
-    }
+    if (!supabase) return
     let active = true
     supabase.auth.getSession().then(async ({ data }) => {
       if (!active) return
@@ -345,8 +342,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    void refreshProfile()
-  }, [session?.user.id])
+    void Promise.resolve().then(() => refreshProfile())
+  }, [refreshProfile])
 
   return <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, loading, refreshProfile }}>{children}</AuthContext.Provider>
 }
