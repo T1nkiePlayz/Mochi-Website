@@ -25,6 +25,7 @@ import {
   verifySignInCode,
   getSignInFactors,
   signInWithPasskey,
+  signedInWithPasskey,
   signInWithPassword,
   signInWithProvider,
   signOutCurrentUser,
@@ -133,7 +134,7 @@ function DashboardAccessGate({ children }: { children: ReactNode }) {
       else {
         const hasTotp = (factors.data?.totp ?? []).length > 0
         const hasPasskey = (factors.data?.passkeys ?? []).length > 0
-        setAllowed((!hasTotp && !hasPasskey) || aal.data?.currentLevel === 'aal2')
+        setAllowed((!hasTotp && !hasPasskey) || aal.data?.currentLevel === 'aal2' || signedInWithPasskey(user.id))
       }
       setChecking(false)
     }
@@ -586,7 +587,11 @@ function SignInPage() {
     window.location.href = `mochi://auth/callback?${params.toString()}`
   }, [])
 
+  // A passkey sign-in both finishes the ceremony and triggers a fresh security check; only hand off once.
+  const finished = useRef(false)
   const finishLogin = useCallback(async () => {
+    if (finished.current) return
+    finished.current = true
     setSecurityMode('complete')
     if (appMode) await handoffToMochi()
     else window.location.hash = '#/dashboard'
@@ -624,7 +629,9 @@ function SignInPage() {
       return
     }
 
-    if (!totp && !passkey) {
+    // A passkey sign-in is its own strong sign-in: it never reaches AAL2, so without this check the page would ask
+    // for a second factor again and loop.
+    if ((!totp && !passkey) || signedInWithPasskey(accountUser.id)) {
       setBusy(false)
       await finishLogin()
       return
@@ -639,6 +646,7 @@ function SignInPage() {
   useEffect(() => {
     void Promise.resolve().then(() => {
       if (user) return inspectSecurity(user)
+      finished.current = false
       setSecurityMode('checking')
       setPendingUserId(null)
     })

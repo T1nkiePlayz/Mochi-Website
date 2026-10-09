@@ -4,7 +4,7 @@ The website migrations extend the shared Mochi database; they are **not a standa
 
 1. `T1nkiePlayz/Mochi/supabase/migrations/20261006035100_create_mochi_metadata_schema.sql` — creates `profiles`, `pikos`, `tofus` and their ownership RLS policies.
 2. `T1nkiePlayz/Mochi/supabase/migrations/20261008130000_harden_and_reconcile.sql` — reconciles cloud policies and creates the private provider-credential storage objects, including `mochi_private.user_credentials`; it requires Supabase Vault to be available.
-3. Apply this repository's migrations in timestamp order, including `20261006120500_website_profile_controls.sql`, `20261008140000_admin_tools_and_account_deletion.sql`, and `20261009150000_security_hardening.sql`.
+3. Apply this repository's migrations in timestamp order, including `20261006120500_website_profile_controls.sql`, `20261008140000_admin_tools_and_account_deletion.sql`, `20261009150000_security_hardening.sql`, and `20261009160000_passkey_account_deletion.sql`.
 
 The launcher repository also owns the `store-provider-credentials` Edge Function. Its implementation and deployed environment must be reviewed alongside these SQL migrations when changing service-key handling. Do not assume that a successful website build proves the database migrations or Edge Function are deployable.
 
@@ -14,6 +14,8 @@ The launcher repository also owns the `store-provider-credentials` Edge Function
 - It does not redefine `update_my_profile(jsonb)`. The launcher migration `20261008130000_harden_and_reconcile.sql` owns that function (it returns `public.profiles`, runs as SECURITY INVOKER, and relies on the `protect_profile_columns` trigger so users cannot grant themselves cloud access). A `returns void` redefinition would fail because a function's return type cannot change.
 - Administrator RPCs now require an AAL2 session, so an administrator must have an authenticator app or passkey set up.
 - `delete_my_account(confirmation_email text)` replaces the no-argument version. It checks the retyped email, a sign-in within the last 10 minutes (read from the `amr` claim; Supabase access tokens have no `auth_time`), and AAL2 when a second factor exists.
+
+- `20261009160000_passkey_account_deletion.sql` relaxes one rule: a passkey sign-in never reaches AAL2, so account deletion requires AAL2 only when an authenticator app exists.
 
 ## Deployment checks
 

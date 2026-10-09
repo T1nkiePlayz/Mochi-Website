@@ -103,8 +103,19 @@ export async function refreshAuthSession() {
   return supabase.auth.refreshSession()
 }
 
+// A passkey sign-in creates its own session, and Supabase does not raise such a session to AAL2. It already proves
+// possession of a user-verified credential, so the site remembers (for this tab only) that this account signed in
+// with one and does not ask for a second factor again. This is a UI convenience; the database never trusts it.
+const PASSKEY_FLAG = 'mochi:passkey-verified'
+const rememberPasskeySignIn = (userId: string) => { try { sessionStorage.setItem(PASSKEY_FLAG, userId) } catch { /* storage unavailable */ } }
+const forgetPasskeySignIn = () => { try { sessionStorage.removeItem(PASSKEY_FLAG) } catch { /* storage unavailable */ } }
+export const signedInWithPasskey = (userId: string) => {
+  try { return sessionStorage.getItem(PASSKEY_FLAG) === userId } catch { return false }
+}
+
 export async function signOutCurrentUser() {
   if (!supabase) return { error: new Error(notConfigured) }
+  forgetPasskeySignIn()
   return supabase.auth.signOut()
 }
 
@@ -176,7 +187,9 @@ export async function getSignInFactors() {
 
 export async function signInWithPasskey() {
   if (!supabase) return { data: { user: null, session: null }, error: new Error(notConfigured) }
-  return supabase.auth.signInWithPasskey()
+  const result = await supabase.auth.signInWithPasskey()
+  if (!result.error && result.data?.user) rememberPasskeySignIn(result.data.user.id)
+  return result
 }
 
 
@@ -231,6 +244,7 @@ export async function clearMyCloudData() {
 
 export async function signOutEverywhere() {
   if (!supabase) return { error: new Error(notConfigured) }
+  forgetPasskeySignIn()
   return supabase.auth.signOut({ scope: 'global' })
 }
 
@@ -238,6 +252,7 @@ export async function deleteMyAccount(confirmationEmail: string) {
   if (!supabase) return { error: new Error(notConfigured) }
   const { error } = await supabase.rpc('delete_my_account', { confirmation_email: confirmationEmail })
   if (error) return { error }
+  forgetPasskeySignIn()
   await supabase.auth.signOut({ scope: 'local' })
   return { error: null }
 }
