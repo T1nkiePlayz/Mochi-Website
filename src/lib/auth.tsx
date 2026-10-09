@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { AuthContext } from './auth-context'
 import { supabase, type Profile } from './supabase'
@@ -7,16 +7,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(Boolean(supabase))
+  const profileRequest = useRef(0)
+  const activeUserId = useRef<string | null>(null)
+  const userId = session?.user.id ?? null
+  const userRole = session?.user.app_metadata?.role
 
   const refreshProfile = useCallback(async () => {
-    if (!supabase || !session?.user) {
+    const requestId = ++profileRequest.current
+    if (!supabase || !userId) {
       setProfile(null)
       return
     }
-    const client = supabase
-    const { data, error } = await client.from('profiles').select('id, display_name, avatar_url, cloud_sync_enabled, metadata_sync_allowed, email').eq('id', session.user.id).maybeSingle()
-    if (!error) setProfile(data ? { ...(data as Profile), is_admin: session.user.app_metadata?.role === 'admin' } : null)
-  }, [session])
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, display_name, avatar_url, cloud_sync_enabled, metadata_sync_allowed, email')
+      .eq('id', userId)
+      .maybeSingle()
+
+    // Account changes and overlapping refreshes must never restore stale data.
+    if (requestId !== profileRequest.current || activeUserId.current !== userId) return
+    if (error || !data) {
+      setProfile(null)
+      return
+    }
+    setProfile({ ...(data as Profile), is_admin: userRole === 'admin' })
+  }, [userId, userRole])
 
   useEffect(() => {
     if (!supabase) return
@@ -24,26 +40,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let active = true
     client.auth.getSession().then(async ({ data }) => {
       if (!active) return
-
       if (data.session) {
-        // Supabase persists the browser session and refresh token locally.
-        // Refresh the persisted session when the site is opened again so a
-        // long gap between visits does not leave the UI holding an expired
-        // access token. Supabase handles refresh-token rotation and expiry.
+        // Refresh the persisted session on return; Supabase rotates refresh tokens.
         const refreshed = await client.auth.refreshSession()
-        // Do not resurrect an old session when refresh fails or returns no session.
-        if (active) {
-          if (refreshed.error || !refreshed.data.session) {
-            await client.auth.signOut({ scope: 'local' })
+        if (!active) return
+        if (refreshed.error || !refreshed.data.session) {
+          await client.auth.signOut({ scope: 'local' })
+          if (active) {
             setSession(null)
             setProfile(null)
-          } else {
-            setSession(refreshed.data.session)
           }
-          setLoading(false)
+        } else {
+          setSession(refreshed.data.session)
         }
+        if (active) setLoading(false)
       } else {
         setSession(null)
+        setProfile(null)
+        setLoading(false)
+      }
+    }).catch(() => {
+      if (active) {
+        setSession(null)
+        setProfile(null)
         setLoading(false)
       }
     })
@@ -53,13 +72,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
     return () => {
       active = false
+      profileRequest.current += 1
       listener.subscription.unsubscribe()
     }
   }, [])
 
   useEffect(() => {
+    if (activeUserId.current !== userId) {
+      activeUserId.current = userId
+      profileRequest.current += 1
+      setProfile(null)
+    }
     void Promise.resolve().then(() => refreshProfile())
-  }, [refreshProfile])
+  }, [userId, refreshProfile])
 
   return <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, loading, refreshProfile }}>{children}</AuthContext.Provider>
 }
