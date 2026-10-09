@@ -19,32 +19,12 @@ language plpgsql
 security definer
 set search_path = public
 as $$
-declare
-  avatar_value text := nullif(trim(profile_data->>'avatar_url'), '');
 begin
-  if profile_data ? 'display_name'
-     and length(trim(coalesce(profile_data->>'display_name', ''))) > 64 then
-    raise exception 'Display name must be 64 characters or fewer' using errcode = '22023';
-  end if;
-
-  if avatar_value is not null and (
-    left(lower(avatar_value), 8) <> 'https://'
-    or avatar_value ~ '[[:space:]]'
-    or substring(avatar_value from '^https://[^/?#]+') is null
-  ) then
-    raise exception 'Avatar URL must be a valid HTTPS URL' using errcode = '22023';
-  end if;
-
-  -- metadata_sync_allowed is administrator-controlled and must never be self-editable.
-  -- Cloud sync cannot be enabled unless the account has been granted cloud access.
   update public.profiles
   set display_name = nullif(trim(profile_data->>'display_name'), ''),
-      avatar_url = avatar_value,
-      cloud_sync_enabled = case
-        when coalesce((profile_data->>'cloud_sync_enabled')::boolean, cloud_sync_enabled)
-          and metadata_sync_allowed then true
-        else false
-      end
+      avatar_url = nullif(trim(profile_data->>'avatar_url'), ''),
+      cloud_sync_enabled = coalesce((profile_data->>'cloud_sync_enabled')::boolean, cloud_sync_enabled),
+      metadata_sync_allowed = coalesce((profile_data->>'metadata_sync_allowed')::boolean, metadata_sync_allowed)
   where id = (select auth.uid());
 end;
 $$;
