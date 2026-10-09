@@ -16,7 +16,6 @@ import { lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from
 import { avatarFor } from './lib/avatar'
 import { HashRouter, NavLink, Route, Routes, Link } from 'react-router-dom'
 import {
-  AuthProvider,
   supabase,
   siteUrl,
   resetPassword,
@@ -28,8 +27,8 @@ import {
   signInWithProvider,
   signOutCurrentUser,
   signUpWithPassword,
-  useAuth,
 } from './lib/supabase'
+import { AuthProvider, useAuth } from './lib/auth'
 
 const base = import.meta.env.BASE_URL
 const logoSrc = `${base}mochi.png`
