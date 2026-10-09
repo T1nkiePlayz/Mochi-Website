@@ -207,22 +207,39 @@ end $$;
 
 -- Self-service account deletion. Require an email match and a recent authentication event server-side.
 create or replace function public.delete_my_account(confirmation_email text)
-returns void language plpgsql security definer set search_path = '' as $
+returns void language plpgsql security definer set search_path = '' as $$
 declare
   me uuid := (select auth.uid());
   auth_time text := (select auth.jwt() ->> 'auth_time');
   actual_email text;
 begin
-  if me is null then raise exception 'Authentication required' using errcode = '42501'; end if;
+  if me is null then
+    raise exception 'Authentication required' using errcode = '42501';
+  end if;
+
   select lower(email) into actual_email from auth.users where id = me;
   if actual_email is null or lower(trim(coalesce(confirmation_email, ''))) <> actual_email then
     raise exception 'The confirmation email does not match this account' using errcode = '22023';
   end if;
-  if coalesce(auth_time, '') !~ '^[0-9]+
+
+  if coalesce(auth_time, '') = ''
+     or auth_time ~ '[^0-9]'
+     or auth_time::bigint < extract(epoch from now() - interval '10 minutes')::bigint then
+    raise exception 'For your security, sign in again before deleting your account' using errcode = '42501';
+  end if;
+
+  if (
+    exists (select 1 from auth.mfa_factors where user_id = me and status = 'verified')
+    or exists (select 1 from auth.webauthn_credentials where user_id = me)
+  ) and coalesce((select auth.jwt() ->> 'aal'), '') <> 'aal2' then
+    raise exception 'Verify your security factor before deleting your account' using errcode = '42501';
+  end if;
+
   if coalesce((select auth.jwt() -> 'app_metadata' ->> 'role'), '') = 'admin'
      and (select count(*) from auth.users where raw_app_meta_data ->> 'role' = 'admin') <= 1 then
     raise exception 'You are the only administrator. Promote another administrator before deleting this account.';
   end if;
+
   perform mochi_private.purge_user_secrets(me);
   delete from auth.users where id = me;
 end $$;
