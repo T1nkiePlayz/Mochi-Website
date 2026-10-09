@@ -30,7 +30,6 @@ export function ChangelogPage() {
   const [error, setError] = useState('')
 
   const load = async () => {
-    setError('')
     try {
       const response = await fetch('https://api.github.com/repos/T1nkiePlayz/Mochi/releases?per_page=30', {
         headers: { Accept: 'application/vnd.github+json' },
@@ -65,7 +64,7 @@ export function ChangelogPage() {
           <Tag className="h-4 w-4 text-violet-300" />
           {loading ? 'Loading releases…' : `${releases.length} release${releases.length === 1 ? '' : 's'} loaded`}
         </div>
-        <button type="button" onClick={() => { setRefreshing(true); void load() }} disabled={refreshing} className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-violet-400/40 hover:bg-white/10 disabled:opacity-50">
+        <button type="button" onClick={() => { setError(''); setRefreshing(true); void load() }} disabled={refreshing} className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-violet-400/40 hover:bg-white/10 disabled:opacity-50">
           <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} /> Refresh
         </button>
       </div>
