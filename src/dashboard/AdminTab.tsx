@@ -5,7 +5,7 @@ import {
   adminApi, setUserCloudSync, setUserMetadataAccess,
   type AdminAuditEntry, type AdminStats, type AdminUser,
 } from '../lib/supabase'
-import { useAuth } from '../lib/auth'
+import { useAuth } from '../lib/useAuth'
 import { Chip, ConfirmAction, CopyButton, Panel, Row, Skeleton } from './ui'
 import { btn, formatDate, input, timeAgo } from './ui-utils'
 import { useNotice } from './useNotice'
