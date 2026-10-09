@@ -5,7 +5,9 @@ import {
   deletePasskey, enrollTotp, linkAuthIdentity, listMfaFactors, listPasskeys, manageApiCredential, registerPasskey,
   unenrollTotp, unlinkAuthIdentity, verifyTotpEnrollment, type ApiCredentialProvider,
 } from '../lib/supabase'
-import { btn, Chip, ConfirmAction, Field, formatDate, input, Panel, Row, SectionLabel, Skeleton, useNotice } from './ui'
+import { Chip, ConfirmAction, Field, Panel, Row, SectionLabel, Skeleton } from './ui'
+import { btn, formatDate, input } from './ui-utils'
+import { useNotice } from './useNotice'
 
 type Factor = { id: string; status: string; friendly_name?: string }
 type Passkey = { id: string; friendly_name?: string | null; created_at?: string }
