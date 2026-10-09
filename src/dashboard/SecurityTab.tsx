@@ -29,6 +29,7 @@ export default function SecurityTab({ user }: { user: User }) {
   const verified = factors.filter((factor) => factor.status === 'verified')
   const identities = new Set((user.identities ?? []).map((identity) => identity.provider))
   const hasPassword = identities.has('email')
+  const hasAlternativeIdentity = identities.size > 1
 
   const methods = [
     { icon: Lock, title: 'Password', on: hasPassword, detail: hasPassword ? 'Set' : 'Not set — add one under Account' },
@@ -157,7 +158,8 @@ function LinkedAccountsPanel({ user }: { user: User }) {
         {(['google', 'github'] as const).map((provider) => (
           <Row key={provider} icon={Link2} title={provider === 'google' ? 'Google' : 'GitHub'} detail={linked.has(provider) ? 'Linked' : 'Not linked'}
             right={linked.has(provider)
-              ? <ConfirmAction label="Unlink" prompt={`Unlink ${provider}? Make sure you have another way to sign in.`} confirmLabel="Unlink" busy={busy} onConfirm={async () => {
+              ? <ConfirmAction label="Unlink" prompt={hasAlternativeIdentity ? `Unlink ${provider}? Make sure you have another way to sign in.` : 'You cannot unlink your only linked sign-in identity. Link and verify another sign-in method first.'} confirmLabel="Unlink" busy={busy || !hasAlternativeIdentity} onConfirm={async () => {
+                  if (!hasAlternativeIdentity) { n.error('Link another sign-in method before unlinking this one.'); return }
                   setBusy(true)
                   const { error } = await unlinkAuthIdentity(provider, user)
                   if (error) n.error(error.message)
