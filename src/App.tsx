@@ -28,7 +28,8 @@ import {
   signOutCurrentUser,
   signUpWithPassword,
 } from './lib/supabase'
-import { AuthProvider, useAuth } from './lib/auth'
+import { AuthProvider } from './lib/auth'
+import { useAuth } from './lib/useAuth'
 
 const base = import.meta.env.BASE_URL
 const logoSrc = `${base}mochi.png`
