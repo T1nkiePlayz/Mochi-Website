@@ -2,13 +2,15 @@ import { Cloud, LayoutDashboard, LogOut, Shield, ShieldCheck, UserRound, Users, 
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { avatarFor } from '../lib/avatar'
-import { signOutCurrentUser, useAuth } from '../lib/supabase'
+import { signOutCurrentUser } from '../lib/supabase'
+import { useAuth } from '../lib/auth'
 import AccountTab from './AccountTab'
 import AdminTab from './AdminTab'
 import CloudTab from './CloudTab'
 import OverviewTab from './OverviewTab'
 import SecurityTab from './SecurityTab'
-import { btn, Chip } from './ui'
+import { Chip } from './ui'
+import { btn } from './ui-utils'
 
 type TabId = 'overview' | 'account' | 'security' | 'cloud' | 'admin'
 
