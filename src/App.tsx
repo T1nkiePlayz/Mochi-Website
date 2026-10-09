@@ -11,12 +11,13 @@ import {
   KeyRound,
   Smartphone,
   ChevronRight,
+  Menu,
+  X,
 } from 'lucide-react'
-import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { avatarFor } from './lib/avatar'
 import { HashRouter, NavLink, Route, Routes, Link } from 'react-router-dom'
 import {
-  AuthProvider,
   supabase,
   siteUrl,
   resetPassword,
@@ -28,8 +29,9 @@ import {
   signInWithProvider,
   signOutCurrentUser,
   signUpWithPassword,
-  useAuth,
 } from './lib/supabase'
+import { AuthProvider } from './lib/auth'
+import { useAuth } from './lib/useAuth'
 
 const base = import.meta.env.BASE_URL
 const logoSrc = `${base}mochi.png`
@@ -107,7 +109,46 @@ function AuthHeader() {
   )
 }
 
+function DashboardAccessGate({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth()
+  const [checking, setChecking] = useState(true)
+  const [allowed, setAllowed] = useState(false)
+  useEffect(() => {
+    let active = true
+    const check = async () => {
+      if (loading) return
+      if (!user || !supabase) {
+        if (active) {
+          setAllowed(false)
+          setChecking(false)
+        }
+        return
+      }
+      const [aal, factors] = await Promise.all([
+        supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+        getSignInFactors(),
+      ])
+      if (!active) return
+      if (aal.error || factors.error) setAllowed(false)
+      else {
+        const hasTotp = (factors.data?.totp ?? []).length > 0
+        const hasPasskey = (factors.data?.passkeys ?? []).length > 0
+        setAllowed((!hasTotp && !hasPasskey) || aal.data?.currentLevel === 'aal2')
+      }
+      setChecking(false)
+    }
+    void Promise.resolve().then(check)
+    return () => { active = false }
+  }, [user, loading])
+  useEffect(() => { if (!checking && !allowed) window.location.hash = '#/signin' }, [checking, allowed])
+  if (loading || checking) return <PageLoading />
+  if (!allowed) return <AuthCard title="Additional verification required" subtitle="Finish verifying your account before opening the dashboard." />
+  return <>{children}</>
+}
+
 function App() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const mobileMenuButton = useRef<HTMLButtonElement>(null)
   return (
     <AuthProvider>
       <HashRouter>
@@ -121,7 +162,7 @@ function App() {
               Mochi
             </Link>
 
-            <nav className="hidden items-center gap-6 text-sm text-slate-200 md:flex">
+            <nav className="hidden items-center gap-6 text-sm text-slate-200 md:flex" aria-label="Main navigation">
               {navItems.map((item) => (
                 <NavLink
                   key={item.to}
@@ -136,6 +177,17 @@ function App() {
             </nav>
 
             <div className="flex items-center gap-3">
+              <button
+                ref={mobileMenuButton}
+                type="button"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-slate-100 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-300 md:hidden"
+                aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+                aria-expanded={mobileMenuOpen}
+                aria-controls="mobile-navigation"
+                onClick={() => setMobileMenuOpen((open) => !open)}
+              >
+                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
               <Link
                 to="/download"
                 className="hidden rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-violet-400/60 hover:bg-violet-500/10 sm:inline-flex"
@@ -145,6 +197,32 @@ function App() {
               <AuthHeader />
             </div>
           </div>
+          <nav
+            id="mobile-navigation"
+            aria-label="Mobile navigation"
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') {
+                setMobileMenuOpen(false)
+                mobileMenuButton.current?.focus()
+              }
+            }}
+            className={`md:hidden ${mobileMenuOpen ? 'block border-t border-white/10 px-4 pb-4 pt-2 sm:px-6' : 'hidden'}`}
+          >
+            <div className="mx-auto flex max-w-7xl flex-col gap-1">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `rounded-xl px-3 py-2.5 text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-300 ${isActive ? 'bg-violet-500/15 text-white' : 'text-slate-300 hover:bg-white/5 hover:text-white'}`
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </div>
+          </nav>
         </header>
 
         <main className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
@@ -174,9 +252,9 @@ function App() {
             <Route path="/faq" element={<FaqPage />} />
             <Route path="/signin" element={<SignInPage />} />
             <Route path="/auth/verify" element={<EmailVerificationPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/settings" element={<DashboardPage />} />
-            <Route path="/admin" element={<DashboardPage />} />
+            <Route path="/dashboard" element={<DashboardAccessGate><DashboardPage /></DashboardAccessGate>} />
+            <Route path="/settings" element={<DashboardAccessGate><DashboardPage /></DashboardAccessGate>} />
+            <Route path="/admin" element={<DashboardAccessGate><DashboardPage /></DashboardAccessGate>} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </main>
@@ -493,7 +571,7 @@ function SignInPage() {
   const mochiSignInUrl = `${siteUrl()}#/signin?app=mochi`
   const mochiVerifyUrl = 'mochi://auth/verify'
 
-  const handoffToMochi = async () => {
+  const handoffToMochi = useCallback(async () => {
     if (!supabase) return
     const { data, error } = await supabase.auth.getSession()
     if (error || !data.session) {
@@ -505,15 +583,15 @@ function SignInPage() {
       refresh_token: data.session.refresh_token,
     })
     window.location.href = `mochi://auth/callback?${params.toString()}`
-  }
+  }, [])
 
-  const finishLogin = async () => {
+  const finishLogin = useCallback(async () => {
     setSecurityMode('complete')
     if (appMode) await handoffToMochi()
     else window.location.hash = '#/dashboard'
-  }
+  }, [appMode, handoffToMochi])
 
-  const inspectSecurity = async (accountUser = user) => {
+  const inspectSecurity = useCallback(async (accountUser = user) => {
     if (!supabase || !accountUser) return
     setBusy(true)
     setMessage('')
@@ -555,16 +633,15 @@ function SignInPage() {
     else if (totp) setSecurityMode('totp')
     else setSecurityMode('passkey')
     setBusy(false)
-  }
+  }, [user, finishLogin])
 
   useEffect(() => {
-    if (!user) {
+    void Promise.resolve().then(() => {
+      if (user) return inspectSecurity(user)
       setSecurityMode('checking')
       setPendingUserId(null)
-      return
-    }
-    void inspectSecurity()
-  }, [user?.id])
+    })
+  }, [user, inspectSecurity])
 
   const run = async (action: () => Promise<{ error: Error | null }>) => {
     setBusy(true)

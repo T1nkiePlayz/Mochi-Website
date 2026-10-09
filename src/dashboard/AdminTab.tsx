@@ -2,14 +2,18 @@ import { Activity, Ban, ChevronDown, Cloud, LogOut, RefreshCw, Search, ShieldChe
 import { useCallback, useEffect, useState } from 'react'
 import { avatarFor } from '../lib/avatar'
 import {
-  adminApi, setUserCloudSync, setUserMetadataAccess, useAuth,
+  adminApi, setUserCloudSync, setUserMetadataAccess,
   type AdminAuditEntry, type AdminStats, type AdminUser,
 } from '../lib/supabase'
-import { btn, Chip, ConfirmAction, CopyButton, formatDate, input, Panel, Row, Skeleton, timeAgo, useNotice } from './ui'
+import { useAuth } from '../lib/useAuth'
+import { Chip, ConfirmAction, CopyButton, Panel, Row, Skeleton } from './ui'
+import { btn, formatDate, input, timeAgo } from './ui-utils'
+import { useNotice } from './useNotice'
 
 const PAGE = 25
 const MIGRATION_HINT = 'The admin tools need the latest database migration (supabase/migrations/20261008140000_admin_tools_and_account_deletion.sql).'
-const friendly = (message: string) => (/could not find the function|does not exist|schema cache/i.test(message) ? MIGRATION_HINT : message)
+const MFA_HINT = 'Admin actions need a second factor. Add an authenticator app or passkey under Security, then sign in again and complete verification.'
+const friendly = (message: string) => (/could not find the function|does not exist|schema cache/i.test(message) ? MIGRATION_HINT : /\bAAL2\b|multi-factor/i.test(message) ? MFA_HINT : message)
 
 export default function AdminTab() {
   const { user } = useAuth()

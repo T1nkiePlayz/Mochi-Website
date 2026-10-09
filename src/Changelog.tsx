@@ -1,5 +1,5 @@
 import { AlertTriangle, ArrowUpRight, CalendarDays, CheckCircle2, ExternalLink, RefreshCw, Sparkles, Tag } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 type Release = {
   id: number
@@ -13,7 +13,8 @@ type Release = {
 
 function formatDate(value: string | null) {
   if (!value) return 'Unpublished'
-  return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(value))
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? 'Date unavailable' : new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'long', day: 'numeric' }).format(date)
 }
 
 function releaseKind(release: Release) {
@@ -28,25 +29,47 @@ export function ChangelogPage() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
+  const requestId = useRef(0)
+  const controller = useRef<AbortController | null>(null)
 
-  const load = async () => {
-    setError('')
+  const load = useCallback(async (manual = false) => {
+    const id = ++requestId.current
+    controller.current?.abort()
+    const request = new AbortController()
+    controller.current = request
+    if (manual) setRefreshing(true)
+    else setLoading(true)
     try {
       const response = await fetch('https://api.github.com/repos/T1nkiePlayz/Mochi/releases?per_page=30', {
         headers: { Accept: 'application/vnd.github+json' },
+        signal: request.signal,
       })
-      if (!response.ok) throw new Error(`GitHub returned ${response.status}`)
-      const data = await response.json() as Release[]
-      setReleases(data)
+      if (!response.ok) throw new Error(response.status === 403 || response.status === 429
+        ? 'GitHub is temporarily rate-limiting release requests. Please try again shortly.'
+        : `GitHub returned ${response.status}.`)
+      const data: unknown = await response.json()
+      if (!Array.isArray(data)) throw new Error('GitHub returned an unexpected release response.')
+      if (id !== requestId.current || request.signal.aborted) return
+      setReleases(data as Release[])
+      setError('')
     } catch (err) {
+      if (request.signal.aborted || id !== requestId.current) return
       setError(err instanceof Error ? err.message : 'Unable to load releases.')
     } finally {
-      setLoading(false)
-      setRefreshing(false)
+      if (id === requestId.current) {
+        setLoading(false)
+        setRefreshing(false)
+      }
     }
-  }
+  }, [])
 
-  useEffect(() => { void load() }, [])
+  useEffect(() => {
+    void load()
+    return () => {
+      requestId.current += 1
+      controller.current?.abort()
+    }
+  }, [load])
 
   return (
     <div className="space-y-10 pb-10">
@@ -61,28 +84,28 @@ export function ChangelogPage() {
       </header>
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
-        <div className="flex items-center gap-3 text-sm text-slate-400">
+        <div className="flex items-center gap-3 text-sm text-slate-400" aria-live="polite">
           <Tag className="h-4 w-4 text-violet-300" />
           {loading ? 'Loading releases…' : `${releases.length} release${releases.length === 1 ? '' : 's'} loaded`}
         </div>
-        <button type="button" onClick={() => { setRefreshing(true); void load() }} disabled={refreshing} className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-violet-400/40 hover:bg-white/10 disabled:opacity-50">
-          <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} /> Refresh
+        <button type="button" onClick={() => void load(true)} disabled={refreshing} className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-violet-400/40 hover:bg-white/10 disabled:opacity-50">
+          <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} /> {refreshing ? 'Refreshing…' : 'Refresh'}
         </button>
       </div>
 
       {error && (
-        <div className="rounded-2xl border border-amber-400/20 bg-amber-500/5 p-5 text-sm text-amber-200">
-          <div className="flex items-start gap-3"><AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" /><div><p className="font-semibold">We couldn't load the release history.</p><p className="mt-1 text-amber-200/70">{error}</p><a href="https://github.com/T1nkiePlayz/Mochi/releases" target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 font-semibold underline underline-offset-2">Open releases on GitHub <ExternalLink className="h-3.5 w-3.5" /></a></div></div>
+        <div role="status" className="rounded-2xl border border-amber-400/20 bg-amber-500/5 p-5 text-sm text-amber-200">
+          <div className="flex items-start gap-3"><AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" /><div><p className="font-semibold">{releases.length ? 'Refresh failed; showing the last loaded releases.' : "We couldn't load the release history."}</p><p className="mt-1 text-amber-200/70">{error}</p><a href="https://github.com/T1nkiePlayz/Mochi/releases" target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 font-semibold underline underline-offset-2">Open releases on GitHub <ExternalLink className="h-3.5 w-3.5" /></a></div></div>
         </div>
       )}
 
-      {loading && <div className="glass-card p-10 text-center text-slate-400">Fetching the latest release notes…</div>}
+      {loading && releases.length === 0 && <div className="glass-card p-10 text-center text-slate-400" aria-live="polite">Fetching the latest release notes…</div>}
 
       {!loading && !error && releases.length === 0 && (
         <div className="glass-card p-10 text-center"><CheckCircle2 className="mx-auto h-8 w-8 text-violet-300" /><h2 className="mt-4 text-xl font-semibold text-white">No public releases yet</h2><p className="mt-2 text-sm text-slate-400">Once a release is published in the Mochi repository, its notes will appear here automatically.</p></div>
       )}
 
-      {!loading && releases.length > 0 && (
+      {releases.length > 0 && (
         <div className="relative space-y-5">
           <div className="absolute bottom-8 left-5 top-8 hidden w-px bg-gradient-to-b from-violet-400/40 via-cyan-400/20 to-transparent sm:block" />
           {releases.map((release, index) => (
@@ -107,7 +130,7 @@ export function ChangelogPage() {
                 </div>
                 <div className="mt-6 border-t border-white/10 pt-5">
                   {release.body ? (
-                    <div className="whitespace-pre-wrap text-sm leading-7 text-slate-300">{release.body}</div>
+                    <div className="whitespace-pre-wrap break-words text-sm leading-7 text-slate-300">{release.body}</div>
                   ) : (
                     <p className="text-sm italic text-slate-500">This release has no release notes.</p>
                   )}

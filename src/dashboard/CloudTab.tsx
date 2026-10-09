@@ -1,15 +1,34 @@
 import { Cloud, Gamepad2, Layers3, Search, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { clearMyCloudData, manageApiCredential, supabase, updateMyProfile, type Profile } from '../lib/supabase'
-import { Chip, ConfirmAction, input, Panel, Skeleton, Switch, useNotice } from './ui'
+import { Chip, ConfirmAction, Panel, Skeleton, Switch } from './ui'
+import { input } from './ui-utils'
+import { useNotice } from './useNotice'
 
-type SyncedGame = { id: string; name: string; artwork: string | null; source: string | null; categories: string[] | null; tofus: { id: string }[] | null }
+type SyncedGame = { id: string; name: string; artwork: string | null; artwork_url?: string | null; source: string | null; categories: string[] | null; tofus: { id: string }[] | null }
+
+const cssImage = /^(url|linear-gradient|radial-gradient|conic-gradient|image-set)\(/i
+const httpsUrl = /^https:\/\/[^\s"'()\\]+$/i
+
+/**
+ * CSS background for a synced game. The launcher stores either a CSS image/gradient value or a bare URL in `artwork`
+ * and the original image link in `artwork_url`; use the https link when there is one, a stored CSS value as it is,
+ * and nothing for local-only values (such as bundled launcher art) that mean nothing on the web.
+ */
+function coverImage(game: SyncedGame): string | undefined {
+  const link = game.artwork_url?.trim()
+  if (link && httpsUrl.test(link)) return `url("${link}")`
+  const stored = game.artwork?.trim()
+  if (!stored) return undefined
+  if (cssImage.test(stored)) return stored
+  return httpsUrl.test(stored) ? `url("${stored}")` : undefined
+}
 
 export default function CloudTab({ profile, refreshProfile }: { profile: Profile | null; refreshProfile: () => Promise<void> }) {
   const [sync, setSync] = useState(profile?.cloud_sync_enabled ?? false)
   const [games, setGames] = useState<SyncedGame[]>([])
   const [artwork, setArtwork] = useState(false)
-  const [loading, setLoading] = useState(Boolean(profile?.metadata_sync_allowed))
+  const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [clearing, setClearing] = useState(false)
   const [query, setQuery] = useState('')
@@ -19,10 +38,15 @@ export default function CloudTab({ profile, refreshProfile }: { profile: Profile
   useEffect(() => { setSync(profile?.cloud_sync_enabled ?? false) }, [profile?.cloud_sync_enabled])
 
   useEffect(() => {
+    setLoading(allowed)
+    if (!allowed) { setGames([]); setArtwork(false) }
+  }, [allowed])
+
+  useEffect(() => {
     if (!allowed || !supabase) return
     let active = true
     void Promise.all([
-      supabase.from('pikos').select('id, name, artwork, source, categories, tofus(id)').order('name'),
+      supabase.from('pikos').select('id, name, artwork, artwork_url, source, categories, tofus(id)').order('name'),
       manageApiCredential('status'),
     ]).then(([pikos, status]) => {
       if (!active) return
@@ -92,16 +116,19 @@ export default function CloudTab({ profile, refreshProfile }: { profile: Profile
           <p className="py-6 text-center text-sm text-slate-500">No games match “{query}”.</p>
         ) : (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {visible.map((game) => (
+            {visible.map((game) => {
+              const cover = coverImage(game)
+              return (
               <li key={game.id} className="min-w-0">
-                <div role="img" aria-label={game.name} style={artwork && game.artwork ? { backgroundImage: game.artwork } : undefined}
+                <div role="img" aria-label={game.name} style={artwork && cover ? { backgroundImage: cover } : undefined}
                   className="flex aspect-[3/4] items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-violet-500/15 to-cyan-500/10 bg-cover bg-center text-slate-600">
-                  {!(artwork && game.artwork) && <Gamepad2 className="h-9 w-9" />}
+                  {!(artwork && cover) && <Gamepad2 className="h-9 w-9" />}
                 </div>
                 <p className="mt-2 truncate text-sm font-semibold text-white" title={game.name}>{game.name}</p>
                 <p className="truncate text-xs text-slate-500">{game.tofus?.length ?? 0} {(game.tofus?.length ?? 0) === 1 ? 'Tofu' : 'Tofus'}{game.categories?.[0] ? ` · ${game.categories[0]}` : ''}</p>
               </li>
-            ))}
+              )
+            })}
           </ul>
         )}
       </Panel>

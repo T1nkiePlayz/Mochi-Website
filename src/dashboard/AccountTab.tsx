@@ -3,7 +3,9 @@ import { Download, LogOut, Mail, Trash2, UserRound, KeyRound } from 'lucide-reac
 import { useState } from 'react'
 import { avatarFor } from '../lib/avatar'
 import { deleteMyAccount, signOutEverywhere, supabase, updateEmail, updateMyProfile, updatePassword, type Profile } from '../lib/supabase'
-import { btn, ConfirmAction, CopyButton, Field, formatDate, input, Panel, Row, useNotice } from './ui'
+import { ConfirmAction, CopyButton, Field, Panel, Row } from './ui'
+import { btn, formatDate, input } from './ui-utils'
+import { useNotice } from './useNotice'
 
 type Props = { user: User; profile: Profile | null; refreshProfile: () => Promise<void> }
 
@@ -150,7 +152,7 @@ function DeletePanel({ user }: { user: User }) {
       <ConfirmAction label="Delete my account" confirmLabel="Permanently delete" prompt={`This will permanently delete ${user.email ?? 'your account'}.`} requireText={user.email ?? 'DELETE'} busy={busy}
         onConfirm={async () => {
           setBusy(true)
-          const { error } = await deleteMyAccount()
+          const { error } = await deleteMyAccount(user.email ?? '')
           if (error) n.error(error.message)
           setBusy(false)
         }} />

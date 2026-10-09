@@ -5,7 +5,9 @@ import {
   deletePasskey, enrollTotp, linkAuthIdentity, listMfaFactors, listPasskeys, manageApiCredential, registerPasskey,
   unenrollTotp, unlinkAuthIdentity, verifyTotpEnrollment, type ApiCredentialProvider,
 } from '../lib/supabase'
-import { btn, Chip, ConfirmAction, Field, formatDate, input, Panel, Row, SectionLabel, Skeleton, useNotice } from './ui'
+import { Chip, ConfirmAction, Field, Panel, Row, SectionLabel, Skeleton } from './ui'
+import { btn, formatDate, input } from './ui-utils'
+import { useNotice } from './useNotice'
 
 type Factor = { id: string; status: string; friendly_name?: string }
 type Passkey = { id: string; friendly_name?: string | null; created_at?: string }
@@ -24,7 +26,14 @@ export default function SecurityTab({ user }: { user: User }) {
     else setPasskeys((keys.data ?? []) as Passkey[])
     setLoading(false)
   }, [])
-  useEffect(() => { void load() }, [load])
+  useEffect(() => {
+    let active = true
+    void Promise.resolve().then(async () => {
+      if (!active) return
+      await load()
+    })
+    return () => { active = false }
+  }, [load])
 
   const verified = factors.filter((factor) => factor.status === 'verified')
   const identities = new Set((user.identities ?? []).map((identity) => identity.provider))
@@ -149,6 +158,7 @@ function PasskeyPanel({ passkeys, reload }: { passkeys: Passkey[]; reload: () =>
 
 function LinkedAccountsPanel({ user }: { user: User }) {
   const [linked, setLinked] = useState(() => new Set((user.identities ?? []).map((identity) => identity.provider)))
+  const hasAlternativeIdentity = linked.size > 1 || (user.identities ?? []).some((identity) => identity.provider === 'email')
   const [busy, setBusy] = useState(false)
   const n = useNotice()
   return (
@@ -157,7 +167,8 @@ function LinkedAccountsPanel({ user }: { user: User }) {
         {(['google', 'github'] as const).map((provider) => (
           <Row key={provider} icon={Link2} title={provider === 'google' ? 'Google' : 'GitHub'} detail={linked.has(provider) ? 'Linked' : 'Not linked'}
             right={linked.has(provider)
-              ? <ConfirmAction label="Unlink" prompt={`Unlink ${provider}? Make sure you have another way to sign in.`} confirmLabel="Unlink" busy={busy} onConfirm={async () => {
+              ? <ConfirmAction label="Unlink" prompt={hasAlternativeIdentity ? `Unlink ${provider}? Make sure you have another way to sign in.` : 'You cannot unlink your only linked sign-in identity. Link and verify another sign-in method first.'} confirmLabel="Unlink" busy={busy || !hasAlternativeIdentity} onConfirm={async () => {
+                  if (!hasAlternativeIdentity) { n.error('Link another sign-in method before unlinking this one.'); return }
                   setBusy(true)
                   const { error } = await unlinkAuthIdentity(provider, user)
                   if (error) n.error(error.message)

@@ -25,7 +25,7 @@ const headings: Record<string, Array<[string, string]>> = {
   'getting-started': [['overview','Overview'],['first-launch','First launch'],['importing','Import existing games'],['add-game','Add a game'],['identify','IGDB identification'],['tofu','Tofu environments'],['play','Launch and play'],['troubleshooting','Troubleshooting']],
   library: [['model','Piko + Tofu'],['piko','Pikos'],['tofu','Tofus'],['sources','Game sources'],['categories','Categories'],['metadata','Metadata'],['local','Local storage'],['paths','Machine-specific paths']],
   launching: [['targets','Launch targets'],['executable','Executables'],['desktop','.desktop files'],['flatpak','Flatpak'],['scripts','Scripts'],['sources','Source handoff'],['tracked','Playtime tracking'],['platforms','Platform behaviour'],['errors','Errors']],
-  integrations: [['overview','Integration model'],['igdb','IGDB'],['matching','Matching and confirmation'],['modrinth','Modrinth'],['downloads','Downloads'],['credentials','Provider credentials'],['limits','Integration boundaries']],
+  integrations: [['overview','Integration model'],['igdb','IGDB'],['matching','Matching and confirmation'],['modrinth','Modrinth'],['downloads','Downloads'],['credentials','Provider credentials'],['nexus-api-key','Adding your Nexus Mods API key'],['limits','Integration boundaries']],
   account: [['methods','Authentication'],['switching','Account switching'],['sessions','Sessions'],['totp','TOTP MFA'],['passkeys','Passkeys'],['identities','Connected identities'],['profile','Profiles and avatars'],['credentials','Credential security']],
   'cloud-sync': [['principles','Principles'],['access','Cloud access'],['data','Synchronised data'],['pull','Pull behaviour'],['push','Push behaviour'],['ownership','Ownership and RLS'],['local','Local boundary'],['failure','Failure handling']],
   development: [['stack','Technology stack'],['architecture','Architecture'],['frontend','Frontend'],['native','Tauri/Rust'],['platforms','Platform adapters'],['sources','Source adapters'],['themes','Theme system'],['local','Local development'],['build','Builds']],
@@ -80,19 +80,24 @@ export function DocumentationArticlePage() {
   const index = sections.findIndex(item => item.slug === section)
   const current = sections[index]
   if (!current) return <div className="glass-card p-10"><h1 className="text-2xl font-bold text-white">Documentation not found</h1><Link className="mt-4 inline-flex text-violet-300" to="/documentation">Back to documentation</Link></div>
-  const Component = ({ slug }: { slug: string }) => {
-    const map: Record<string, () => ReactNode> = { 'getting-started': GettingStarted, library: Library, launching: Launching, integrations: Integrations, account: Account, 'cloud-sync': CloudSync, development: Development, reference: Reference }
-    return <>{map[slug]?.()}</>
-  }
   const previous = sections[index - 1]
   const next = sections[index + 1]
   return <div className="pb-10">
     <div className="mb-6 flex flex-wrap items-center justify-between gap-3"><Link to="/documentation" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 transition hover:text-white"><ArrowLeft className="h-4 w-4" /> Back to docs</Link><span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">{current.status}</span></div>
     <div className="grid gap-8 lg:grid-cols-[220px_1fr]">
       <aside className="hidden lg:block"><div className="sticky top-24 space-y-2"><p className="px-3 pb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">On this page</p>{headings[current.slug].map(([id, title]) => <a key={id} href={`#${id}`} className="block rounded-lg px-3 py-2 text-sm text-slate-500 transition hover:bg-white/[0.04] hover:text-slate-200">{title}</a>)}</div></aside>
-      <article className="min-w-0"><header className="mb-9"><div className="inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-violet-200"><current.icon className="h-3.5 w-3.5" /> {current.title}</div><h1 className="mt-5 text-4xl font-black tracking-tight text-white sm:text-5xl">{current.title}</h1><p className="mt-4 max-w-3xl text-lg leading-8 text-slate-400">{current.description}</p></header><Component slug={current.slug} /><nav className="mt-10 grid gap-3 sm:grid-cols-2">{previous ? <Link to={`/documentation/${previous.slug}`} className="glass-card p-4"><span className="text-xs text-slate-500">Previous</span><span className="mt-1 flex items-center gap-2 font-semibold text-white"><ArrowLeft className="h-4 w-4" />{previous.title}</span></Link> : <span />}{next ? <Link to={`/documentation/${next.slug}`} className="glass-card p-4 text-right"><span className="text-xs text-slate-500">Next</span><span className="mt-1 flex items-center justify-end gap-2 font-semibold text-white">{next.title}<ArrowRight className="h-4 w-4" /></span></Link> : <span />}</nav></article>
+      <article className="min-w-0"><header className="mb-9"><div className="inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-violet-200"><current.icon className="h-3.5 w-3.5" /> {current.title}</div><h1 className="mt-5 text-4xl font-black tracking-tight text-white sm:text-5xl">{current.title}</h1><p className="mt-4 max-w-3xl text-lg leading-8 text-slate-400">{current.description}</p></header>{renderArticle(current.slug)}<nav className="mt-10 grid gap-3 sm:grid-cols-2">{previous ? <Link to={`/documentation/${previous.slug}`} className="glass-card p-4"><span className="text-xs text-slate-500">Previous</span><span className="mt-1 flex items-center gap-2 font-semibold text-white"><ArrowLeft className="h-4 w-4" />{previous.title}</span></Link> : <span />}{next ? <Link to={`/documentation/${next.slug}`} className="glass-card p-4 text-right"><span className="text-xs text-slate-500">Next</span><span className="mt-1 flex items-center justify-end gap-2 font-semibold text-white">{next.title}<ArrowRight className="h-4 w-4" /></span></Link> : <span />}</nav></article>
     </div>
   </div>
+}
+
+function renderArticle(slug: string): ReactNode {
+  const articles: Record<string, () => ReactNode> = {
+    'getting-started': GettingStarted, library: Library, launching: Launching,
+    integrations: Integrations, account: Account, 'cloud-sync': CloudSync,
+    development: Development, reference: Reference,
+  }
+  return articles[slug]?.() ?? null
 }
 
 function GettingStarted() { return <div className="space-y-9">
