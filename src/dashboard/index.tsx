@@ -1,5 +1,5 @@
 import { Cloud, LayoutDashboard, LogOut, Shield, ShieldCheck, UserRound, Users, type LucideIcon } from 'lucide-react'
-import { useState } from 'react'
+import { useState, type KeyboardEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { avatarFor } from '../lib/avatar'
 import { signOutCurrentUser } from '../lib/supabase'
@@ -44,7 +44,7 @@ export default function DashboardPage() {
   ]
   const active = tabs.some((item) => item.id === tab) ? tab : 'overview'
 
-  const handleTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+  const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
     const currentIndex = tabs.findIndex((item) => item.id === active)
     let nextIndex = currentIndex
     if (event.key === 'ArrowRight' || event.key === 'ArrowDown') nextIndex = (currentIndex + 1) % tabs.length
