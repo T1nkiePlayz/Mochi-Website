@@ -1,0 +1,23 @@
+name: Feature request
+description: Suggest an idea or improvement for the website or dashboard
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes: { label: Problem or use case, description: What are you trying to do? }
+    validations: { required: true }
+  - type: textarea
+    id: solution
+    attributes: { label: Proposed solution }
+    validations: { required: true }
+  - type: textarea
+    id: alternatives
+    attributes: { label: Alternatives considered }
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: It should
+      options:
+        - label: Work on phones as well as desktop
+        - label: Stay accessible (keyboard and screen readers)
+        - label: Keep the site local-first (no tracking or unnecessary account requirements)

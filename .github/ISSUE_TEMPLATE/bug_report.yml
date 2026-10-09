@@ -1,0 +1,32 @@
+name: Bug report
+description: Something on the Mochi website or dashboard is broken or behaves unexpectedly
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please read the [Code of Conduct](https://github.com/T1nkiePlayz/Mochi/blob/main/CODE_OF_CONDUCT.md). **Never paste API keys, tokens, codes or passwords**, and no piracy-related requests. Problems with the desktop app belong in the [launcher repository](https://github.com/T1nkiePlayz/Mochi/issues/new/choose).
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where did it happen?
+      options: [Home / Download, Documentation / FAQ, Changelog, Sign in / verification, "Dashboard: Overview", "Dashboard: Account", "Dashboard: Security", "Dashboard: Cloud", "Dashboard: Admin", Other]
+    validations: { required: true }
+  - type: textarea
+    id: what
+    attributes: { label: "What happened?", description: "What did you expect instead?" }
+    validations: { required: true }
+  - type: textarea
+    id: steps
+    attributes: { label: Steps to reproduce, placeholder: "1. Open ...\n2. Click ...\n3. See error" }
+    validations: { required: true }
+  - type: input
+    id: browser
+    attributes: { label: Browser and version, placeholder: "e.g. Firefox 130 on Linux, Safari on iPhone" }
+    validations: { required: true }
+  - type: dropdown
+    id: device
+    attributes: { label: Device, options: [Desktop or laptop, Phone, Tablet, Steam Deck] }
+  - type: textarea
+    id: logs
+    attributes: { label: Console errors / screenshots, description: "Open the browser console (F12) and paste any red errors. Remove anything private.", render: shell }

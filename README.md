@@ -211,6 +211,10 @@ The website should describe what the launcher **actually does**, not what is mer
 
 - Mochi Launcher: https://github.com/T1nkiePlayz/Mochi
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, checks and guidelines. Issues and pull requests use the templates in `.github/`.
+
 ## License
 
 The website source is released under the [MIT License](LICENSE).

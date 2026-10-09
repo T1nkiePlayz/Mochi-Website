@@ -1,0 +1,15 @@
+name: Documentation or content
+description: A documentation page, the FAQ, or the policy and terms text is wrong, unclear or out of date
+labels: [documentation]
+body:
+  - type: input
+    id: page
+    attributes: { label: Page or link, placeholder: "e.g. #/documentation/cloud-sync" }
+    validations: { required: true }
+  - type: textarea
+    id: problem
+    attributes: { label: "What is wrong or missing?", description: "If it disagrees with how the launcher behaves, say which launcher version." }
+    validations: { required: true }
+  - type: textarea
+    id: suggestion
+    attributes: { label: Suggested wording }
