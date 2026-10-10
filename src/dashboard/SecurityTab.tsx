@@ -230,7 +230,7 @@ function ServiceKeysPanel() {
     setBusy(true); n.clear()
     const { error } = await manageApiCredential('set', provider, value)
     if (error) n.error(error.message)
-    else { setConfigured((current) => ({ ...current, [provider]: true })); reset(); n.success(`${provider === 'igdb' ? 'IGDB' : 'Nexus Mods'} key saved.`) }
+    else { setConfigured((current) => ({ ...current, [provider]: true })); reset(); n.success(`${provider === 'igdb' ? 'IGDB' : provider === 'nexus' ? 'Nexus Mods' : 'SteamGridDB'} key saved.`) }
     setBusy(false)
   }
   const remove = async (provider: Provider) => {
@@ -262,7 +262,7 @@ function ServiceKeysPanel() {
               {editing === service.id && (
                 <div className="space-y-3 rounded-xl border border-white/10 bg-white/[0.025] p-4">
                   {service.id === 'igdb' && <Field label="Client ID"><input value={clientId} onChange={(event) => setClientId(event.target.value)} autoComplete="off" spellCheck={false} className={`${input} font-mono text-sm`} /></Field>}
-                  <Field label={service.id === 'igdb' ? 'Client Secret' : 'Personal API Key'}>
+                  <Field label={service.id === 'igdb' ? 'Client Secret' : service.id === 'nexus' ? 'Personal API Key' : 'API Key'}>
                     <div className="flex gap-2">
                       <input type={show ? 'text' : 'password'} value={secret} onChange={(event) => setSecret(event.target.value)} autoComplete="off" spellCheck={false} className={`${input} font-mono text-sm`} />
                       <button type="button" onClick={() => setShow(!show)} className={btn('secondary')}>{show ? 'Hide' : 'Show'}</button>
