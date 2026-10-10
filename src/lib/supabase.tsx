@@ -193,7 +193,7 @@ export async function signInWithPasskey() {
 }
 
 
-export type ApiCredentialProvider = 'nexus' | 'igdb'
+export type ApiCredentialProvider = 'nexus' | 'igdb' | 'steamgriddb'
 
 export async function manageApiCredential(
   action: 'set' | 'status' | 'delete',
