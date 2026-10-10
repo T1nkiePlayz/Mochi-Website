@@ -2,20 +2,20 @@ import { Activity, Ban, ChevronDown, Cloud, LogOut, RefreshCw, Search, ShieldChe
 import { useCallback, useEffect, useState } from 'react'
 import { avatarFor } from '../lib/avatar'
 import {
-  adminApi, setUserCloudSync, setUserMetadataAccess,
+  adminApi, setUserCloudSync, setUserMetadataAccess, supabase,
   type AdminAuditEntry, type AdminStats, type AdminUser,
 } from '../lib/supabase'
 import { useAuth } from '../lib/useAuth'
-import { Chip, ConfirmAction, CopyButton, Panel, Row, Skeleton } from './ui'
+import { Chip, ConfirmAction, CopyButton, Field, Panel, Row, Skeleton } from './ui'
 import { btn, formatDate, input, timeAgo } from './ui-utils'
 import { useNotice } from './useNotice'
 
 const PAGE = 25
 const MIGRATION_HINT = 'The admin tools need the latest database migration (supabase/migrations/20261008140000_admin_tools_and_account_deletion.sql).'
-const MFA_HINT = 'Admin actions need a second factor. Add an authenticator app or passkey under Security, then sign in again and complete verification.'
+const MFA_HINT = 'Admin actions need a session verified with your authenticator app. Enter a code to continue.'
 const friendly = (message: string) => (/could not find the function|does not exist|schema cache/i.test(message) ? MIGRATION_HINT : /\bAAL2\b|multi-factor/i.test(message) ? MFA_HINT : message)
 
-export default function AdminTab() {
+function AdminPanel() {
   const { user } = useAuth()
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [users, setUsers] = useState<AdminUser[]>([])
@@ -180,5 +180,65 @@ function UserCard({ row, self, reload }: { row: AdminUser; self: boolean; reload
         </div>
       )}
     </div>
+  )
+}
+
+type Step = 'checking' | 'ready' | 'verify' | 'enroll'
+
+/**
+ * Administrator actions need an AAL2 session (the database checks it). A password, email-code or passkey sign-in
+ * is AAL1, so ask for an authenticator code here and upgrade the session instead of making the admin sign in again.
+ */
+export default function AdminTab() {
+  const [step, setStep] = useState<Step>('checking')
+  const [factorId, setFactorId] = useState('')
+  const [code, setCode] = useState('')
+  const [busy, setBusy] = useState(false)
+  const n = useNotice()
+
+  useEffect(() => {
+    let active = true
+    void (async () => {
+      if (!supabase) { if (active) setStep('ready'); return }
+      const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+      if (!active) return
+      if (error || data?.currentLevel === 'aal2') { setStep('ready'); return }
+      const factors = await supabase.auth.mfa.listFactors()
+      if (!active) return
+      const totp = (factors.data?.totp ?? []).find((factor) => factor.status === 'verified')
+      if (totp) { setFactorId(totp.id); setStep('verify') } else setStep('enroll')
+    })()
+    return () => { active = false }
+  }, [])
+
+  const verify = async () => {
+    if (!supabase || !factorId) return
+    setBusy(true)
+    n.clear()
+    const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId, code: code.trim() })
+    if (error) n.error(error.message)
+    else {
+      await supabase.auth.refreshSession()
+      setStep('ready')
+    }
+    setBusy(false)
+  }
+
+  if (step === 'checking') return <Skeleton className="h-40" />
+  if (step === 'ready') return <AdminPanel />
+  return (
+    <Panel title="Verify to use admin tools" description="Administrator actions need a session verified with your authenticator app." icon={ShieldCheck}>
+      {step === 'enroll'
+        ? <p className="text-sm leading-6 text-slate-300">Add an authenticator app under Security first. A passkey on its own cannot unlock admin actions. Then come back to this tab.</p>
+        : (
+          <form className="space-y-3" onSubmit={(event) => { event.preventDefault(); void verify() }}>
+            <Field label="Authenticator code">
+              <input className={input} inputMode="numeric" autoComplete="one-time-code" placeholder="123456" maxLength={8} value={code} onChange={(event) => setCode(event.target.value)} />
+            </Field>
+            <button type="submit" disabled={busy || code.trim().length < 6} className={btn('primary')}>{busy ? 'Verifying…' : 'Verify and continue'}</button>
+            {n.node}
+          </form>
+        )}
+    </Panel>
   )
 }
