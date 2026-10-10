@@ -21,10 +21,16 @@ const phases = [
     description: 'Mochi is at version 0.1.0 and has no stable release yet. These parts exist in the project today, but storage formats and the interface may still change.',
     items: [
       ['Library and launching', 'Pikos and their Tofus, imports from Steam, Heroic, itch.io, Flatpak, Lutris, Bottles and more, launch handoff, and process tracking.'],
-      ['Big Picture and Steam Deck', 'Controller-first fullscreen mode, 11 built-in themes, bundled fonts, and accessibility options.'],
+      ['Big Picture and Steam Deck', 'Controller-first fullscreen mode with display options, power actions and interface sounds, 11 built-in themes, interface sound packs, bundled fonts, and accessibility options.'],
       ['Metadata, playtime and achievements', 'IGDB, SteamGridDB and Steam Store metadata, playtime and stats, 77 Mochi achievements, and Steam achievements.'],
-      ['Discover and mods', 'Modrinth, CurseForge and Nexus Mods discovery with per-Tofu mod management.'],
-      ['Accounts and optional cloud sync', 'Sign-in with email, Google or GitHub, passkeys, authenticator-app MFA, and optional metadata-only sync.'],
+      ['Discover and mods', 'Modrinth, CurseForge and Nexus Mods discovery with per-Tofu mod management, required-dependency prompts, an offline conflict check, pre-update snapshots with one-click restore, an Update all review, and .mochipack modpack export and import.'],
+      ['Minecraft instances', 'One Minecraft Piko with each launcher instance as a Tofu, optional copy on import, and modpack matching against Modrinth and CurseForge.'],
+      ['Launch options and shortcuts', 'Per-game environment, arguments and Proton/Wine, GameMode, MangoHud and gamescope with a live command preview; desktop shortcuts and Add to Steam; mochi launch/open/list commands and links.'],
+      ['Library tools', 'Backlog statuses, a wishlist and a What should I play? picker, duplicate merging, a Ctrl/Cmd+K command palette, and a collapsed section for Steam soundtracks and extras.'],
+      ['Saves, storage and backups', 'Zip backups of game saves with restore and automatic backup on exit, a Storage disk usage manager, and a settings export/import zip.'],
+      ['Experimental features', 'Opt-in under Settings > Experimental: game news, deal alerts, a stats share card and game search. Off by default.'],
+      ['Security and updates', 'Verified downloads (checksums, GPG, build attestation), updates verified before the installed copy is replaced, and transactional, hardened archive extraction.'],
+      ['Accounts and optional cloud sync', 'Sign-in with email, Google or GitHub, passkeys, authenticator-app MFA, optional metadata-only sync, and optional cloud saving of Mochi achievements with a clear button.'],
       ['Linux and macOS builds', 'AppImage, deb, rpm and an Arch PKGBUILD on Linux; a universal DMG on macOS. Linux is the primary, best-tested platform.'],
     ],
   },
@@ -34,7 +40,7 @@ const phases = [
     tone: 'violet',
     description: 'Work that is under way and not yet part of a release.',
     items: [
-      ['Achievements in Mochi Cloud', 'Optionally saving Mochi achievements to your account. This is in development and has not been released.'],
+      ['Newest merged work', 'Recently merged features may not be in a packaged download yet; Mochi is still at version 0.1.0.'],
       ['Ongoing polish', 'Continued work on layout, theming, Big Picture options, and everyday library usability.'],
     ],
   },
@@ -45,6 +51,7 @@ const phases = [
     description: 'Items the project lists as not done yet. No dates are promised.',
     items: [
       ['Signed and notarized macOS builds', 'macOS builds are currently only ad-hoc signed, so Gatekeeper blocks the first launch. Notarization needs an Apple Developer account.'],
+      ['Theme gallery and creator', 'An in-app gallery for community themes and a live theme creator are listed in the project README as not done yet.'],
       ['Stable release', 'A first stable release, once the early-development caveats are behind us.'],
     ],
   },
@@ -72,7 +79,7 @@ export function RoadmapPage() {
 
       <section className="grid gap-4 md:grid-cols-3">
         <div className="glass-card p-5"><Gamepad2 className="h-5 w-5 text-violet-300" /><p className="mt-4 text-sm font-semibold text-white">Now</p><p className="mt-1 text-sm leading-6 text-slate-400">Linux and macOS builds are available while Mochi is still in early development.</p></div>
-        <div className="glass-card p-5"><Cloud className="h-5 w-5 text-cyan-300" /><p className="mt-4 text-sm font-semibold text-white">In progress</p><p className="mt-1 text-sm leading-6 text-slate-400">Optional achievements sync to Mochi Cloud, plus ongoing polish.</p></div>
+        <div className="glass-card p-5"><Cloud className="h-5 w-5 text-cyan-300" /><p className="mt-4 text-sm font-semibold text-white">In progress</p><p className="mt-1 text-sm leading-6 text-slate-400">Newest merged work reaching packaged builds, plus ongoing polish.</p></div>
         <div className="glass-card p-5"><Code2 className="h-5 w-5 text-emerald-300" /><p className="mt-4 text-sm font-semibold text-white">Planned</p><p className="mt-1 text-sm leading-6 text-slate-400">Notarized macOS builds and a stable release. Windows is not supported.</p></div>
       </section>
 
