@@ -186,7 +186,7 @@ function LinkedAccountsPanel({ user }: { user: User }) {
 type Provider = ApiCredentialProvider
 
 function ServiceKeysPanel() {
-  const [configured, setConfigured] = useState<Record<Provider, boolean>>({ igdb: false, nexus: false })
+  const [configured, setConfigured] = useState<Record<Provider, boolean>>({ igdb: false, nexus: false, steamgriddb: false })
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<Provider | null>(null)
   const [clientId, setClientId] = useState('')
@@ -200,7 +200,7 @@ function ServiceKeysPanel() {
     void manageApiCredential('status').then(({ data, error }) => {
       if (!active) return
       if (error) n.error(error.message)
-      else { const providers = (data?.providers ?? []) as string[]; setConfigured({ igdb: providers.includes('igdb'), nexus: providers.includes('nexus') }) }
+      else { const providers = (data?.providers ?? []) as string[]; setConfigured({ igdb: providers.includes('igdb'), nexus: providers.includes('nexus'), steamgriddb: providers.includes('steamgriddb') }) }
       setLoading(false)
     })
     return () => { active = false }
@@ -214,10 +214,17 @@ function ServiceKeysPanel() {
     if (provider === 'igdb') {
       if (!clientId.trim() || !secret.trim()) { n.error('Enter both the Client ID and Client Secret.'); return }
       value = JSON.stringify({ clientId: clientId.trim(), clientSecret: secret.trim() })
-    } else {
+    } else if (provider === 'nexus') {
       const key = secret.trim()
       if (key.length < 32) { n.error('Nexus Mods Personal API Keys are at least 32 characters.'); return }
       if (key.length > 4096 || /[^!-~]/.test(key)) { n.error('Paste the full key without spaces or line breaks.'); return }
+      value = key
+    } else {
+      const key = secret.trim()
+      if (!/^[A-Za-z0-9_-]{16,256}$/.test(key)) {
+        n.error('SteamGridDB API keys must be 16–256 characters and contain only letters, numbers, dashes, or underscores.')
+        return
+      }
       value = key
     }
     setBusy(true); n.clear()
@@ -237,6 +244,7 @@ function ServiceKeysPanel() {
   const services: { id: Provider; name: string; text: string; link: string }[] = [
     { id: 'igdb', name: 'IGDB', text: 'Game artwork and metadata (Twitch Client ID and Secret).', link: 'https://dev.twitch.tv/console/apps' },
     { id: 'nexus', name: 'Nexus Mods', text: 'Experimental mod discovery (Personal API Key).', link: 'https://next.nexusmods.com/settings/api-keys' },
+    { id: 'steamgriddb', name: 'SteamGridDB', text: 'Custom game artwork, grids, heroes, logos and icons (API Key).', link: 'https://www.steamgriddb.com/profile/preferences' },
   ]
 
   return (
