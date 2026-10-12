@@ -31,13 +31,15 @@ const phases = [
       ['News, deals and sharing', 'Opt-in game news and an optional Deals tab (both off by default), a stats share card, and game search from the command palette. Plugins are the only feature still under Settings > Experimental, off by default.'],
       ['Security and updates', 'Verified downloads (checksums, GPG, build attestation), updates verified before the installed copy is replaced, and transactional, hardened archive extraction, and symlink-safe export temp files.'],
       ['Accounts and optional cloud sync', 'Sign-in with email, Google or GitHub, passkeys, authenticator-app MFA, optional metadata-only sync, and optional cloud saving of Mochi achievements with a clear button, plus fixes for setup credentials, game logs and artwork visibility.'],
+      ['Localisation', 'A fully localised 29-language interface, so menus, settings and prompts are translated throughout the launcher.'],
+      ['Everyday controls', 'Play limits, an account PIN, tray quick launch, launch hooks, live folder watching that keeps the library in step, and a per-game screenshot manager.'],
       ['Linux and macOS builds', 'AppImage, deb, rpm and an Arch PKGBUILD on Linux; a universal DMG on macOS. Linux is the primary, best-tested platform.'],
     ],
   },
   {
     title: 'Recent and upcoming',
     status: 'In progress',
-    tone: 'violet',
+    tone: 'mint',
     description: 'Work that is under way and not yet part of a release.',
     items: [
       ['Newest merged work', 'Recently merged features may not be in a packaged download yet; Mochi is still at version 0.1.0.'],
@@ -59,7 +61,7 @@ const phases = [
 
 const toneClasses: Record<string, string> = {
   emerald: 'border-emerald-400/20 bg-emerald-500/[0.06] text-emerald-300',
-  violet: 'border-violet-400/20 bg-violet-500/[0.06] text-violet-300',
+  mint: 'border-mint-400/20 bg-mint-500/[0.06] text-mint-300',
   cyan: 'border-cyan-400/20 bg-cyan-500/[0.06] text-cyan-300',
   slate: 'border-white/10 bg-white/[0.03] text-slate-300',
 }
@@ -68,7 +70,7 @@ export function RoadmapPage() {
   return (
     <div className="space-y-12 pb-10">
       <header className="max-w-4xl">
-        <div className="inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-violet-200">
+        <div className="inline-flex items-center gap-2 rounded-full border border-mint-400/20 bg-mint-500/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-mint-200">
           <Rocket className="h-3.5 w-3.5" /> Project roadmap
         </div>
         <h1 className="mt-5 text-4xl font-black tracking-tight text-white sm:text-5xl">Where Mochi is going.</h1>
@@ -78,17 +80,17 @@ export function RoadmapPage() {
       </header>
 
       <section className="grid gap-4 md:grid-cols-3">
-        <div className="glass-card p-5"><Gamepad2 className="h-5 w-5 text-violet-300" /><p className="mt-4 text-sm font-semibold text-white">Now</p><p className="mt-1 text-sm leading-6 text-slate-400">Linux and macOS builds are available while Mochi is still in early development.</p></div>
+        <div className="glass-card p-5"><Gamepad2 className="h-5 w-5 text-mint-300" /><p className="mt-4 text-sm font-semibold text-white">Now</p><p className="mt-1 text-sm leading-6 text-slate-400">Linux and macOS builds are available while Mochi is still in early development.</p></div>
         <div className="glass-card p-5"><Cloud className="h-5 w-5 text-cyan-300" /><p className="mt-4 text-sm font-semibold text-white">In progress</p><p className="mt-1 text-sm leading-6 text-slate-400">Newest merged work reaching packaged builds, plus ongoing polish.</p></div>
         <div className="glass-card p-5"><Code2 className="h-5 w-5 text-emerald-300" /><p className="mt-4 text-sm font-semibold text-white">Planned</p><p className="mt-1 text-sm leading-6 text-slate-400">Notarized macOS builds and a stable release. Windows is not supported.</p></div>
       </section>
 
       <div className="relative space-y-5">
-        <div className="absolute bottom-8 left-[19px] top-8 hidden w-px bg-gradient-to-b from-violet-400/40 via-cyan-400/20 to-transparent sm:block" />
+        <div className="absolute bottom-8 left-[19px] top-8 hidden w-px bg-gradient-to-b from-mint-400/40 via-cyan-400/20 to-transparent sm:block" />
         {phases.map((phase, index) => (
           <article key={phase.title} className="relative grid gap-5 sm:grid-cols-[40px_1fr]">
             <div className="relative z-10 mt-6 hidden h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-slate-950 sm:flex">
-              {index === 0 ? <CheckCircle2 className="h-5 w-5 text-emerald-300" /> : index === 1 ? <CircleDot className="h-5 w-5 text-violet-300" /> : <Sparkles className="h-5 w-5 text-cyan-300" />}
+              {index === 0 ? <CheckCircle2 className="h-5 w-5 text-emerald-300" /> : index === 1 ? <CircleDot className="h-5 w-5 text-mint-300" /> : <Sparkles className="h-5 w-5 text-cyan-300" />}
             </div>
             <div className="glass-card overflow-hidden p-6 sm:p-7">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -103,7 +105,7 @@ export function RoadmapPage() {
                 {phase.items.map(([title, description]) => (
                   <div key={title} className="rounded-2xl border border-white/10 bg-black/15 p-4">
                     <div className="flex items-start gap-3">
-                      <Wrench className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" />
+                      <Wrench className="mt-0.5 h-4 w-4 shrink-0 text-mint-300" />
                       <div><h3 className="font-semibold text-white">{title}</h3><p className="mt-1 text-sm leading-6 text-slate-400">{description}</p></div>
                     </div>
                   </div>
@@ -114,15 +116,15 @@ export function RoadmapPage() {
         ))}
       </div>
 
-      <section className="rounded-[2rem] border border-violet-400/15 bg-gradient-to-br from-violet-500/10 via-slate-900/60 to-cyan-500/10 p-7 sm:p-9">
+      <section className="rounded-[2rem] border border-mint-400/15 bg-gradient-to-br from-mint-500/10 via-slate-900/60 to-cyan-500/10 p-7 sm:p-9">
         <div className="flex items-start gap-4">
-          <Globe2 className="mt-1 h-6 w-6 shrink-0 text-violet-300" />
+          <Globe2 className="mt-1 h-6 w-6 shrink-0 text-mint-300" />
           <div>
             <h2 className="text-2xl font-bold text-white">A local-first roadmap</h2>
             <p className="mt-3 max-w-3xl leading-7 text-slate-300">
               New online features should complement the desktop launcher, not make it dependent on a server. Game installations, launch targets, and immediate library access remain local responsibilities.
             </p>
-            <Link to="/documentation" className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-violet-400/40 hover:bg-white/10">
+            <Link to="/documentation" className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-mint-400/40 hover:bg-white/10">
               Read the architecture docs <ArrowRight className="h-4 w-4" />
             </Link>
           </div>

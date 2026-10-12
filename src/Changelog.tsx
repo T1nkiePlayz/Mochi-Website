@@ -111,10 +111,10 @@ export function ChangelogPage() {
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
         <div className="flex items-center gap-3 text-sm text-slate-400" aria-live="polite">
-          <Tag className="h-4 w-4 text-violet-300" />
+          <Tag className="h-4 w-4 text-mint-300" />
           {loading ? 'Loading releases…' : `${releases.length} release${releases.length === 1 ? '' : 's'} loaded`}
         </div>
-        <button type="button" onClick={() => { setRefreshing(true); void load() }} disabled={refreshing} className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-violet-400/40 hover:bg-white/10 disabled:opacity-50">
+        <button type="button" onClick={() => { setRefreshing(true); void load() }} disabled={refreshing} className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-mint-400/40 hover:bg-white/10 disabled:opacity-50">
           <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} /> {refreshing ? 'Refreshing…' : 'Refresh'}
         </button>
       </div>
@@ -128,29 +128,29 @@ export function ChangelogPage() {
       {loading && releases.length === 0 && <div className="glass-card p-10 text-center text-slate-400" aria-live="polite">Fetching the latest release notes…</div>}
 
       {!loading && !error && releases.length === 0 && (
-        <div className="glass-card p-10 text-center"><CheckCircle2 className="mx-auto h-8 w-8 text-violet-300" /><h2 className="mt-4 text-xl font-semibold text-white">No public releases yet</h2><p className="mt-2 text-sm text-slate-400">Once a release is published in the Mochi repository, its notes will appear here automatically.</p></div>
+        <div className="glass-card p-10 text-center"><CheckCircle2 className="mx-auto h-8 w-8 text-mint-300" /><h2 className="mt-4 text-xl font-semibold text-white">No public releases yet</h2><p className="mt-2 text-sm text-slate-400">Once a release is published in the Mochi repository, its notes will appear here automatically.</p></div>
       )}
 
       {releases.length > 0 && (
         <div className="relative space-y-5">
-          <div className="absolute bottom-8 left-5 top-8 hidden w-px bg-gradient-to-b from-violet-400/40 via-cyan-400/20 to-transparent sm:block" />
+          <div className="absolute bottom-8 left-5 top-8 hidden w-px bg-gradient-to-b from-mint-400/40 via-cyan-400/20 to-transparent sm:block" />
           {releases.map((release, index) => (
             <article key={release.id} className="relative sm:pl-14">
               <div className="absolute left-0 top-6 hidden h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-slate-950 sm:flex">
-                <CalendarDays className={`h-4 w-4 ${index === 0 ? 'text-violet-300' : 'text-slate-400'}`} />
+                <CalendarDays className={`h-4 w-4 ${index === 0 ? 'text-mint-300' : 'text-slate-400'}`} />
               </div>
               <div className="glass-card p-6 sm:p-7">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full border border-violet-400/20 bg-violet-500/10 px-2.5 py-1 text-xs font-mono font-semibold text-violet-200">{release.tag_name}</span>
+                      <span className="rounded-full border border-mint-400/20 bg-mint-500/10 px-2.5 py-1 text-xs font-mono font-semibold text-mint-200">{release.tag_name}</span>
                       {index === 0 && <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-300">Latest</span>}
                       <span className="text-xs text-slate-400">{releaseKind(release)}</span>
                     </div>
                     <h2 className="mt-3 text-2xl font-bold text-white">{release.name || release.tag_name}</h2>
                     <p className="mt-2 text-sm text-slate-400">{formatDate(release.published_at)}</p>
                   </div>
-                  <a href={release.html_url} target="_blank" rel="noreferrer" className="inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-violet-400/40 hover:text-white">
+                  <a href={release.html_url} target="_blank" rel="noreferrer" className="inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-mint-400/40 hover:text-white">
                     View release <ArrowUpRight className="h-3.5 w-3.5" />
                   </a>
                 </div>

@@ -25,7 +25,7 @@ export default function DashboardPage() {
     return (
       <div className="mx-auto w-full max-w-md pt-6">
         <div className="glass-card p-8 text-center">
-          <UserRound className="mx-auto h-8 w-8 text-violet-300" />
+          <UserRound className="mx-auto h-8 w-8 text-mint-300" />
           <h1 className="mt-4 text-xl font-bold text-white">Sign in to see your dashboard</h1>
           <p className="mt-2 text-sm text-slate-400">Manage your Mochi account, security, and cloud sync.</p>
           <Link to="/signin" className={btn('primary', 'mt-6 w-full')}>Sign in</Link>
@@ -88,7 +88,7 @@ export default function DashboardPage() {
             aria-selected={active === id} aria-controls={`dashboard-panel-${id}`}
             tabIndex={active === id ? 0 : -1}
             onClick={() => setTab(id)} onKeyDown={handleTabKeyDown}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 ${active === id ? 'bg-violet-500/20 text-white ring-1 ring-violet-400/30' : 'text-slate-400 hover:bg-white/[0.05] hover:text-white'}`}>
+            className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint-300 ${active === id ? 'bg-mint-500/20 text-white ring-1 ring-mint-400/30' : 'text-slate-400 hover:bg-white/[0.05] hover:text-white'}`}>
             <Icon className="h-4 w-4" />{label}
           </button>
         ))}

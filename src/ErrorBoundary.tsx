@@ -34,7 +34,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-5 py-2.5 font-semibold text-white shadow-lg shadow-violet-500/25 transition hover:brightness-110"
+              className="rounded-full bg-gradient-to-r from-mint-400 to-mint-300 px-5 py-2.5 font-semibold text-slate-900 shadow-lg shadow-mint-500/25 transition hover:brightness-110"
             >
               Reload page
             </button>
@@ -46,7 +46,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                 this.setState({ error: null })
                 window.location.hash = '#/'
               }}
-              className="rounded-full border border-white/15 bg-white/5 px-5 py-2.5 font-semibold text-slate-100 transition hover:border-violet-400/40 hover:bg-white/10"
+              className="rounded-full border border-white/15 bg-white/5 px-5 py-2.5 font-semibold text-slate-100 transition hover:border-mint-400/40 hover:bg-white/10"
             >
               Go to home
             </a>
