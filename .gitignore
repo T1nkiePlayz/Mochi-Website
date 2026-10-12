@@ -7,3 +7,5 @@ dist
 AGENTS.md
 .opencode
 PLAN.md
+test-results
+playwright-report

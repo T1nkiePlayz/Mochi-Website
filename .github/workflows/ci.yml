@@ -28,3 +28,22 @@ jobs:
         run: npm run lint
       - name: Build
         run: npm run build
+
+  # Route smoke tests: every route renders, in-page docs anchors stay on the article, navigation
+  # resets scroll, a failed lazy chunk shows the recovery UI, and axe stays clean.
+  smoke:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+      - name: Run smoke tests
+        run: npm run test:e2e

@@ -18,7 +18,7 @@
 </p>
 
 <p align="center">
-  <img src="./docs/social-preview.png" alt="Mochi Website social preview" width="100%">
+  <img src="./public/social-preview.png" alt="Mochi Website social preview" width="100%">
 </p>
 
 > [!NOTE]
@@ -45,7 +45,7 @@
 - **Account portal**: one **Account** shared with the launcher, with sign-in methods, **Cloud sync**, **Service keys** and (for administrators) admin tools.
 - **Hands sign-in to the app** through `mochi://auth/callback` when started from the launcher.
 
-Words such as Piko, Tofu, Account, Cloud access, Cloud sync, Service key and Administrator are defined in [`CONTEXT.md`](CONTEXT.md). Use them in UI copy and docs.
+Words such as Piko, Tofu, Account, Cloud access, Cloud sync, Service key and Administrator are defined in the **Glossary** article in [`src/Documentation.tsx`](src/Documentation.tsx) (Documentation → Reference). Use them in UI copy and docs.
 
 Built with React 19, TypeScript, React Router (`HashRouter`), Vite 8, Tailwind CSS 4, `lucide-react`, Supabase (`@supabase/supabase-js`) and oxlint, and hosted on GitHub Pages.
 
@@ -106,6 +106,10 @@ Never put a `service_role` or other secret key in `.env.local` or any `VITE_*` v
 | `npm run lint` | oxlint |
 | `npm run preview` | Serve the built site |
 | `npm test` | Documentation anchor check, lint, then build (the same checks as CI) |
+| `npm run test:e2e` | Playwright smoke suite: every route renders, docs anchors stay on the article, navigation resets scroll, a failed lazy chunk shows the recovery UI, axe is clean. Builds and serves `dist/` first. |
+
+> [!NOTE]
+> A build **without** `.env.local` leaves `VITE_SUPABASE_*` unset, so the bundler tree-shakes `@supabase/supabase-js` out entirely — the `supabase` chunk shrinks from ~214 kB to a stub. Local bundle sizes and `npm run preview` therefore do not match the deployed site: build with the variables set when measuring sizes or exercising account features.
 
 ## Supabase
 
@@ -122,14 +126,14 @@ In the Supabase dashboard, add every deployed site URL (for example `https://moc
 
 ## Deployment
 
-- `.github/workflows/deploy.yml` runs on pushes to `main`: `npm ci`, lint, build, then publishes `dist/` to GitHub Pages. The Supabase values come from the repository secrets `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`.
-- `.github/workflows/ci.yml` runs the anchor check, lint and build on pull requests and `main`.
+- `.github/workflows/deploy.yml` runs on pushes to `main`: `npm ci`, anchor check, lint, build, then publishes `dist/` to GitHub Pages. The Supabase values come from the repository secrets `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`.
+- `.github/workflows/ci.yml` runs the anchor check, lint and build on pull requests and `main`, plus a `smoke` job that runs the Playwright suite.
 - `vite.config.ts` uses `base: './'`, so one build works under a sub-path or a custom domain. Link with `import.meta.env.BASE_URL`, never a leading `/`.
 - Auth redirects use the current origin plus path (`siteUrl()` in `src/lib/supabase.tsx`). The custom domain is set in GitHub Pages settings; no `CNAME` is committed.
 
 ## Documentation maintenance
 
-Headings in `src/Documentation.tsx` are listed in a registry that must match the article sections. Run `node scripts/check-doc-anchors.mjs` (also part of `npm test`) after editing docs, and keep them in line with the launcher.
+Headings in `src/Documentation.tsx` are listed in a registry that must match the article sections. Run `node scripts/check-doc-anchors.mjs` (also part of `npm test`) after editing docs: it checks the heading registry against the `<Section id>` elements, and checks that every article slug has a registry entry (the "On this page" sidebar) and a body in `renderArticle()`. Keep the content in line with the launcher.
 
 ## Security model
 

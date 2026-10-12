@@ -60,9 +60,9 @@ export default function OverviewTab({ user, profile, go }: { user: User; profile
         ].map(({ id, icon: Icon, title, value, hint }) => (
           <button key={id} onClick={() => go(id)} className="glass-card group p-5 text-left transition hover:-translate-y-0.5 hover:border-violet-400/30">
             <Icon className="h-5 w-5 text-violet-300" />
-            <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-slate-500">{title}</p>
+            <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-slate-400">{title}</p>
             <p className="mt-1 truncate text-base font-semibold text-white">{value}</p>
-            <p className="mt-1 text-xs text-slate-500">{hint}</p>
+            <p className="mt-1 text-xs text-slate-400">{hint}</p>
           </button>
         ))}
       </div>

@@ -68,9 +68,9 @@ function AdminPanel() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {loading && !stats ? [0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-24" />) : tiles.map((tile) => (
           <div key={tile.label} className="glass-card p-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{tile.label}</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{tile.label}</p>
             <p className="mt-1 text-2xl font-bold text-white">{tile.value}</p>
-            <p className="text-xs text-slate-500">{tile.hint}{tile.label === 'Users' && stats && stats.banned > 0 ? ` · ${stats.banned} suspended` : ''}</p>
+            <p className="text-xs text-slate-400">{tile.hint}{tile.label === 'Users' && stats && stats.banned > 0 ? ` · ${stats.banned} suspended` : ''}</p>
           </div>
         ))}
       </div>
@@ -78,12 +78,12 @@ function AdminPanel() {
       <Panel title="Users" icon={Users} description="Search by email, username, or exact account ID."
         action={<button onClick={() => void load()} disabled={loading} aria-label="Refresh" className={btn('ghost', '!p-2')}><RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /></button>}>
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search users…" aria-label="Search users" className={`${input} !pl-9`} />
         </div>
         <div className="mt-4 space-y-2">
           {loading && users.length === 0 ? [0, 1, 2].map((i) => <Skeleton key={i} className="h-16" />) : users.length === 0 ? (
-            <p className="py-6 text-center text-sm text-slate-500">No users match.</p>
+            <p className="py-6 text-center text-sm text-slate-400">No users match.</p>
           ) : users.map((row) => <UserCard key={row.id} row={row} self={row.id === user?.id} reload={load} />)}
         </div>
         {total > PAGE && (
@@ -97,13 +97,13 @@ function AdminPanel() {
 
       <Panel title="Audit log" icon={Activity} description="Every admin action taken from this dashboard.">
         {!showAudit ? <button onClick={() => void loadAudit()} className={btn('secondary')}>Show recent activity</button> : audit.length === 0 ? (
-          <p className="text-sm text-slate-500">No admin actions recorded yet.</p>
+          <p className="text-sm text-slate-400">No admin actions recorded yet.</p>
         ) : (
           <ul className="space-y-2">
             {audit.map((entry) => (
               <li key={entry.id} className="rounded-xl border border-white/10 bg-white/[0.025] px-4 py-2.5 text-sm">
-                <div className="flex flex-wrap items-center gap-2"><Chip tone={/delete|suspend|clear|revoke/.test(entry.action) ? 'bad' : 'info'}>{entry.action.replace(/_/g, ' ')}</Chip><span className="text-slate-300">{entry.target_email ?? entry.target_id ?? '—'}</span><span className="ml-auto text-xs text-slate-500">{timeAgo(entry.created_at)}</span></div>
-                <p className="mt-1 text-xs text-slate-500">by {entry.actor_email ?? 'unknown'}</p>
+                <div className="flex flex-wrap items-center gap-2"><Chip tone={/delete|suspend|clear|revoke/.test(entry.action) ? 'bad' : 'info'}>{entry.action.replace(/_/g, ' ')}</Chip><span className="text-slate-300">{entry.target_email ?? entry.target_id ?? '—'}</span><span className="ml-auto text-xs text-slate-400">{timeAgo(entry.created_at)}</span></div>
+                <p className="mt-1 text-xs text-slate-400">by {entry.actor_email ?? 'unknown'}</p>
               </li>
             ))}
           </ul>
@@ -131,15 +131,15 @@ function UserCard({ row, self, reload }: { row: AdminUser; self: boolean; reload
       <button onClick={() => setOpen(!open)} aria-expanded={open} className="flex w-full items-center gap-3 px-4 py-3 text-left">
         <img src={avatarFor(row.email, row.avatar_url, 64)} alt="" className="h-9 w-9 shrink-0 rounded-full border border-white/10 bg-slate-900 object-cover" loading="lazy" decoding="async" />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-semibold text-white">{row.display_name || row.email || 'Unnamed account'}{self && <span className="ml-2 text-xs font-normal text-slate-500">(you)</span>}</span>
-          <span className="block truncate text-xs text-slate-500">{row.email} · last seen {timeAgo(row.last_sign_in_at)}</span>
+          <span className="block truncate text-sm font-semibold text-white">{row.display_name || row.email || 'Unnamed account'}{self && <span className="ml-2 text-xs font-normal text-slate-400">(you)</span>}</span>
+          <span className="block truncate text-xs text-slate-400">{row.email} · last seen {timeAgo(row.last_sign_in_at)}</span>
         </span>
         <span className="hidden shrink-0 gap-1.5 sm:flex">
           {row.is_admin && <Chip tone="info">Admin</Chip>}
           {row.banned && <Chip tone="bad">Suspended</Chip>}
           {row.metadata_sync_allowed && <Chip tone={row.cloud_sync_enabled ? 'good' : 'muted'}>Cloud</Chip>}
         </span>
-        <ChevronDown className={`h-4 w-4 shrink-0 text-slate-500 transition ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
@@ -152,12 +152,12 @@ function UserCard({ row, self, reload }: { row: AdminUser; self: boolean; reload
               ['Providers', row.providers.length ? row.providers.join(', ') : '—'],
               ['Passkeys / authenticators', `${row.passkey_count} / ${row.authenticator_count}`],
               ['Library', `${row.piko_count} Pikos · ${row.tofu_count} Tofus`],
-            ].map(([label, value]) => <div key={label}><dt className="text-xs text-slate-500">{label}</dt><dd className="mt-0.5 break-words text-slate-200">{value}</dd></div>)}
+            ].map(([label, value]) => <div key={label}><dt className="text-xs text-slate-400">{label}</dt><dd className="mt-0.5 break-words text-slate-200">{value}</dd></div>)}
           </dl>
           <Row title="Account ID" detail={<span className="break-all font-mono">{row.id}</span>} right={<CopyButton value={row.id} />} />
 
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Cloud</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Cloud</p>
             <div className="flex flex-wrap gap-2">
               <button disabled={busy} onClick={() => void run(row.metadata_sync_allowed ? 'Cloud access revoked.' : 'Cloud access granted.', () => setUserMetadataAccess(row.id, !row.metadata_sync_allowed) as PromiseLike<{ error: { message: string } | null }>)} className={btn('secondary')}><Cloud className="h-4 w-4" />{row.metadata_sync_allowed ? 'Revoke access' : 'Grant access'}</button>
               <button disabled={busy || !row.metadata_sync_allowed} onClick={() => void run(row.cloud_sync_enabled ? 'Cloud sync turned off.' : 'Cloud sync turned on.', () => setUserCloudSync(row.id, !row.cloud_sync_enabled) as PromiseLike<{ error: { message: string } | null }>)} className={btn('secondary')}>{row.cloud_sync_enabled ? 'Turn sync off' : 'Turn sync on'}</button>
@@ -166,7 +166,7 @@ function UserCard({ row, self, reload }: { row: AdminUser; self: boolean; reload
           </div>
 
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Access</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Access</p>
             <div className="flex flex-wrap gap-2">
               <ConfirmAction label="Sign out everywhere" confirmLabel="End sessions" prompt={`End every active session for ${row.email}?`} busy={busy} variant="secondary" icon={LogOut} onConfirm={() => run('Sessions ended.', () => adminApi.revokeSessions(row.id))} />
               {row.banned
@@ -174,7 +174,7 @@ function UserCard({ row, self, reload }: { row: AdminUser; self: boolean; reload
                 : <ConfirmAction label="Suspend" confirmLabel="Suspend account" prompt={`Suspend ${row.email}? They'll be signed out and unable to sign in.`} busy={busy} disabled={self} icon={Ban} onConfirm={() => run('Account suspended.', () => adminApi.setBanned(row.id, true))} />}
               <ConfirmAction label="Delete user" confirmLabel="Delete permanently" prompt={`Permanently delete ${row.email} and all of their data?`} requireText={row.email ?? 'DELETE'} busy={busy} disabled={self} icon={Trash2} onConfirm={() => run('User deleted.', () => adminApi.deleteUser(row.id))} />
             </div>
-            {self && <p className="text-xs text-slate-500">You can’t suspend or delete yourself here — use Account → Delete account.</p>}
+            {self && <p className="text-xs text-slate-400">You can’t suspend or delete yourself here — use Account → Delete account.</p>}
           </div>
           {n.node}
         </div>

@@ -93,7 +93,7 @@ export function RoadmapPage() {
             <div className="glass-card overflow-hidden p-6 sm:p-7">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Phase {String(index + 1).padStart(2, '0')}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Phase {String(index + 1).padStart(2, '0')}</p>
                   <h2 className="mt-2 text-2xl font-bold text-white">{phase.title}</h2>
                 </div>
                 <span className={`inline-flex w-fit items-center rounded-full border px-3 py-1 text-xs font-semibold ${toneClasses[phase.tone]}`}>{phase.status}</span>
@@ -130,7 +130,7 @@ export function RoadmapPage() {
       </section>
 
       <section className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/[0.02] p-5 text-sm text-slate-400">
-        <Lock className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+        <Lock className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
         <p>Roadmap items can move, change scope, or be removed as Mochi develops. The changelog is the source of truth for what has actually shipped.</p>
       </section>
     </div>

@@ -52,8 +52,9 @@ export default function DashboardPage() {
     else if (event.key === 'Home') nextIndex = 0
     else if (event.key === 'End') nextIndex = tabs.length - 1
     else return
-    event.preventDefault()
     const next = tabs[nextIndex]
+    if (!next) return
+    event.preventDefault()
     setTab(next.id)
     document.getElementById(`dashboard-tab-${next.id}`)?.focus()
   }

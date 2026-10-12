@@ -1,6 +1,6 @@
 import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Cloud, Code2, Download, Gamepad2, KeyRound, Layers3, Package, Palette, Rocket, Search, ShieldCheck, Terminal, Wrench } from 'lucide-react'
-import { Link, useParams } from 'react-router-dom'
-import { useMemo, useState, type ReactNode } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useMemo, useState, type MouseEvent, type ReactNode } from 'react'
 
 type SectionInfo = {
   slug: string
@@ -71,7 +71,7 @@ export function DocumentationPage() {
         <div className="inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-violet-200"><BookOpen className="h-3.5 w-3.5" /> Documentation</div>
         <h1 className="mt-5 max-w-4xl text-4xl font-black tracking-tight text-white sm:text-5xl">How Mochi actually works.</h1>
         <p className="mt-5 max-w-4xl text-lg leading-8 text-slate-300">This documentation follows the current Mochi Launcher implementation: a Tauri desktop launcher for Linux and macOS (Linux is the primary, best-tested platform; Windows is not supported) with local game management, source importing, metadata, mods from Modrinth, CurseForge, and Nexus Mods, a controller-first Big Picture mode, themes, achievements, account security, and optional cloud metadata. Mochi is in early development, so formats and screens may still change.</p>
-        <div className="mt-7 flex max-w-2xl items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3"><Search className="h-5 w-5 text-slate-500" /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search documentation sections..." className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-600" /></div>
+        <div className="mt-7 flex max-w-2xl items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3"><Search className="h-5 w-5 text-slate-400" /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search documentation sections..." className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-400" /></div>
       </div>
     </header>
     <div className="grid gap-4 md:grid-cols-2">
@@ -83,16 +83,32 @@ export function DocumentationPage() {
 
 export function DocumentationArticlePage() {
   const { section } = useParams()
+  const navigate = useNavigate()
   const index = sections.findIndex(item => item.slug === section)
   const current = sections[index]
   if (!current) return <div className="glass-card p-10"><h1 className="text-2xl font-bold text-white">Documentation not found</h1><Link className="mt-4 inline-flex text-violet-300" to="/documentation">Back to documentation</Link></div>
+
+  // The hash belongs to the router: a bare `#id` link would make HashRouter read `id` as the
+  // pathname and fall through to the 404 route. Scroll here instead and record the anchor through
+  // the router, so the URL stays deep-linkable (`#/documentation/<slug>#<id>`).
+  const jumpTo = (id: string) => (event: MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault()
+    const target = document.getElementById(id)
+    if (!target) return
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    target.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' })
+    target.setAttribute('tabindex', '-1')
+    target.focus({ preventScroll: true })
+    navigate({ pathname: `/documentation/${current.slug}`, hash: `#${id}` }, { replace: true })
+  }
+  const articleHeadings = headings[current.slug] ?? []
   const previous = sections[index - 1]
   const next = sections[index + 1]
   return <div className="pb-10">
-    <div className="mb-6 flex flex-wrap items-center justify-between gap-3"><Link to="/documentation" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 transition hover:text-white"><ArrowLeft className="h-4 w-4" /> Back to docs</Link><span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">{current.status}</span></div>
+    <div className="mb-6 flex flex-wrap items-center justify-between gap-3"><Link to="/documentation" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 transition hover:text-white"><ArrowLeft className="h-4 w-4" /> Back to docs</Link><span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{current.status}</span></div>
     <div className="grid gap-8 lg:grid-cols-[220px_1fr]">
-      <aside className="hidden lg:block"><div className="sticky top-24 space-y-2"><p className="px-3 pb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">On this page</p>{headings[current.slug].map(([id, title]) => <a key={id} href={`#${id}`} className="block rounded-lg px-3 py-2 text-sm text-slate-500 transition hover:bg-white/[0.04] hover:text-slate-200">{title}</a>)}</div></aside>
-      <article className="min-w-0"><header className="mb-9"><div className="inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-violet-200"><current.icon className="h-3.5 w-3.5" /> {current.title}</div><h1 className="mt-5 text-4xl font-black tracking-tight text-white sm:text-5xl">{current.title}</h1><p className="mt-4 max-w-3xl text-lg leading-8 text-slate-400">{current.description}</p></header>{renderArticle(current.slug)}<nav className="mt-10 grid gap-3 sm:grid-cols-2">{previous ? <Link to={`/documentation/${previous.slug}`} className="glass-card p-4"><span className="text-xs text-slate-500">Previous</span><span className="mt-1 flex items-center gap-2 font-semibold text-white"><ArrowLeft className="h-4 w-4" />{previous.title}</span></Link> : <span />}{next ? <Link to={`/documentation/${next.slug}`} className="glass-card p-4 text-right"><span className="text-xs text-slate-500">Next</span><span className="mt-1 flex items-center justify-end gap-2 font-semibold text-white">{next.title}<ArrowRight className="h-4 w-4" /></span></Link> : <span />}</nav></article>
+      <aside className="hidden lg:block"><div className="sticky top-24 space-y-2"><p className="px-3 pb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">On this page</p>{articleHeadings.map(([id, title]) => <a key={id} href={`#/documentation/${current.slug}#${id}`} onClick={jumpTo(id)} className="block rounded-lg px-3 py-2 text-sm text-slate-400 transition hover:bg-white/[0.04] hover:text-slate-200">{title}</a>)}</div></aside>
+      <article className="min-w-0"><header className="mb-9"><div className="inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-violet-200"><current.icon className="h-3.5 w-3.5" /> {current.title}</div><h1 className="mt-5 text-4xl font-black tracking-tight text-white sm:text-5xl">{current.title}</h1><p className="mt-4 max-w-3xl text-lg leading-8 text-slate-400">{current.description}</p></header>{renderArticle(current.slug)}<nav className="mt-10 grid gap-3 sm:grid-cols-2">{previous ? <Link to={`/documentation/${previous.slug}`} className="glass-card p-4"><span className="text-xs text-slate-400">Previous</span><span className="mt-1 flex items-center gap-2 font-semibold text-white"><ArrowLeft className="h-4 w-4" />{previous.title}</span></Link> : <span />}{next ? <Link to={`/documentation/${next.slug}`} className="glass-card p-4 text-right"><span className="text-xs text-slate-400">Next</span><span className="mt-1 flex items-center justify-end gap-2 font-semibold text-white">{next.title}<ArrowRight className="h-4 w-4" /></span></Link> : <span />}</nav></article>
     </div>
   </div>
 }
@@ -118,7 +134,7 @@ function GettingStarted() { return <div className="space-y-9">
 </div> }
 
 function Library() { return <div className="space-y-9">
-  <Section id="model" title="1. Piko + Tofu"><Diagram title="Core library model"><div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center"><Box title="Piko" >Game identity</Box><ArrowRight className="hidden h-5 w-5 text-slate-600 sm:block" /><div className="text-slate-600 sm:hidden">↓</div><Box title="Tofu" >Environment / profile</Box></div></Diagram><p><strong>Piko</strong> answers “what game is this?” while <strong>Tofu</strong> answers “how is this version or setup run?”</p></Section>
+  <Section id="model" title="1. Piko + Tofu"><Diagram title="Core library model"><div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center"><Box title="Piko" >Game identity</Box><ArrowRight className="hidden h-5 w-5 text-slate-400 sm:block" /><div className="text-slate-400 sm:hidden">↓</div><Box title="Tofu" >Environment / profile</Box></div></Diagram><p><strong>Piko</strong> answers “what game is this?” while <strong>Tofu</strong> answers “how is this version or setup run?”</p></Section>
   <Section id="piko" title="2. Pikos"><p>A Piko contains the game's name, description, accent/artwork, categories, source information, launch target, and its Tofus. Source-aware imports can retain a source ID such as Steam, Heroic, Lutris, Bottles, itch.io, or Flatpak.</p></Section>
   <Section id="tofu" title="3. Tofus"><p>A Tofu is an install, version, modded profile, or runtime of a Piko. It contains a name, game version, runtime, mod count, status, and optional install path and content folder. The install path is especially important for local content management and is not assumed to be portable between computers.</p></Section>
   <Section id="sources" title="4. Game sources"><p>Source integrations discover existing installations without taking ownership of them. Steam shortcuts, for example, are launched through Steam so Steam keeps control of its launch context.</p></Section>
@@ -195,13 +211,13 @@ function CloudSync() { return <div className="space-y-9">
   <Section id="pull" title="4. Pull behaviour"><p>When a signed-in launcher starts cloud synchronisation, it pulls the account's Pikos and their Tofus. If cloud data exists, it becomes the current library state.</p></Section>
   <Section id="push" title="5. Push behaviour"><p>If the cloud library is empty during initial synchronisation, the local library can be used as the initial cloud state. Later local library changes are pushed after synchronisation has been initialised.</p></Section>
   <Section id="ownership" title="6. Ownership and row-level security"><p>Cloud records are account-scoped. Database row-level security and server-side functions are used to restrict access to the owning user and authorised administrative operations.</p></Section>
-  <Section id="local" title="7. The local boundary"><Diagram title="Data boundary"><div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center"><Box title="Local machine" >Installations, paths, native files</Box><ArrowRight className="hidden h-5 w-5 text-slate-600 sm:block" /><Box title="Mochi Cloud" >Supported metadata</Box></div></Diagram><p>A synced Piko can arrive on another device, but the device still needs a valid local installation and launch target before that game can actually run.</p></Section>
+  <Section id="local" title="7. The local boundary"><Diagram title="Data boundary"><div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center"><Box title="Local machine" >Installations, paths, native files</Box><ArrowRight className="hidden h-5 w-5 text-slate-400 sm:block" /><Box title="Mochi Cloud" >Supported metadata</Box></div></Diagram><p>A synced Piko can arrive on another device, but the device still needs a valid local installation and launch target before that game can actually run.</p></Section>
   <Section id="failure" title="8. Failure handling"><p>Cloud errors set the launcher into an error state rather than pretending the library is synchronised. The local library remains the primary fallback.</p></Section>
 </div> }
 
 function Development() { return <div className="space-y-9">
   <Section id="stack" title="1. Technology stack"><div className="grid gap-3 sm:grid-cols-2"><Box title="React + TypeScript">Desktop UI</Box><Box title="Tauri 2">Desktop boundary</Box><Box title="Rust">Native/platform layer</Box><Box title="Vite">Frontend build</Box><Box title="Supabase">Auth + cloud metadata</Box><Box title="Mod providers">Modrinth, CurseForge, Nexus Mods</Box></div></Section>
-  <Section id="architecture" title="2. Application architecture"><Diagram title="Main boundary"><div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center"><Box title="React UI" >Library, settings, account</Box><ArrowRight className="hidden h-5 w-5 text-slate-600 sm:block" /><Box title="src/lib" >Small typed wrappers</Box><ArrowRight className="hidden h-5 w-5 text-slate-600 sm:block" /><Box title="Tauri commands" >Native operations</Box><ArrowRight className="hidden h-5 w-5 text-slate-600 sm:block" /><Box title="Rust adapters" >OS/source integration</Box></div></Diagram></Section>
+  <Section id="architecture" title="2. Application architecture"><Diagram title="Main boundary"><div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center"><Box title="React UI" >Library, settings, account</Box><ArrowRight className="hidden h-5 w-5 text-slate-400 sm:block" /><Box title="src/lib" >Small typed wrappers</Box><ArrowRight className="hidden h-5 w-5 text-slate-400 sm:block" /><Box title="Tauri commands" >Native operations</Box><ArrowRight className="hidden h-5 w-5 text-slate-400 sm:block" /><Box title="Rust adapters" >OS/source integration</Box></div></Diagram></Section>
   <Section id="frontend" title="3. Frontend"><p><code>src/App.tsx</code> owns the main launcher experience. Focused libraries under <code>src/lib/</code> wrap cloud, authentication, metadata, mod providers, platform, source, service-key, and theme behaviour.</p><p>Reusable setup/import/content components live under <code>src/components/</code>.</p></Section>
   <Section id="native" title="4. Tauri and Rust"><p><code>src-tauri/src/main.rs</code> registers native commands for launching, source discovery, playtime, themes, notifications, and mod file management. Rust owns operations that require local filesystem/process access.</p></Section>
   <Section id="platforms" title="5. Platform adapters"><p><code>src-tauri/src/platform/</code> isolates Linux, macOS, and unsupported-platform behaviour. Linux currently exposes Flatpak support and source-aware launching; macOS exposes application-bundle and shell-script handling.</p></Section>
