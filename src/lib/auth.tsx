@@ -1,7 +1,10 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { isAuthRetryableFetchError, type Session } from '@supabase/supabase-js'
 import { AuthContext } from './auth-context'
 import { supabase, type Profile } from './supabase'
+
+// An access token with more than this left is used as-is on load instead of being rotated.
+const FRESH_SESSION_MS = 60_000
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
@@ -40,29 +43,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let active = true
     client.auth.getSession().then(async ({ data }) => {
       if (!active) return
-      if (data.session) {
-        // Refresh the persisted session on return; Supabase rotates refresh tokens.
-        const refreshed = await client.auth.refreshSession()
-        if (!active) return
-        if (refreshed.error && isAuthRetryableFetchError(refreshed.error)) {
-          // Offline or the auth service is briefly unavailable: that says nothing about the session, so keep it
-          // (Supabase retries the refresh in the background) instead of signing the user out.
-          setSession(data.session)
-        } else if (refreshed.error || !refreshed.data.session) {
-          await client.auth.signOut({ scope: 'local' })
-          if (active) {
-            setSession(null)
-            setProfile(null)
-          }
-        } else {
-          setSession(refreshed.data.session)
-        }
-        if (active) setLoading(false)
-      } else {
+      const storedSession = data.session
+      if (!storedSession) {
         setSession(null)
         setProfile(null)
         setLoading(false)
+        return
       }
+      const expiresInMs = storedSession.expires_at ? storedSession.expires_at * 1000 - Date.now() : 0
+      if (expiresInMs > FRESH_SESSION_MS) {
+        // The stored access token is still usable: don't spend a network round trip rotating it
+        // before `loading` clears. autoRefreshToken keeps it fresh while the tab is open.
+        setSession(storedSession)
+        setLoading(false)
+        return
+      }
+      const refreshed = await client.auth.refreshSession()
+      if (!active) return
+      if (refreshed.error && isAuthRetryableFetchError(refreshed.error)) {
+        // Offline or the auth service is briefly unavailable: that says nothing about the session, so keep it
+        // (Supabase retries the refresh in the background) instead of signing the user out.
+        setSession(storedSession)
+      } else if (refreshed.error || !refreshed.data.session) {
+        await client.auth.signOut({ scope: 'local' })
+        if (active) {
+          setSession(null)
+          setProfile(null)
+        }
+      } else {
+        setSession(refreshed.data.session)
+      }
+      if (active) setLoading(false)
     }).catch(() => {
       if (active) {
         setSession(null)
@@ -90,5 +101,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void Promise.resolve().then(() => refreshProfile())
   }, [userId, refreshProfile])
 
-  return <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, loading, refreshProfile }}>{children}</AuthContext.Provider>
+  // Memoised so consumers (header, gates, dashboard tabs) don't re-render on every AuthProvider render.
+  const value = useMemo(
+    () => ({ session, user: session?.user ?? null, profile, loading, refreshProfile }),
+    [session, profile, loading, refreshProfile],
+  )
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

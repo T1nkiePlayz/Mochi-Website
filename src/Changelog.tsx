@@ -24,21 +24,44 @@ function releaseKind(release: Release) {
   return 'Release'
 }
 
+// GitHub's unauthenticated API allows 60 requests/hour per IP, so the last good payload is kept
+// locally and shown when the request fails or is rate-limited.
+const RELEASES_CACHE_KEY = 'mochi:releases:v1'
+
+function readReleaseCache(): Release[] | null {
+  try {
+    const raw = window.localStorage.getItem(RELEASES_CACHE_KEY)
+    if (!raw) return null
+    const parsed: unknown = JSON.parse(raw)
+    return Array.isArray(parsed) ? (parsed as Release[]) : null
+  } catch {
+    return null
+  }
+}
+
+function writeReleaseCache(releases: Release[]) {
+  try {
+    window.localStorage.setItem(RELEASES_CACHE_KEY, JSON.stringify(releases))
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+const cachedReleases = readReleaseCache()
+
 export function ChangelogPage() {
-  const [releases, setReleases] = useState<Release[]>([])
-  const [loading, setLoading] = useState(true)
+  const [releases, setReleases] = useState<Release[]>(cachedReleases ?? [])
+  const [loading, setLoading] = useState(cachedReleases === null)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
   const requestId = useRef(0)
   const controller = useRef<AbortController | null>(null)
 
-  const load = useCallback(async (manual = false) => {
+  const load = useCallback(async () => {
     const id = ++requestId.current
     controller.current?.abort()
     const request = new AbortController()
     controller.current = request
-    if (manual) setRefreshing(true)
-    else setLoading(true)
     try {
       const response = await fetch('https://api.github.com/repos/T1nkiePlayz/Mochi/releases?per_page=30', {
         headers: { Accept: 'application/vnd.github+json' },
@@ -52,6 +75,7 @@ export function ChangelogPage() {
       if (id !== requestId.current || request.signal.aborted) return
       setReleases(data as Release[])
       setError('')
+      writeReleaseCache(data as Release[])
     } catch (err) {
       if (request.signal.aborted || id !== requestId.current) return
       setError(err instanceof Error ? err.message : 'Unable to load releases.')
@@ -64,6 +88,8 @@ export function ChangelogPage() {
   }, [])
 
   useEffect(() => {
+    // `load()` only touches state after `await fetch(...)`, which this rule cannot model.
+    // eslint-disable-next-line react/set-state-in-effect
     void load()
     return () => {
       requestId.current += 1
@@ -88,14 +114,14 @@ export function ChangelogPage() {
           <Tag className="h-4 w-4 text-violet-300" />
           {loading ? 'Loading releases…' : `${releases.length} release${releases.length === 1 ? '' : 's'} loaded`}
         </div>
-        <button type="button" onClick={() => void load(true)} disabled={refreshing} className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-violet-400/40 hover:bg-white/10 disabled:opacity-50">
+        <button type="button" onClick={() => { setRefreshing(true); void load() }} disabled={refreshing} className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-violet-400/40 hover:bg-white/10 disabled:opacity-50">
           <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} /> {refreshing ? 'Refreshing…' : 'Refresh'}
         </button>
       </div>
 
       {error && (
         <div role="status" className="rounded-2xl border border-amber-400/20 bg-amber-500/5 p-5 text-sm text-amber-200">
-          <div className="flex items-start gap-3"><AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" /><div><p className="font-semibold">{releases.length ? 'Refresh failed; showing the last loaded releases.' : "We couldn't load the release history."}</p><p className="mt-1 text-amber-200/70">{error}</p><a href="https://github.com/T1nkiePlayz/Mochi/releases" target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 font-semibold underline underline-offset-2">Open releases on GitHub <ExternalLink className="h-3.5 w-3.5" /></a></div></div>
+          <div className="flex items-start gap-3"><AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" /><div><p className="font-semibold">{releases.length ? 'Couldn’t refresh; showing the releases saved on this device.' : "We couldn't load the release history."}</p><p className="mt-1 text-amber-200/70">{error}</p><a href="https://github.com/T1nkiePlayz/Mochi/releases" target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 font-semibold underline underline-offset-2">Open releases on GitHub <ExternalLink className="h-3.5 w-3.5" /></a></div></div>
         </div>
       )}
 
@@ -111,7 +137,7 @@ export function ChangelogPage() {
           {releases.map((release, index) => (
             <article key={release.id} className="relative sm:pl-14">
               <div className="absolute left-0 top-6 hidden h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-slate-950 sm:flex">
-                <CalendarDays className={`h-4 w-4 ${index === 0 ? 'text-violet-300' : 'text-slate-500'}`} />
+                <CalendarDays className={`h-4 w-4 ${index === 0 ? 'text-violet-300' : 'text-slate-400'}`} />
               </div>
               <div className="glass-card p-6 sm:p-7">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -119,10 +145,10 @@ export function ChangelogPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="rounded-full border border-violet-400/20 bg-violet-500/10 px-2.5 py-1 text-xs font-mono font-semibold text-violet-200">{release.tag_name}</span>
                       {index === 0 && <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-300">Latest</span>}
-                      <span className="text-xs text-slate-500">{releaseKind(release)}</span>
+                      <span className="text-xs text-slate-400">{releaseKind(release)}</span>
                     </div>
                     <h2 className="mt-3 text-2xl font-bold text-white">{release.name || release.tag_name}</h2>
-                    <p className="mt-2 text-sm text-slate-500">{formatDate(release.published_at)}</p>
+                    <p className="mt-2 text-sm text-slate-400">{formatDate(release.published_at)}</p>
                   </div>
                   <a href={release.html_url} target="_blank" rel="noreferrer" className="inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-violet-400/40 hover:text-white">
                     View release <ArrowUpRight className="h-3.5 w-3.5" />
@@ -132,7 +158,7 @@ export function ChangelogPage() {
                   {release.body ? (
                     <div className="whitespace-pre-wrap break-words text-sm leading-7 text-slate-300">{release.body}</div>
                   ) : (
-                    <p className="text-sm italic text-slate-500">This release has no release notes.</p>
+                    <p className="text-sm italic text-slate-400">This release has no release notes.</p>
                   )}
                 </div>
               </div>
