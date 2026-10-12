@@ -1,5 +1,18 @@
 @import 'tailwindcss';
 
+@theme {
+  /* Mint accent scale — matched to the launcher's --mochi-* tokens
+     (accent #b9dbc8, accent-dark #84b69f). */
+  --color-mint-50: #eef8f2;
+  --color-mint-100: #e0f2e9;
+  --color-mint-200: #d7eee2;
+  --color-mint-300: #b9dbc8;
+  --color-mint-400: #9ccbb4;
+  --color-mint-500: #84b69f;
+  --color-mint-600: #5f9c84;
+  --color-mint-700: #3f7a63;
+}
+
 :root {
   /* No webfont is shipped: 'Inter' was never loaded, so the stack starts at a font that exists. */
   font-family: 'Segoe UI', system-ui, sans-serif;
@@ -61,7 +74,7 @@ input {
   position: absolute;
   width: 42rem;
   height: 42rem;
-  border: 1px solid rgba(139, 92, 246, 0.10);
+  border: 1px solid rgba(132, 182, 159, 0.14);
   border-radius: 9999px;
   filter: blur(0.2px);
   animation: mochi-drift 14s ease-in-out infinite;
@@ -71,7 +84,7 @@ input {
   content: '';
   position: absolute;
   inset: 18%;
-  border: 1px solid rgba(34, 211, 238, 0.08);
+  border: 1px solid rgba(185, 219, 200, 0.10);
   border-radius: inherit;
 }
 
@@ -113,13 +126,13 @@ input {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
 .gradient-text {
-  color: #ddd6fe;
+  color: #d7eee2;
 }
 
 @supports ((-webkit-background-clip: text) or (background-clip: text)) {
   .gradient-text {
-    background-image: linear-gradient(to right, #c4b5fd, #ffffff, #67e8f9);
-    background-color: #ddd6fe;
+    background-image: linear-gradient(to right, #9ccbb4, #ffffff, #b9dbc8);
+    background-color: #d7eee2;
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;

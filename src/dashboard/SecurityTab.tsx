@@ -271,7 +271,7 @@ function ServiceKeysPanel() {
                   <div className="flex flex-wrap items-center gap-2">
                     <button disabled={busy} onClick={() => void save(service.id)} className={btn('primary')}>{busy ? 'Saving…' : 'Save key'}</button>
                     <button disabled={busy} onClick={reset} className={btn('ghost')}>Cancel</button>
-                    <a href={service.link} target="_blank" rel="noreferrer" className="ml-auto text-xs text-violet-300 underline decoration-violet-400/40 underline-offset-2 hover:text-white">Get a key ↗</a>
+                    <a href={service.link} target="_blank" rel="noreferrer" className="ml-auto text-xs text-mint-300 underline decoration-mint-400/40 underline-offset-2 hover:text-white">Get a key ↗</a>
                   </div>
                 </div>
               )}

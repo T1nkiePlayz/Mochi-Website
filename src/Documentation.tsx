@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Cloud, Code2, Download, Gamepad2, KeyRound, Layers3, Package, Palette, Rocket, Search, ShieldCheck, Terminal, Wrench } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ArrowUpRight, BookOpen, CheckCircle2, Cloud, Code2, Download, Gamepad2, KeyRound, Layers3, Package, Palette, Rocket, Search, ShieldCheck, Terminal, Wrench } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useMemo, useState, type MouseEvent, type ReactNode } from 'react'
 
@@ -46,15 +46,15 @@ function Section({ id, title, children }: { id: string; title: string; children:
 }
 
 function Callout({ icon: Icon = Wrench, title, children }: { icon?: typeof Wrench; title: string; children: ReactNode }) {
-  return <div className="rounded-2xl border border-violet-400/15 bg-violet-500/[0.05] p-5"><div className="flex items-start gap-3"><Icon className="mt-1 h-5 w-5 shrink-0 text-violet-300" /><div><p className="font-semibold text-white">{title}</p><div className="mt-1 text-sm leading-6 text-slate-400">{children}</div></div></div></div>
+  return <div className="rounded-2xl border border-mint-400/15 bg-mint-500/[0.05] p-5"><div className="flex items-start gap-3"><Icon className="mt-1 h-5 w-5 shrink-0 text-mint-300" /><div><p className="font-semibold text-white">{title}</p><div className="mt-1 text-sm leading-6 text-slate-400">{children}</div></div></div></div>
 }
 
 function Diagram({ title, children }: { title: string; children: ReactNode }) {
-  return <div className="my-7 overflow-x-auto rounded-2xl border border-white/10 bg-black/20 p-5"><p className="mb-4 text-xs font-semibold uppercase tracking-[0.16em] text-violet-300">{title}</p>{children}</div>
+  return <div className="my-7 overflow-x-auto rounded-2xl border border-white/10 bg-black/20 p-5"><p className="mb-4 text-xs font-semibold uppercase tracking-[0.16em] text-mint-300">{title}</p>{children}</div>
 }
 
 function Box({ title, children, muted = false }: { title: string; children?: ReactNode; muted?: boolean }) {
-  return <div className={`min-w-[155px] rounded-xl border px-4 py-3 text-center ${muted ? 'border-white/10 bg-white/[0.03]' : 'border-violet-400/25 bg-violet-500/[0.07]'}`}><p className="text-sm font-semibold text-white">{title}</p>{children && <p className="mt-1 text-xs leading-5 text-slate-400">{children}</p>}</div>
+  return <div className={`min-w-[155px] rounded-xl border px-4 py-3 text-center ${muted ? 'border-white/10 bg-white/[0.03]' : 'border-mint-400/25 bg-mint-500/[0.07]'}`}><p className="text-sm font-semibold text-white">{title}</p>{children && <p className="mt-1 text-xs leading-5 text-slate-400">{children}</p>}</div>
 }
 
 export function DocumentationPage() {
@@ -65,17 +65,17 @@ export function DocumentationPage() {
   }, [query])
 
   return <div className="space-y-10 pb-10">
-    <header className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-violet-500/10 via-slate-950/70 to-cyan-500/10 p-7 sm:p-10">
-      <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-violet-500/10 blur-3xl" />
+    <header className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-mint-500/10 via-slate-950/70 to-cyan-500/10 p-7 sm:p-10">
+      <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-mint-500/10 blur-3xl" />
       <div className="relative">
-        <div className="inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-violet-200"><BookOpen className="h-3.5 w-3.5" /> Documentation</div>
+        <div className="inline-flex items-center gap-2 rounded-full border border-mint-400/20 bg-mint-500/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-mint-200"><BookOpen className="h-3.5 w-3.5" /> Documentation</div>
         <h1 className="mt-5 max-w-4xl text-4xl font-black tracking-tight text-white sm:text-5xl">How Mochi actually works.</h1>
         <p className="mt-5 max-w-4xl text-lg leading-8 text-slate-300">This documentation follows the current Mochi Launcher implementation: a Tauri desktop launcher for Linux and macOS (Linux is the primary, best-tested platform; Windows is not supported) with local game management, source importing, metadata, mods from Modrinth, CurseForge, and Nexus Mods, a controller-first Big Picture mode, themes, achievements, account security, and optional cloud metadata. Mochi is in early development, so formats and screens may still change.</p>
         <div className="mt-7 flex max-w-2xl items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3"><Search className="h-5 w-5 text-slate-400" /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search documentation sections..." className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-400" /></div>
       </div>
     </header>
     <div className="grid gap-4 md:grid-cols-2">
-      {filtered.map(({ slug, title, description, icon: Icon, status }) => <Link key={slug} to={`/documentation/${slug}`} className="glass-card group p-6 transition hover:-translate-y-0.5 hover:border-violet-400/25"><div className="flex items-start justify-between gap-4"><div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04]"><Icon className="h-5 w-5 text-violet-300" /></div><span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold text-slate-400">{status}</span></div><h2 className="mt-5 text-xl font-bold text-white">{title}</h2><p className="mt-2 text-sm leading-6 text-slate-400">{description}</p><div className="mt-5 flex items-center gap-2 text-sm font-semibold text-violet-300">Read documentation <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></div></Link>)}
+      {filtered.map(({ slug, title, description, icon: Icon, status }) => <Link key={slug} to={`/documentation/${slug}`} className="glass-card group p-6 transition hover:-translate-y-0.5 hover:border-mint-400/25"><div className="flex items-start justify-between gap-4"><div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04]"><Icon className="h-5 w-5 text-mint-300" /></div><span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold text-slate-400">{status}</span></div><h2 className="mt-5 text-xl font-bold text-white">{title}</h2><p className="mt-2 text-sm leading-6 text-slate-400">{description}</p><div className="mt-5 flex items-center gap-2 text-sm font-semibold text-mint-300">Read documentation <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></div></Link>)}
     </div>
     {!filtered.length && <div className="glass-card p-8 text-center text-sm text-slate-400">No documentation sections match <strong className="text-slate-200">{query}</strong>.</div>}
   </div>
@@ -86,7 +86,7 @@ export function DocumentationArticlePage() {
   const navigate = useNavigate()
   const index = sections.findIndex(item => item.slug === section)
   const current = sections[index]
-  if (!current) return <div className="glass-card p-10"><h1 className="text-2xl font-bold text-white">Documentation not found</h1><Link className="mt-4 inline-flex text-violet-300" to="/documentation">Back to documentation</Link></div>
+  if (!current) return <div className="glass-card p-10"><h1 className="text-2xl font-bold text-white">Documentation not found</h1><Link className="mt-4 inline-flex text-mint-300" to="/documentation">Back to documentation</Link></div>
 
   // The hash belongs to the router: a bare `#id` link would make HashRouter read `id` as the
   // pathname and fall through to the 404 route. Scroll here instead and record the anchor through
@@ -108,7 +108,7 @@ export function DocumentationArticlePage() {
     <div className="mb-6 flex flex-wrap items-center justify-between gap-3"><Link to="/documentation" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 transition hover:text-white"><ArrowLeft className="h-4 w-4" /> Back to docs</Link><span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{current.status}</span></div>
     <div className="grid gap-8 lg:grid-cols-[220px_1fr]">
       <aside className="hidden lg:block"><div className="sticky top-24 space-y-2"><p className="px-3 pb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">On this page</p>{articleHeadings.map(([id, title]) => <a key={id} href={`#/documentation/${current.slug}#${id}`} onClick={jumpTo(id)} className="block rounded-lg px-3 py-2 text-sm text-slate-400 transition hover:bg-white/[0.04] hover:text-slate-200">{title}</a>)}</div></aside>
-      <article className="min-w-0"><header className="mb-9"><div className="inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-violet-200"><current.icon className="h-3.5 w-3.5" /> {current.title}</div><h1 className="mt-5 text-4xl font-black tracking-tight text-white sm:text-5xl">{current.title}</h1><p className="mt-4 max-w-3xl text-lg leading-8 text-slate-400">{current.description}</p></header>{renderArticle(current.slug)}<nav className="mt-10 grid gap-3 sm:grid-cols-2">{previous ? <Link to={`/documentation/${previous.slug}`} className="glass-card p-4"><span className="text-xs text-slate-400">Previous</span><span className="mt-1 flex items-center gap-2 font-semibold text-white"><ArrowLeft className="h-4 w-4" />{previous.title}</span></Link> : <span />}{next ? <Link to={`/documentation/${next.slug}`} className="glass-card p-4 text-right"><span className="text-xs text-slate-400">Next</span><span className="mt-1 flex items-center justify-end gap-2 font-semibold text-white">{next.title}<ArrowRight className="h-4 w-4" /></span></Link> : <span />}</nav></article>
+      <article className="min-w-0"><header className="mb-9"><div className="inline-flex items-center gap-2 rounded-full border border-mint-400/20 bg-mint-500/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-mint-200"><current.icon className="h-3.5 w-3.5" /> {current.title}</div><h1 className="mt-5 text-4xl font-black tracking-tight text-white sm:text-5xl">{current.title}</h1><p className="mt-4 max-w-3xl text-lg leading-8 text-slate-400">{current.description}</p><p className="mt-3"><a href="https://github.com/T1nkiePlayz/Mochi/tree/main/docs" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-mint-300 transition hover:text-white">View source in the launcher repo <ArrowUpRight className="h-4 w-4" /></a></p></header>{renderArticle(current.slug)}<nav className="mt-10 grid gap-3 sm:grid-cols-2">{previous ? <Link to={`/documentation/${previous.slug}`} className="glass-card p-4"><span className="text-xs text-slate-400">Previous</span><span className="mt-1 flex items-center gap-2 font-semibold text-white"><ArrowLeft className="h-4 w-4" />{previous.title}</span></Link> : <span />}{next ? <Link to={`/documentation/${next.slug}`} className="glass-card p-4 text-right"><span className="text-xs text-slate-400">Next</span><span className="mt-1 flex items-center justify-end gap-2 font-semibold text-white">{next.title}<ArrowRight className="h-4 w-4" /></span></Link> : <span />}</nav></article>
     </div>
   </div>
 }
@@ -194,7 +194,7 @@ function Integrations() { return <div className="space-y-9">
 </div> }
 
 function Account() { return <div className="space-y-9">
-  <Section id="methods" title="1. Authentication"><p>The desktop launcher supports email/password, email sign-in codes, Google, GitHub, and passkeys. An account is optional. Email verification can return to the desktop application through a <code>mochi://</code> deep link.</p></Section>
+  <Section id="methods" title="1. Authentication"><p>The desktop launcher supports email/password, email sign-in codes, Google, GitHub, and passkeys. An account is optional. Email verification can return to the desktop application through a <code>mochi://</code> deep link. When you choose a password on the website, it is checked against the HaveIBeenPwned breached-password corpus using k-anonymity: only a partial hash ever leaves your device, and the check never runs for sign-in.</p></Section>
   <Section id="switching" title="2. Account switching"><p>Mochi can remember up to five signed-in accounts locally. Switching restores the selected account session; invalid saved sessions are removed and require signing in again.</p><Callout title="Local session storage">Saved account session material is local application state. It should be treated as sensitive and must not be copied into bug reports or shared.</Callout></Section>
   <Section id="sessions" title="3. Sessions"><p>The authentication client persists sessions and listens for authentication changes. Signing in to an account does not automatically enable cloud synchronisation.</p></Section>
   <Section id="totp" title="4. Authenticator app"><p>The authenticator app is Mochi's time-based one-time-code second factor. Enrollment provides a QR/manual secret and requires a six-digit verification code before the factor becomes active.</p></Section>

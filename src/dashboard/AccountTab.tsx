@@ -2,6 +2,7 @@ import type { User } from '@supabase/supabase-js'
 import { Download, LogOut, Mail, Trash2, UserRound, KeyRound } from 'lucide-react'
 import { useState } from 'react'
 import { avatarFor } from '../lib/avatar'
+import { passwordIsBreached } from '../lib/password'
 import { deleteMyAccount, signOutEverywhere, supabase, updateEmail, updateMyProfile, updatePassword, type Profile } from '../lib/supabase'
 import { ConfirmAction, CopyButton, Field, Panel, Row } from './ui'
 import { btn, formatDate, input } from './ui-utils'
@@ -88,6 +89,8 @@ function PasswordPanel() {
   const save = async () => {
     if (next.length < 8) { n.error('Choose a password with at least 8 characters.'); return }
     setBusy(true); n.clear()
+    const breached = await passwordIsBreached(next)
+    if (breached) { n.error('That password has appeared in a public data breach. Please choose a different one.'); setBusy(false); return }
     const { error } = await updatePassword(next, current || undefined)
     if (error) n.error(error.message)
     else { n.success('Password updated.'); setCurrent(''); setNext('') }

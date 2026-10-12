@@ -8,7 +8,7 @@ export function Panel({
   return (
     <section className={`glass-card p-5 sm:p-6 ${tone === 'danger' ? '!border-rose-400/25' : ''}`}>
       <header className="flex items-start gap-3">
-        {Icon && <span className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${tone === 'danger' ? 'bg-rose-500/10 text-rose-300' : 'bg-violet-500/10 text-violet-200'}`}><Icon className="h-4 w-4" /></span>}
+        {Icon && <span className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${tone === 'danger' ? 'bg-rose-500/10 text-rose-300' : 'bg-mint-500/10 text-mint-200'}`}><Icon className="h-4 w-4" /></span>}
         <div className="min-w-0 flex-1">
           <h3 className="text-base font-semibold text-white">{title}</h3>
           {description && <p className="mt-1 text-sm leading-6 text-slate-400">{description}</p>}
@@ -38,7 +38,7 @@ export function Chip({ tone = 'muted', children }: { tone?: keyof typeof chipTon
 export function Row({ icon: Icon, title, detail, right }: { icon?: LucideIcon; title: ReactNode; detail?: ReactNode; right?: ReactNode }) {
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-white/[0.025] px-4 py-3">
-      {Icon && <Icon className="h-4 w-4 shrink-0 text-violet-300" />}
+      {Icon && <Icon className="h-4 w-4 shrink-0 text-mint-300" />}
       <div className="min-w-0 flex-1 basis-40">
         <p className="truncate text-sm font-medium text-white">{title}</p>
         {detail && <p className="mt-0.5 text-xs text-slate-400">{detail}</p>}

@@ -4,6 +4,7 @@ import {
   Cloud,
   Download,
   Gamepad2,
+  Languages,
   Layers3,
   Rocket,
   ShieldCheck,
@@ -11,6 +12,7 @@ import {
   KeyRound,
   Smartphone,
   ChevronRight,
+  Gauge,
   Menu,
   X,
 } from 'lucide-react'
@@ -34,6 +36,7 @@ import {
 } from './lib/supabase'
 import { AuthProvider } from './lib/auth'
 import { useAuth } from './lib/useAuth'
+import { passwordIsBreached } from './lib/password'
 
 const base = import.meta.env.BASE_URL
 const logoSrc = `${base}mochi.png`
@@ -91,7 +94,7 @@ function AuthHeader() {
     return (
       <Link
         to="/signin"
-        className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-500/30 transition hover:brightness-110"
+        className="rounded-full bg-gradient-to-r from-mint-400 to-mint-300 px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-mint-500/30 transition hover:brightness-110"
       >
         Sign in
       </Link>
@@ -104,7 +107,7 @@ function AuthHeader() {
       to="/dashboard"
       aria-label="Open your Mochi dashboard"
       title="Account dashboard"
-      className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-white/5 transition hover:border-violet-400/60 hover:bg-violet-500/10"
+      className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-white/5 transition hover:border-mint-400/60 hover:bg-mint-500/10"
     >
       {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" /> : <span className="text-xs font-bold text-slate-100">{initials}</span>}
     </Link>
@@ -206,7 +209,7 @@ function App() {
               <button
                 ref={mobileMenuButton}
                 type="button"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-slate-100 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-300 md:hidden"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-slate-100 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-mint-300 md:hidden"
                 aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
                 aria-expanded={mobileMenuOpen}
                 aria-controls="mobile-navigation"
@@ -216,7 +219,7 @@ function App() {
               </button>
               <Link
                 to="/download"
-                className="hidden rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-violet-400/60 hover:bg-violet-500/10 sm:inline-flex"
+                className="hidden rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-mint-400/60 hover:bg-mint-500/10 sm:inline-flex"
               >
                 Download
               </Link>
@@ -241,7 +244,7 @@ function App() {
                   to={item.to}
                   onClick={() => setMobileMenuOpen(false)}
                   className={({ isActive }) =>
-                    `rounded-xl px-3 py-2.5 text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-300 ${isActive ? 'bg-violet-500/15 text-white' : 'text-slate-300 hover:bg-white/5 hover:text-white'}`
+                    `rounded-xl px-3 py-2.5 text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-mint-300 ${isActive ? 'bg-mint-500/15 text-white' : 'text-slate-300 hover:bg-white/5 hover:text-white'}`
                   }
                 >
                   {item.label}
@@ -318,6 +321,8 @@ const featureHighlights = [
   { icon: Gamepad2, title: 'Organise games your way', text: 'Keep one Piko for a game and create multiple Tofus for different versions, modded setups, performance profiles, or testing environments.' },
   { icon: Cloud, title: 'Optional cloud sync', text: 'When enabled for your account, Mochi can synchronise library metadata (Pikos and Tofus) without uploading game files. Syncing achievements to Mochi Cloud is a recent addition still in early development.' },
   { icon: ShieldCheck, title: 'Account controls', text: 'Use Google, GitHub, an email sign-in code, or email and password, with authenticator-app two-factor authentication and passkeys available when configured.' },
+  { icon: Languages, title: 'In your language', text: 'The launcher interface is fully localised into 29 languages, so menus, settings and prompts read naturally wherever you are. English is the fallback for anything untranslated.' },
+  { icon: Gauge, title: 'Everyday comforts', text: 'Play limits, an account PIN for quick parental control, tray quick launch, launch hooks, live folder watching that keeps the library in step, and a per-game screenshot manager.' },
 ]
 
 const steps = [
@@ -342,15 +347,15 @@ function HomePage() {
         <div className="mochi-orbit mochi-orbit-one" />
         <div className="mochi-orbit mochi-orbit-two" />
         <div className="mochi-grid" />
-        <div className="absolute left-[8%] top-48 h-2 w-2 rounded-full bg-violet-300/70 blur-[1px]" />
+        <div className="absolute left-[8%] top-48 h-2 w-2 rounded-full bg-mint-300/70 blur-[1px]" />
         <div className="absolute right-[14%] top-[38rem] h-1.5 w-1.5 rounded-full bg-cyan-200/70" />
       </div>
 
       <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/45 px-6 py-20 sm:px-10 lg:px-14">
-        <div className="absolute -left-32 top-0 h-96 w-96 rounded-full bg-violet-600/20 blur-3xl mochi-glow mochi-glow-one" />
+        <div className="absolute -left-32 top-0 h-96 w-96 rounded-full bg-mint-600/20 blur-3xl mochi-glow mochi-glow-one" />
         <div className="absolute -right-32 bottom-0 h-96 w-96 rounded-full bg-cyan-500/15 blur-3xl mochi-glow mochi-glow-two" />
         <div className="relative z-10 mx-auto max-w-5xl text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-violet-200">
+          <div className="inline-flex items-center gap-2 rounded-full border border-mint-400/30 bg-mint-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-mint-200">
             <Sparkles className="h-4 w-4" /> Linux-first game launcher · early development
           </div>
           <h1 className="mt-7 text-5xl font-black tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl">
@@ -360,8 +365,8 @@ function HomePage() {
             Mochi is a flexible desktop game launcher built around local control. Bring your games together, give every setup its own environment, and use optional online services when they actually help.
           </p>
           <div className="mt-9 flex justify-center gap-4 flex-wrap">
-            <Link to="/download" className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-6 py-3.5 font-semibold text-white shadow-xl shadow-violet-500/25 transition hover:scale-[1.02] hover:brightness-110">Get Mochi <ArrowRight className="h-4 w-4" /></Link>
-            <Link to="/documentation" className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-6 py-3.5 font-semibold text-slate-100 transition hover:border-violet-400/40 hover:bg-white/10">Explore the docs</Link>
+            <Link to="/download" className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-mint-400 to-mint-300 px-6 py-3.5 font-semibold text-slate-900 shadow-xl shadow-mint-500/25 transition hover:scale-[1.02] hover:brightness-110">Get Mochi <ArrowRight className="h-4 w-4" /></Link>
+            <Link to="/documentation" className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-6 py-3.5 font-semibold text-slate-100 transition hover:border-mint-400/40 hover:bg-white/10">Explore the docs</Link>
           </div>
           <div className="mt-12 grid gap-3 text-left sm:grid-cols-3">
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"><p className="font-semibold text-white">Local-first</p><p className="mt-1 text-sm text-slate-400">Games stay on your device.</p></div>
@@ -370,14 +375,30 @@ function HomePage() {
           </div>
         </div>
       </section>
+      <section aria-label="Mochi library preview" className="-mt-14 sm:-mt-20">
+        <figure className="overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/60 shadow-2xl shadow-mint-500/10">
+          <img
+            src={`${base}screenshots/library.webp`}
+            alt="The Mochi library showing game covers, collections, tags and the Continue playing shelf"
+            width={1440}
+            height={900}
+            loading="lazy"
+            decoding="async"
+            className="h-auto w-full"
+          />
+          <figcaption className="border-t border-white/10 px-5 py-3 text-sm text-slate-400">
+            The Mochi library — covers, collections, saved filters and a Continue playing shelf.
+          </figcaption>
+        </figure>
+      </section>
       <section>
         <div className="max-w-3xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-300">Why Mochi</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-mint-300">Why Mochi</p>
           <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl">A launcher that stays out of the way.</h2>
           <p className="mt-4 text-lg leading-8 text-slate-400">Mochi is designed to be the layer between you and the games already on your machine. It does not try to become a game store, replace publishers, or move your entire library into the cloud.</p>
         </div>
         <div className="mt-9 grid gap-5 md:grid-cols-2">
-          {featureHighlights.map(({icon:Icon,title,text}) => <article key={title} className="glass-card p-6"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-500/10 text-violet-200"><Icon className="h-5 w-5"/></div><h3 className="mt-5 text-xl font-semibold text-white">{title}</h3><p className="mt-3 leading-7 text-slate-300">{text}</p></article>)}
+          {featureHighlights.map(({icon:Icon,title,text}) => <article key={title} className="glass-card p-6"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-mint-500/10 text-mint-200"><Icon className="h-5 w-5"/></div><h3 className="mt-5 text-xl font-semibold text-white">{title}</h3><p className="mt-3 leading-7 text-slate-300">{text}</p></article>)}
         </div>
       </section>
 
@@ -390,10 +411,10 @@ function HomePage() {
             <p className="mt-4 leading-7 text-slate-400">The core model separates a game’s identity from the way you run it, so one game can have as many environments as you need.</p>
           </div>
           <div className="mt-10 grid gap-4 lg:grid-cols-3">
-            {pillars.map(({icon:Icon,title,description}) => <article key={title} className="glass-card p-6 transition hover:-translate-y-1 hover:border-violet-400/30"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-500/10 text-violet-200"><Icon className="h-6 w-6"/></div><h3 className="mt-5 text-xl font-semibold text-white">{title}</h3><p className="mt-3 leading-7 text-slate-300">{description}</p></article>)}
+            {pillars.map(({icon:Icon,title,description}) => <article key={title} className="glass-card p-6 transition hover:-translate-y-1 hover:border-mint-400/30"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-mint-500/10 text-mint-200"><Icon className="h-6 w-6"/></div><h3 className="mt-5 text-xl font-semibold text-white">{title}</h3><p className="mt-3 leading-7 text-slate-300">{description}</p></article>)}
           </div>
           <div className="mt-5 grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-center">
-            <div className="rounded-2xl border border-violet-400/20 bg-violet-500/[0.07] p-5 text-center"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">Piko</p><p className="mt-2 text-lg font-bold text-white">What you play</p><p className="mt-1 text-sm text-slate-400">The game’s identity and library record.</p></div>
+            <div className="rounded-2xl border border-mint-400/20 bg-mint-500/[0.07] p-5 text-center"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-mint-300">Piko</p><p className="mt-2 text-lg font-bold text-white">What you play</p><p className="mt-1 text-sm text-slate-400">The game’s identity and library record.</p></div>
             <div className="hidden text-2xl text-slate-400 md:block">→</div>
             <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/[0.06] p-5 text-center"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">Tofu</p><p className="mt-2 text-lg font-bold text-white">How you play it</p><p className="mt-1 text-sm text-slate-400">A specific environment, setup, or configuration.</p></div>
           </div>
@@ -401,17 +422,17 @@ function HomePage() {
       </section>
       <section>
         <div className="max-w-3xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-300">From library to launch</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-mint-300">From library to launch</p>
           <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl">Four steps from setup to Play.</h2>
         </div>
         <div className="mt-9 grid gap-4 lg:grid-cols-4">
-          {steps.map(([number,title,text]) => <article key={number} className="glass-card relative p-6"><p className="text-sm font-mono text-violet-300">{number}</p><h3 className="mt-5 text-xl font-semibold text-white">{title}</h3><p className="mt-3 text-sm leading-7 text-slate-300">{text}</p></article>)}
+          {steps.map(([number,title,text]) => <article key={number} className="glass-card relative p-6"><p className="text-sm font-mono text-mint-300">{number}</p><h3 className="mt-5 text-xl font-semibold text-white">{title}</h3><p className="mt-3 text-sm leading-7 text-slate-300">{text}</p></article>)}
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-violet-500/10 via-slate-900/60 to-cyan-500/10 p-8 sm:p-12">
+      <section className="overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-mint-500/10 via-slate-900/60 to-cyan-500/10 p-8 sm:p-12">
         <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
-          <div><p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-300">Local-first</p><h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl">Your game files belong to you.</h2><p className="mt-4 leading-7 text-slate-300">Mochi stores the information it needs to manage your library locally. Optional cloud features are focused on supported metadata and account data. A network outage should not turn an already-installed local game into a cloud-dependent file.</p></div>
+          <div><p className="text-sm font-semibold uppercase tracking-[0.2em] text-mint-300">Local-first</p><h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl">Your game files belong to you.</h2><p className="mt-4 leading-7 text-slate-300">Mochi stores the information it needs to manage your library locally. Optional cloud features are focused on supported metadata and account data. A network outage should not turn an already-installed local game into a cloud-dependent file.</p></div>
           <div className="grid gap-3">
             {['Game installations stay local','Launch targets stay tied to your machine','Cloud sync is optional and access-controlled','IGDB enrichment is optional','No complete game installations uploaded by Mochi'].map(x=><div key={x} className="flex items-center gap-3 rounded-xl border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-200"><CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-300"/>{x}</div>)}
           </div>
@@ -421,19 +442,19 @@ function HomePage() {
       <section className="grid items-center gap-10 lg:grid-cols-[1fr_.9fr]">
         <div><p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">Made for Linux first</p><h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl">Native where it matters.</h2><p className="mt-4 leading-7 text-slate-400">Mochi uses a web-based interface inside Tauri, while Rust handles desktop responsibilities such as process launching, native file selection, filesystem access, and installed Flatpak discovery. That lets the interface stay polished without giving up native integration.</p></div>
         <div className="glass-card p-6 font-mono text-sm">
-          <div className="space-y-3 text-slate-300"><p><span className="text-violet-300">Mochi UI</span> → Tauri 2</p><p><span className="text-violet-300">Tauri</span> → Rust / OS</p><p><span className="text-violet-300">Rust</span> → executable / .desktop / Flatpak / script</p><p><span className="text-violet-300">Local data</span> → Pikos + Tofus + settings</p><p><span className="text-violet-300">Optional cloud</span> → supported metadata</p></div>
+          <div className="space-y-3 text-slate-300"><p><span className="text-mint-300">Mochi UI</span> → Tauri 2</p><p><span className="text-mint-300">Tauri</span> → Rust / OS</p><p><span className="text-mint-300">Rust</span> → executable / .desktop / Flatpak / script</p><p><span className="text-mint-300">Local data</span> → Pikos + Tofus + settings</p><p><span className="text-mint-300">Optional cloud</span> → supported metadata</p></div>
         </div>
       </section>
 
       <section className="grid gap-5 md:grid-cols-3">
-        <Link to="/documentation" className="glass-card group p-6 transition hover:-translate-y-1 hover:border-violet-400/30"><p className="text-sm text-violet-300">Documentation</p><h3 className="mt-2 text-xl font-semibold text-white">Understand the architecture</h3><p className="mt-3 text-sm leading-6 text-slate-400">Read about Pikos, Tofus, launching, authentication, storage, and cloud synchronisation.</p><span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white">Read docs <ArrowRight className="h-4 w-4"/></span></Link>
-        <Link to="/faq" className="glass-card group p-6 transition hover:-translate-y-1 hover:border-violet-400/30"><p className="text-sm text-cyan-300">FAQ</p><h3 className="mt-2 text-xl font-semibold text-white">Have questions?</h3><p className="mt-3 text-sm leading-6 text-slate-400">Find answers about accounts, cloud sync, platforms, offline use, and what Mochi does with your data.</p><span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white">Read FAQ <ArrowRight className="h-4 w-4"/></span></Link>
-        <Link to="/download" className="glass-card group p-6 transition hover:-translate-y-1 hover:border-violet-400/30"><p className="text-sm text-emerald-300">Download</p><h3 className="mt-2 text-xl font-semibold text-white">Ready to try it?</h3><p className="mt-3 text-sm leading-6 text-slate-400">Early-development builds for Linux and macOS, including Steam Deck and controller support.</p><span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white">Get Mochi <ArrowRight className="h-4 w-4"/></span></Link>
+        <Link to="/documentation" className="glass-card group p-6 transition hover:-translate-y-1 hover:border-mint-400/30"><p className="text-sm text-mint-300">Documentation</p><h3 className="mt-2 text-xl font-semibold text-white">Understand the architecture</h3><p className="mt-3 text-sm leading-6 text-slate-400">Read about Pikos, Tofus, launching, authentication, storage, and cloud synchronisation.</p><span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white">Read docs <ArrowRight className="h-4 w-4"/></span></Link>
+        <Link to="/faq" className="glass-card group p-6 transition hover:-translate-y-1 hover:border-mint-400/30"><p className="text-sm text-cyan-300">FAQ</p><h3 className="mt-2 text-xl font-semibold text-white">Have questions?</h3><p className="mt-3 text-sm leading-6 text-slate-400">Find answers about accounts, cloud sync, platforms, offline use, and what Mochi does with your data.</p><span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white">Read FAQ <ArrowRight className="h-4 w-4"/></span></Link>
+        <Link to="/download" className="glass-card group p-6 transition hover:-translate-y-1 hover:border-mint-400/30"><p className="text-sm text-emerald-300">Download</p><h3 className="mt-2 text-xl font-semibold text-white">Ready to try it?</h3><p className="mt-3 text-sm leading-6 text-slate-400">Early-development builds for Linux and macOS, including Steam Deck and controller support.</p><span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white">Get Mochi <ArrowRight className="h-4 w-4"/></span></Link>
       </section>
 
-      <section className="relative overflow-hidden rounded-[2rem] border border-violet-400/20 bg-violet-500/[0.06] p-10 text-center sm:p-14">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(124,92,255,.18),transparent_55%)]" />
-        <div className="relative"><Sparkles className="mx-auto h-7 w-7 text-violet-300"/><h2 className="mt-4 text-3xl font-bold text-white sm:text-4xl">Ready when you are.</h2><p className="mx-auto mt-4 max-w-2xl text-slate-300">Bring your library together, keep your setups separate, and let Mochi handle the boring parts.</p><Link to="/download" className="mt-7 inline-flex rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-6 py-3 font-semibold text-white shadow-lg shadow-violet-500/25">Get Mochi</Link></div>
+      <section className="relative overflow-hidden rounded-[2rem] border border-mint-400/20 bg-mint-500/[0.06] p-10 text-center sm:p-14">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(132,182,159,.18),transparent_55%)]" />
+        <div className="relative"><Sparkles className="mx-auto h-7 w-7 text-mint-300"/><h2 className="mt-4 text-3xl font-bold text-slate-900 sm:text-4xl">Ready when you are.</h2><p className="mx-auto mt-4 max-w-2xl text-slate-300">Bring your library together, keep your setups separate, and let Mochi handle the boring parts.</p><Link to="/download" className="mt-7 inline-flex rounded-full bg-gradient-to-r from-mint-400 to-mint-300 px-6 py-3 font-semibold text-slate-900 shadow-lg shadow-mint-500/25">Get Mochi</Link></div>
       </section>
     </div>
   )
@@ -448,6 +469,29 @@ function NotFoundPage() {
   )
 }
 
+const featureGallery = [
+  {
+    src: 'game-details.webp',
+    alt: 'A game page in Mochi with playtime, Tofu environments and mod management',
+    caption: 'Game pages: playtime, Tofus, metadata and mods in one place.',
+  },
+  {
+    src: 'discover.webp',
+    alt: 'The Discover view showing community mods from Modrinth, CurseForge and Nexus Mods',
+    caption: 'Discover: community mods from Modrinth, CurseForge and Nexus Mods.',
+  },
+  {
+    src: 'big-picture.webp',
+    alt: 'Mochi Big Picture mode, the controller-first fullscreen interface',
+    caption: 'Big Picture: the controller-first mode built for Steam Deck and TVs.',
+  },
+  {
+    src: 'themes.webp',
+    alt: 'A selection of the 11 built-in Mochi themes',
+    caption: 'One of 11 built-in themes, plus accents taken from game artwork.',
+  },
+]
+
 function FeaturePage() {
   return (
     <PageShell>
@@ -460,6 +504,8 @@ function FeaturePage() {
         {[
           'Library management and game discovery',
           'Custom Tofu environments for profiles and versions',
+          '29-language localised interface with accessibility options',
+          'Play limits, account PIN, launch hooks and tray quick launch',
           'Cross-device account sync and launcher settings for selected users',
           'Local game installs with cloud metadata support for selected users',
           'Secure account authentication and user accounts',
@@ -470,6 +516,27 @@ function FeaturePage() {
             <span>{item}</span>
           </div>
         ))}
+      </div>
+
+      <div>
+        <h2 className="text-2xl font-bold text-white">See it in action</h2>
+        <p className="mt-2 max-w-3xl text-slate-400">Screenshots from the launcher itself — the same Mochi you download.</p>
+        <div className="mt-6 grid gap-6 sm:grid-cols-2">
+          {featureGallery.map(({ src, alt, caption }) => (
+            <figure key={src} className="overflow-hidden rounded-2xl border border-white/10 bg-slate-950/60">
+              <img
+                src={`${base}screenshots/${src}`}
+                alt={alt}
+                width={1440}
+                height={900}
+                loading="lazy"
+                decoding="async"
+                className="h-auto w-full"
+              />
+              <figcaption className="border-t border-white/10 px-4 py-3 text-sm text-slate-400">{caption}</figcaption>
+            </figure>
+          ))}
+        </div>
       </div>
     </PageShell>
   )
@@ -507,14 +574,14 @@ function DownloadPage() {
       <div className="glass-card p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.2em] text-violet-200">Latest release</p>
+            <p className="text-sm uppercase tracking-[0.2em] text-mint-200">Latest release</p>
             <h3 className="mt-2 text-2xl font-bold text-white">Linux and macOS</h3>
           </div>
           <a
             href="https://github.com/T1nkiePlayz/Mochi/releases/latest"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-5 py-3 font-semibold text-white shadow-lg shadow-violet-500/25 transition hover:brightness-110"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-mint-400 to-mint-300 px-5 py-3 font-semibold text-slate-900 shadow-lg shadow-mint-500/25 transition hover:brightness-110"
           >
             <Download className="h-4 w-4" />
             Download latest release
@@ -567,6 +634,7 @@ function FaqPage() {
         <FaqItem question="Is cloud sync available to everyone?" answer="Not currently. Cloud metadata features are available only to selected users, and access can be controlled from the Mochi account system." />
         <FaqItem question="Where can I download Mochi?" answer="The latest publicly available Mochi release can be found from the Download page and the project's release page." />
         <FaqItem question="What platforms does Mochi support?" answer="Mochi supports Linux (AppImage, .deb, .rpm and an Arch PKGBUILD) and macOS 12 or later (Apple silicon and Intel). Linux is the best tested. Windows is not supported. Steam Deck and controllers are supported, including a Big Picture mode. Mochi is in early development (0.1.0) and has no stable release yet." />
+        <FaqItem question="What languages does Mochi support?" answer="The launcher interface is available in 29 languages. English is the fallback for anything not yet translated." />
         <FaqItem question="How do I get help with my account?" answer="For account, privacy, or other support questions, contact support@ashtontink.com." />
         <FaqItem question="How is my personal information handled?" answer="Mochi's Privacy Policy explains what information may be collected, why it is used, how it may be disclosed, and how you can request access, correction, or deletion." />
       </div>
@@ -785,10 +853,10 @@ function SignInPage() {
   }
 
   const switchFactor = (mode: 'passkey' | 'totp') => { setCode(''); setMessage(''); setSecurityMode(mode) }
-  const inputClass = 'w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none placeholder:text-slate-400 focus:border-violet-400/60'
-  const primaryButton = 'w-full rounded-xl bg-gradient-to-r from-violet-500 to-cyan-400 px-4 py-3 font-semibold text-white shadow-lg shadow-violet-500/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-400 disabled:shadow-none'
+  const inputClass = 'w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none placeholder:text-slate-400 focus:border-mint-400/60'
+  const primaryButton = 'w-full rounded-xl bg-gradient-to-r from-mint-400 to-mint-300 px-4 py-3 font-semibold text-slate-900 shadow-lg shadow-mint-500/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-400 disabled:shadow-none'
   const linkButton = 'text-slate-400 transition hover:text-white disabled:opacity-40'
-  const codeInput = 'w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-4 text-center font-mono text-2xl tracking-[0.4em] text-white outline-none placeholder:text-slate-400 focus:border-violet-400/60'
+  const codeInput = 'w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-4 text-center font-mono text-2xl tracking-[0.4em] text-white outline-none placeholder:text-slate-400 focus:border-mint-400/60'
 
   if (user && securityMode === 'checking') {
     return <AuthCard title="Checking your account" subtitle="One moment while we check your account security…" />
@@ -807,10 +875,10 @@ function SignInPage() {
               { mode: 'passkey' as const, icon: KeyRound, title: 'Passkey', text: 'Device, password manager, or security key' },
               { mode: 'totp' as const, icon: Smartphone, title: 'Authenticator app', text: '6-digit code from your app' },
             ].map(({ mode, icon: Icon, title, text }) => (
-              <button key={mode} type="button" disabled={busy} onClick={() => switchFactor(mode)} className="group flex w-full items-center gap-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3.5 text-left transition hover:border-violet-400/40 hover:bg-violet-500/[0.07] disabled:opacity-40">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-200"><Icon className="h-5 w-5" /></span>
+              <button key={mode} type="button" disabled={busy} onClick={() => switchFactor(mode)} className="group flex w-full items-center gap-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3.5 text-left transition hover:border-mint-400/40 hover:bg-mint-500/[0.07] disabled:opacity-40">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-mint-500/10 text-mint-200"><Icon className="h-5 w-5" /></span>
                 <span className="min-w-0 flex-1"><span className="block font-semibold text-white">{title}</span><span className="block text-sm text-slate-400">{text}</span></span>
-                <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-violet-300" />
+                <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-mint-300" />
               </button>
             ))}
           </div>
@@ -818,7 +886,7 @@ function SignInPage() {
 
         {securityMode === 'passkey' && (
           <div className="space-y-4 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-200"><KeyRound className="h-7 w-7" /></div>
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-mint-500/10 text-mint-200"><KeyRound className="h-7 w-7" /></div>
             <p className="text-sm leading-6 text-slate-400">Use the passkey you registered for this Mochi account.</p>
             <button type="button" disabled={busy} onClick={() => void verifyPasskey()} className={primaryButton}>{busy ? 'Waiting for passkey…' : 'Continue with passkey'}</button>
             {hasTotp && <button type="button" disabled={busy} onClick={() => switchFactor('totp')} className={`${linkButton} text-sm`}>Use authenticator app instead</button>}
@@ -878,7 +946,7 @@ function SignInPage() {
 
       <div role="tablist" aria-label="Sign-in method" className="mb-4 grid grid-cols-2 rounded-xl border border-white/10 bg-slate-900/60 p-1 text-sm font-medium">
         {([['password', 'Password'], ['code', 'Email code']] as const).map(([id, label]) => (
-          <button key={id} type="button" role="tab" aria-selected={method === id} onClick={() => { setMethod(id); setMessage('') }} className={method === id ? 'rounded-lg bg-violet-500/20 py-2 text-white' : 'rounded-lg py-2 text-slate-400 hover:text-white'}>{label}</button>
+          <button key={id} type="button" role="tab" aria-selected={method === id} onClick={() => { setMethod(id); setMessage('') }} className={method === id ? 'rounded-lg bg-mint-500/20 py-2 text-white' : 'rounded-lg py-2 text-slate-400 hover:text-white'}>{label}</button>
         ))}
       </div>
 
@@ -902,7 +970,12 @@ function SignInPage() {
         {method === 'password' ? (
           <>
             <button type="button" disabled={busy || !normalizedEmail} onClick={() => void run(async () => { const result = await resetPassword(normalizedEmail); if (!result.error) setMessage('Check your email for a password reset link.'); return result })} className={linkButton} title={normalizedEmail ? undefined : 'Enter your email first'}>Forgot password?</button>
-            <button type="button" disabled={busy || !normalizedEmail || !password} onClick={() => void run(async () => { const result = await signUpWithPassword(normalizedEmail, password, appMode ? mochiVerifyUrl : undefined); if (!result.error) setMessage('Check your email to confirm your new account.'); return result })} className={linkButton} title="Enter an email and password first">Create account</button>
+            <button type="button" disabled={busy || !normalizedEmail || !password} onClick={() => void run(async () => {
+              if (password.length < 8) return { error: new Error('Choose a password with at least 8 characters.') }
+              const breached = await passwordIsBreached(password)
+              if (breached) return { error: new Error('That password has appeared in a public data breach. Please choose a different one.') }
+              const result = await signUpWithPassword(normalizedEmail, password, appMode ? mochiVerifyUrl : undefined); if (!result.error) setMessage('Check your email to confirm your new account.'); return result
+            })} className={linkButton} title="Enter an email and password first">Create account</button>
           </>
         ) : (
           <p className="w-full text-center text-slate-400">New here? We’ll create your account when you verify the code.</p>
@@ -918,7 +991,7 @@ function AuthCard({ eyebrow, title, subtitle, children }: { eyebrow?: string; ti
       <div className="glass-card p-6 sm:p-8">
         <div className="mb-6 text-center">
           <img src={logoSrc} alt="" width={48} height={48} className="mx-auto h-12 w-12 rounded-2xl object-contain" />
-          {eyebrow && <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">{eyebrow}</p>}
+          {eyebrow && <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-mint-300">{eyebrow}</p>}
           <h1 className="mt-2 text-2xl font-bold tracking-tight text-white">{title}</h1>
           {subtitle && <p className="mt-2 text-sm leading-6 text-slate-400">{subtitle}</p>}
         </div>
@@ -982,7 +1055,7 @@ function EmailVerificationPage() {
     <PageShell className="max-w-2xl">
       <div className="glass-card p-8 text-center sm:p-10">
         <img src={logoSrc} alt="Mochi" width={64} height={64} className="mx-auto h-16 w-16 rounded-2xl object-contain" />
-        <p className="mt-6 text-sm font-semibold uppercase tracking-[0.2em] text-violet-300">Email verification</p>
+        <p className="mt-6 text-sm font-semibold uppercase tracking-[0.2em] text-mint-300">Email verification</p>
         <h2 className="mt-3 text-3xl font-bold text-white">
           {status === 'verifying' ? 'Confirming your email…' : 'Verification failed'}
         </h2>
@@ -1006,7 +1079,7 @@ function PageShell({ children, className = '' }: { children: React.ReactNode; cl
 function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
     <div>
-      <p className="text-sm font-medium uppercase tracking-[0.2em] text-violet-200">{eyebrow}</p>
+      <p className="text-sm font-medium uppercase tracking-[0.2em] text-mint-200">{eyebrow}</p>
       <h1 className="mt-3 max-w-3xl text-3xl font-bold tracking-tight text-white sm:text-4xl">{title}</h1>
     </div>
   )
@@ -1015,7 +1088,7 @@ function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) 
 function StepCard({ step, title, description }: { step: string; title: string; description: string }) {
   return (
     <div className="glass-card p-6">
-      <p className="text-sm uppercase tracking-[0.2em] text-violet-200">{step}</p>
+      <p className="text-sm uppercase tracking-[0.2em] text-mint-200">{step}</p>
       <h3 className="mt-4 text-2xl font-semibold text-white">{title}</h3>
       <p className="mt-3 text-slate-300">{description}</p>
     </div>

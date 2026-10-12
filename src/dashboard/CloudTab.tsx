@@ -121,7 +121,7 @@ export default function CloudTab({ profile, refreshProfile }: { profile: Profile
               return (
               <li key={game.id} className="min-w-0">
                 <div role="img" aria-label={game.name} style={artwork && cover ? { backgroundImage: cover } : undefined}
-                  className="flex aspect-[3/4] items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-violet-500/15 to-cyan-500/10 bg-cover bg-center text-slate-400">
+                  className="flex aspect-[3/4] items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-mint-500/15 to-cyan-500/10 bg-cover bg-center text-slate-400">
                   {!(artwork && cover) && <Gamepad2 className="h-9 w-9" />}
                 </div>
                 <p className="mt-2 truncate text-sm font-semibold text-white" title={game.name}>{game.name}</p>
