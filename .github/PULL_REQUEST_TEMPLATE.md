@@ -16,10 +16,11 @@
 - [ ] Not applicable (docs / tooling only)
 
 ## Checklist
-- [ ] `npm run lint` and `npm run build` pass
+- [ ] `npm test` passes (docs anchor check, lint, build)
+- [ ] `npm run test:e2e` passes for routing or UI changes
 - [ ] Links use `import.meta.env.BASE_URL` (the site is served from a sub-path)
 - [ ] Keyboard and screen-reader use still works; reduced motion is respected
-- [ ] UI text uses the terms in `CONTEXT.md`
+- [ ] UI text uses the documented terms (Glossary in `src/Documentation.tsx`)
 - [ ] Security rules are enforced in the database, not only in the browser
 - [ ] Migrations are new, idempotent files and no applied migration was edited
 - [ ] Docs / README updated for user-facing changes

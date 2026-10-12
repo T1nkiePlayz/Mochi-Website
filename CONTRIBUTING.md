@@ -33,8 +33,8 @@ the site still builds and runs; account features are simply unavailable.
 ## Before you open a pull request
 
 ```bash
-npm run lint
-npm run build      # type-checks and bundles
+npm test           # documentation anchor check, lint, then build (type-checks and bundles)
+npm run test:e2e   # route + accessibility smoke suite; CI runs this too
 ```
 
 CI runs the same checks on every pull request. Open the built site (`npm run preview`) and check the pages you changed
@@ -43,7 +43,7 @@ at phone width as well as desktop.
 ## Guidelines
 
 1. Understand the existing implementation before changing it; keep changes focused.
-2. Use the words in [`CONTEXT.md`](CONTEXT.md) in the UI and docs (Piko, Tofu, Account, Cloud access, Service key...).
+2. Use the words in the [Glossary](src/Documentation.tsx) in the UI and docs (Piko, Tofu, Account, Cloud access, Service key...).
 3. The site is hosted under a sub-path on GitHub Pages: link with `import.meta.env.BASE_URL`, never a leading `/`.
 4. The browser is not a security boundary. Role, ownership, assurance (AAL2) and confirmation checks belong in
    database functions or Row Level Security; UI checks are only a convenience.

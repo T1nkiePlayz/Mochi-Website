@@ -35,6 +35,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate documentation anchors
+        run: node scripts/check-doc-anchors.mjs
+
       - name: Lint website
         run: npm run lint
 

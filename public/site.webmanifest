@@ -1,0 +1,14 @@
+{
+  "name": "Mochi — Your games, your way",
+  "short_name": "Mochi",
+  "description": "The public site and account portal for the Mochi game launcher.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "icons": [
+    { "src": "./mochi-192.webp", "sizes": "192x192", "type": "image/webp" },
+    { "src": "./mochi.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
