@@ -1,7 +1,8 @@
 @import 'tailwindcss';
 
 :root {
-  font-family: 'Inter', 'Segoe UI', sans-serif;
+  /* No webfont is shipped: 'Inter' was never loaded, so the stack starts at a font that exists. */
+  font-family: 'Segoe UI', system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color: rgba(248, 250, 252, 0.96);

@@ -21,7 +21,7 @@ export function Panel({
 }
 
 export function SectionLabel({ children }: { children: ReactNode }) {
-  return <h2 className="px-1 pt-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{children}</h2>
+  return <h2 className="px-1 pt-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{children}</h2>
 }
 
 const chipTones = {
@@ -41,7 +41,7 @@ export function Row({ icon: Icon, title, detail, right }: { icon?: LucideIcon; t
       {Icon && <Icon className="h-4 w-4 shrink-0 text-violet-300" />}
       <div className="min-w-0 flex-1 basis-40">
         <p className="truncate text-sm font-medium text-white">{title}</p>
-        {detail && <p className="mt-0.5 text-xs text-slate-500">{detail}</p>}
+        {detail && <p className="mt-0.5 text-xs text-slate-400">{detail}</p>}
       </div>
       {right && <div className="flex shrink-0 items-center gap-2">{right}</div>}
     </div>
@@ -109,7 +109,7 @@ export function Field({ label, children, hint }: { label: string; children: Reac
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium text-slate-200">{label}</span>
       {children}
-      {hint && <span className="mt-1.5 block text-xs text-slate-500">{hint}</span>}
+      {hint && <span className="mt-1.5 block text-xs text-slate-400">{hint}</span>}
     </label>
   )
 }

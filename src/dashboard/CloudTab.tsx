@@ -107,13 +107,13 @@ export default function CloudTab({ profile, refreshProfile }: { profile: Profile
 
       <Panel title="Synced library" icon={Layers3}
         description={artwork ? undefined : 'Save an IGDB key under Security → Service keys to show cover artwork.'}
-        action={games.length > 0 ? <div className="relative w-40 sm:w-56"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search" aria-label="Search synced games" className={`${input} !py-2 !pl-9 text-sm`} /></div> : undefined}>
+        action={games.length > 0 ? <div className="relative w-40 sm:w-56"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search" aria-label="Search synced games" className={`${input} !py-2 !pl-9 text-sm`} /></div> : undefined}>
         {loading ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3"><Skeleton className="aspect-[3/4] h-auto" /><Skeleton className="aspect-[3/4] h-auto" /><Skeleton className="hidden aspect-[3/4] h-auto sm:block" /></div>
         ) : games.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-white/10 px-4 py-8 text-center text-sm text-slate-500">Nothing synced yet. Turn on sync here and in the launcher, and your library will appear.</p>
+          <p className="rounded-xl border border-dashed border-white/10 px-4 py-8 text-center text-sm text-slate-400">Nothing synced yet. Turn on sync here and in the launcher, and your library will appear.</p>
         ) : visible.length === 0 ? (
-          <p className="py-6 text-center text-sm text-slate-500">No games match “{query}”.</p>
+          <p className="py-6 text-center text-sm text-slate-400">No games match “{query}”.</p>
         ) : (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {visible.map((game) => {
@@ -121,11 +121,11 @@ export default function CloudTab({ profile, refreshProfile }: { profile: Profile
               return (
               <li key={game.id} className="min-w-0">
                 <div role="img" aria-label={game.name} style={artwork && cover ? { backgroundImage: cover } : undefined}
-                  className="flex aspect-[3/4] items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-violet-500/15 to-cyan-500/10 bg-cover bg-center text-slate-600">
+                  className="flex aspect-[3/4] items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-violet-500/15 to-cyan-500/10 bg-cover bg-center text-slate-400">
                   {!(artwork && cover) && <Gamepad2 className="h-9 w-9" />}
                 </div>
                 <p className="mt-2 truncate text-sm font-semibold text-white" title={game.name}>{game.name}</p>
-                <p className="truncate text-xs text-slate-500">{game.tofus?.length ?? 0} {(game.tofus?.length ?? 0) === 1 ? 'Tofu' : 'Tofus'}{game.categories?.[0] ? ` · ${game.categories[0]}` : ''}</p>
+                <p className="truncate text-xs text-slate-400">{game.tofus?.length ?? 0} {(game.tofus?.length ?? 0) === 1 ? 'Tofu' : 'Tofus'}{game.categories?.[0] ? ` · ${game.categories[0]}` : ''}</p>
               </li>
               )
             })}
