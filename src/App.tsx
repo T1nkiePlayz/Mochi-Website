@@ -16,7 +16,8 @@ import {
 } from 'lucide-react'
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { avatarFor } from './lib/avatar'
-import { HashRouter, NavLink, Route, Routes, Link } from 'react-router-dom'
+import { HashRouter, NavLink, Route, Routes, Link, useLocation, useNavigate } from 'react-router-dom'
+import ErrorBoundary from './ErrorBoundary'
 import {
   supabase,
   siteUrl,
@@ -147,19 +148,43 @@ function DashboardAccessGate({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
+/** Remounts the boundary per route so a failed page does not block navigation to the next one. */
+function RouteErrorBoundary({ children }: { children: ReactNode }) {
+  const { pathname } = useLocation()
+  return <ErrorBoundary key={pathname}>{children}</ErrorBoundary>
+}
+
+/**
+ * HashRouter keeps the scroll offset across pushState navigations (a page can start halfway down),
+ * so route changes always start at the top. Anchor jumps inside a page do not change `pathname`
+ * and are left alone.
+ */
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  const previousPath = useRef(pathname)
+  useEffect(() => {
+    // Skip the first render so the browser keeps its own scroll restoration on load.
+    if (previousPath.current === pathname) return
+    previousPath.current = pathname
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  }, [pathname])
+  return null
+}
+
 function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const mobileMenuButton = useRef<HTMLButtonElement>(null)
   return (
     <AuthProvider>
       <HashRouter>
+      <ScrollToTop />
       <div className="min-h-screen bg-slate-950 text-slate-100">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(129,140,248,0.35),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(45,212,191,0.18),_transparent_22%)]" />
 
         <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
             <Link to="/" className="flex items-center gap-3 text-lg font-semibold tracking-tight text-white">
-              <img src={logoSrc} alt="Mochi" width={36} height={36} className="h-9 w-9 rounded-xl object-contain" />
+              <img src={logoSrc} alt="" width={36} height={36} className="h-9 w-9 rounded-xl object-contain" />
               Mochi
             </Link>
 
@@ -227,37 +252,30 @@ function App() {
         </header>
 
         <main className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/features" element={<FeaturePage />} />
-            <Route path="/how-it-works" element={<HowItWorksPage />} />
-            <Route path="/download" element={<DownloadPage />} />
-            <Route path="/roadmap" element={<RoadmapPage />} />
-            <Route path="/changelog" element={<ChangelogPage />} />
-            <Route
-              path="/documentation"
-              element={
-                <Suspense fallback={<PageLoading />}>
-                  <DocumentationPage />
-                </Suspense>
-              }
-            />
-            <Route
-              path="/documentation/:section"
-              element={
-                <Suspense fallback={<PageLoading />}>
-                  <DocumentationArticlePage />
-                </Suspense>
-              }
-            />
-            <Route path="/faq" element={<FaqPage />} />
-            <Route path="/signin" element={<SignInPage />} />
-            <Route path="/auth/verify" element={<EmailVerificationPage />} />
-            <Route path="/dashboard" element={<DashboardAccessGate><DashboardPage /></DashboardAccessGate>} />
-            <Route path="/settings" element={<DashboardAccessGate><DashboardPage /></DashboardAccessGate>} />
-            <Route path="/admin" element={<DashboardAccessGate><DashboardPage /></DashboardAccessGate>} />
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
+          {/* Single boundary for every route: catches a failed lazy chunk or a render error
+              (otherwise the whole tree unmounts) and shows the loading state while a lazy page
+              arrives (without it React suspends the entire root and the screen stays blank). */}
+          <RouteErrorBoundary>
+            <Suspense fallback={<PageLoading />}>
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/features" element={<FeaturePage />} />
+                <Route path="/how-it-works" element={<HowItWorksPage />} />
+                <Route path="/download" element={<DownloadPage />} />
+                <Route path="/roadmap" element={<RoadmapPage />} />
+                <Route path="/changelog" element={<ChangelogPage />} />
+                <Route path="/documentation" element={<DocumentationPage />} />
+                <Route path="/documentation/:section" element={<DocumentationArticlePage />} />
+                <Route path="/faq" element={<FaqPage />} />
+                <Route path="/signin" element={<SignInPage />} />
+                <Route path="/auth/verify" element={<EmailVerificationPage />} />
+                <Route path="/dashboard" element={<DashboardAccessGate><DashboardPage /></DashboardAccessGate>} />
+                <Route path="/settings" element={<DashboardAccessGate><DashboardPage /></DashboardAccessGate>} />
+                <Route path="/admin" element={<DashboardAccessGate><DashboardPage /></DashboardAccessGate>} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </Suspense>
+          </RouteErrorBoundary>
         </main>
 
         <footer className="relative border-t border-white/10 bg-slate-950/80">
@@ -376,7 +394,7 @@ function HomePage() {
           </div>
           <div className="mt-5 grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-center">
             <div className="rounded-2xl border border-violet-400/20 bg-violet-500/[0.07] p-5 text-center"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">Piko</p><p className="mt-2 text-lg font-bold text-white">What you play</p><p className="mt-1 text-sm text-slate-400">The game’s identity and library record.</p></div>
-            <div className="hidden text-2xl text-slate-500 md:block">→</div>
+            <div className="hidden text-2xl text-slate-400 md:block">→</div>
             <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/[0.06] p-5 text-center"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">Tofu</p><p className="mt-2 text-lg font-bold text-white">How you play it</p><p className="mt-1 text-sm text-slate-400">A specific environment, setup, or configuration.</p></div>
           </div>
         </div>
@@ -558,6 +576,9 @@ function FaqPage() {
 
 function SignInPage() {
   const { user } = useAuth()
+  const location = useLocation()
+  // Set by the email-verification page after a successful verify.
+  const justVerified = Boolean((location.state as { verified?: boolean } | null)?.verified)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
@@ -764,10 +785,10 @@ function SignInPage() {
   }
 
   const switchFactor = (mode: 'passkey' | 'totp') => { setCode(''); setMessage(''); setSecurityMode(mode) }
-  const inputClass = 'w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none placeholder:text-slate-500 focus:border-violet-400/60'
+  const inputClass = 'w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none placeholder:text-slate-400 focus:border-violet-400/60'
   const primaryButton = 'w-full rounded-xl bg-gradient-to-r from-violet-500 to-cyan-400 px-4 py-3 font-semibold text-white shadow-lg shadow-violet-500/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-400 disabled:shadow-none'
   const linkButton = 'text-slate-400 transition hover:text-white disabled:opacity-40'
-  const codeInput = 'w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-4 text-center font-mono text-2xl tracking-[0.4em] text-white outline-none placeholder:text-slate-600 focus:border-violet-400/60'
+  const codeInput = 'w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-4 text-center font-mono text-2xl tracking-[0.4em] text-white outline-none placeholder:text-slate-400 focus:border-violet-400/60'
 
   if (user && securityMode === 'checking') {
     return <AuthCard title="Checking your account" subtitle="One moment while we check your account security…" />
@@ -789,7 +810,7 @@ function SignInPage() {
               <button key={mode} type="button" disabled={busy} onClick={() => switchFactor(mode)} className="group flex w-full items-center gap-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3.5 text-left transition hover:border-violet-400/40 hover:bg-violet-500/[0.07] disabled:opacity-40">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-200"><Icon className="h-5 w-5" /></span>
                 <span className="min-w-0 flex-1"><span className="block font-semibold text-white">{title}</span><span className="block text-sm text-slate-400">{text}</span></span>
-                <ChevronRight className="h-4 w-4 shrink-0 text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-violet-300" />
+                <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-violet-300" />
               </button>
             ))}
           </div>
@@ -842,6 +863,7 @@ function SignInPage() {
   return (
     <AuthCard eyebrow="Welcome" title="Sign in to Mochi" subtitle="One account for the Mochi website and launcher.">
       {appMode && <div className="mb-5 rounded-xl border border-cyan-400/20 bg-cyan-500/[0.06] p-3 text-sm leading-6 text-cyan-100"><strong>Signing in for the Mochi app.</strong> You’ll be returned to Mochi automatically afterwards.</div>}
+      {justVerified && <p role="status" className="mb-5 rounded-xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-center text-sm text-emerald-200">Email verified — you can sign in now.</p>}
 
       <div className="grid grid-cols-2 gap-2">
         <button type="button" disabled={busy} onClick={() => void run(() => signInWithProvider('github', appMode ? mochiSignInUrl : undefined))} className={socialButton}>
@@ -852,7 +874,7 @@ function SignInPage() {
         </button>
       </div>
 
-      <div className="my-5 flex items-center gap-3 text-xs uppercase tracking-wider text-slate-500"><span className="h-px flex-1 bg-white/10" />or with email<span className="h-px flex-1 bg-white/10" /></div>
+      <div className="my-5 flex items-center gap-3 text-xs uppercase tracking-wider text-slate-400"><span className="h-px flex-1 bg-white/10" />or with email<span className="h-px flex-1 bg-white/10" /></div>
 
       <div role="tablist" aria-label="Sign-in method" className="mb-4 grid grid-cols-2 rounded-xl border border-white/10 bg-slate-900/60 p-1 text-sm font-medium">
         {([['password', 'Password'], ['code', 'Email code']] as const).map(([id, label]) => (
@@ -883,7 +905,7 @@ function SignInPage() {
             <button type="button" disabled={busy || !normalizedEmail || !password} onClick={() => void run(async () => { const result = await signUpWithPassword(normalizedEmail, password, appMode ? mochiVerifyUrl : undefined); if (!result.error) setMessage('Check your email to confirm your new account.'); return result })} className={linkButton} title="Enter an email and password first">Create account</button>
           </>
         ) : (
-          <p className="w-full text-center text-slate-500">New here? We’ll create your account when you verify the code.</p>
+          <p className="w-full text-center text-slate-400">New here? We’ll create your account when you verify the code.</p>
         )}
       </div>
     </AuthCard>
@@ -907,8 +929,9 @@ function AuthCard({ eyebrow, title, subtitle, children }: { eyebrow?: string; ti
 }
 
 function EmailVerificationPage() {
-  const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying')
+  const [status, setStatus] = useState<'verifying' | 'error'>('verifying')
   const [message, setMessage] = useState('Confirming your email address…')
+  const navigate = useNavigate()
 
   useEffect(() => {
     let active = true
@@ -944,16 +967,16 @@ function EmailVerificationPage() {
         return
       }
 
-      window.history.replaceState({}, document.title, window.location.pathname)
-      setStatus('success')
-      setMessage('Your email has been verified. Your Mochi account is ready.')
+      // Hand over to the sign-in form (which shows the confirmation) and drop the one-time token
+      // from the URL. `replace` keeps Back from re-submitting the verification link.
+      navigate('/signin', { replace: true, state: { verified: true } })
     }
 
     void verify()
     return () => {
       active = false
     }
-  }, [])
+  }, [navigate])
 
   return (
     <PageShell className="max-w-2xl">
@@ -961,19 +984,15 @@ function EmailVerificationPage() {
         <img src={logoSrc} alt="Mochi" width={64} height={64} className="mx-auto h-16 w-16 rounded-2xl object-contain" />
         <p className="mt-6 text-sm font-semibold uppercase tracking-[0.2em] text-violet-300">Email verification</p>
         <h2 className="mt-3 text-3xl font-bold text-white">
-          {status === 'verifying' ? 'Confirming your email…' : status === 'success' ? 'Email verified!' : 'Verification failed'}
+          {status === 'verifying' ? 'Confirming your email…' : 'Verification failed'}
         </h2>
         <p className="mx-auto mt-4 max-w-lg leading-7 text-slate-300">{message}</p>
         <div className="mt-7 flex flex-wrap justify-center gap-3">
-          {status === 'success' ? (
-            <Link to="/signin" className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-5 py-3 font-semibold text-white">
-              Sign in to Mochi
-            </Link>
-          ) : status === 'error' ? (
+          {status === 'error' && (
             <Link to="/signin" className="rounded-full border border-white/15 bg-white/5 px-5 py-3 font-semibold text-slate-100">
               Return to sign in
             </Link>
-          ) : null}
+          )}
         </div>
       </div>
     </PageShell>
@@ -988,7 +1007,7 @@ function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) 
   return (
     <div>
       <p className="text-sm font-medium uppercase tracking-[0.2em] text-violet-200">{eyebrow}</p>
-      <h2 className="mt-3 max-w-3xl text-3xl font-bold tracking-tight text-white sm:text-4xl">{title}</h2>
+      <h1 className="mt-3 max-w-3xl text-3xl font-bold tracking-tight text-white sm:text-4xl">{title}</h1>
     </div>
   )
 }
