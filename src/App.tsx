@@ -36,6 +36,7 @@ import {
 } from './lib/supabase'
 import { AuthProvider } from './lib/auth'
 import { useAuth } from './lib/useAuth'
+import { passwordIsBreached } from './lib/password'
 
 const base = import.meta.env.BASE_URL
 const logoSrc = `${base}mochi.png`
@@ -969,7 +970,12 @@ function SignInPage() {
         {method === 'password' ? (
           <>
             <button type="button" disabled={busy || !normalizedEmail} onClick={() => void run(async () => { const result = await resetPassword(normalizedEmail); if (!result.error) setMessage('Check your email for a password reset link.'); return result })} className={linkButton} title={normalizedEmail ? undefined : 'Enter your email first'}>Forgot password?</button>
-            <button type="button" disabled={busy || !normalizedEmail || !password} onClick={() => void run(async () => { const result = await signUpWithPassword(normalizedEmail, password, appMode ? mochiVerifyUrl : undefined); if (!result.error) setMessage('Check your email to confirm your new account.'); return result })} className={linkButton} title="Enter an email and password first">Create account</button>
+            <button type="button" disabled={busy || !normalizedEmail || !password} onClick={() => void run(async () => {
+              if (password.length < 8) return { error: new Error('Choose a password with at least 8 characters.') }
+              const breached = await passwordIsBreached(password)
+              if (breached) return { error: new Error('That password has appeared in a public data breach. Please choose a different one.') }
+              const result = await signUpWithPassword(normalizedEmail, password, appMode ? mochiVerifyUrl : undefined); if (!result.error) setMessage('Check your email to confirm your new account.'); return result
+            })} className={linkButton} title="Enter an email and password first">Create account</button>
           </>
         ) : (
           <p className="w-full text-center text-slate-400">New here? We’ll create your account when you verify the code.</p>
